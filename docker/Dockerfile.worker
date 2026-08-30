@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+COPY pyproject.toml /app/
+COPY server/requirements.txt /app/server/requirements.txt
+RUN pip install --no-cache-dir -r server/requirements.txt
+
+COPY sdk /app/sdk
+COPY server /app/server
+
+RUN pip install --no-cache-dir -e /app
+
+CMD ["python", "-c", "from feenion_server.worker import worker; worker.start(); import time; time.sleep(100000000)"]

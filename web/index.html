@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feenion — AI Observability Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+      body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; color: #e2e8f0; }
+      code, pre { font-family: 'JetBrains Mono', monospace; }
+      
+      .bg-card { background-color: #0d111a; }
+      .border-card { border-color: #1e2330; }
+
+      /* Waterfall Bar */
+      .waterfall-bar { height: 24px; border-radius: 4px; transition: all 0.15s ease-in-out; cursor: pointer; }
+      .waterfall-bar:hover { filter: brightness(1.25); outline: 2px solid #6366f1; box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
+
+      /* Animated Request Flow for Mindmap */
+      @keyframes flowLink {
+        from { stroke-dashoffset: 24; }
+        to { stroke-dashoffset: 0; }
+      }
+      .flow-link {
+        fill: none;
+        stroke-width: 2px;
+        stroke-dasharray: 6, 6;
+        animation: flowLink 1.2s linear infinite;
+      }
+
+      .mindmap-svg { cursor: grab; }
+      .mindmap-svg:active { cursor: grabbing; }
+      .node circle { fill: #1e1b4b; stroke: #6366f1; stroke-width: 2px; cursor: pointer; transition: all 0.2s; }
+      .node circle:hover { fill: #312e81; stroke: #a5b4fc; stroke-width: 3px; r: 10px; }
+      .node text { font-size: 11px; fill: #cbd5e1; font-family: 'JetBrains Mono', monospace; }
+      .node-llm circle { fill: #4c1d95; stroke: #c084fc; }
+      .node-retrieval circle { fill: #78350f; stroke: #fde047; }
+      .node-tool circle { fill: #164e63; stroke: #22d3ee; }
+      .node-error circle { fill: #881337; stroke: #f43f5e; }
+    </style>
+  </head>
+  <body class="h-screen flex flex-col overflow-hidden select-none antialiased bg-[#080b11]">
+    <div id="root" class="h-full flex flex-col"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

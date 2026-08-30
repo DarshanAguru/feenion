@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "feenion-server"
+version = "0.1.0"
+description = "Feenion Telemetry & Debugging Server"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy>=2.0.0",
+    "pydantic-settings>=2.15.0",
+]
+
+[project.scripts]
+feenion-server = "feenion_server.main:start"
+
+[tool.setuptools.packages.find]
+where = ["."]
+

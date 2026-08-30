@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About Feenion — Open-Source AI Telemetry Project</title>
+  <meta name="description" content="Feenion is a brand-new open-source, self-hosted AI debugging and observability project." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; color: #e2e8f0; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .bg-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 28px 28px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased bg-[#080b11]">
+
+  <!-- Liquid Glass Header Navbar -->
+  <header class="bg-slate-950/70 backdrop-blur-xl border-b border-slate-800/60 sticky top-0 z-50 shadow-2xl px-6 py-2.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-6">
+        <a href="index.html" class="flex items-center space-x-3 group">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">F</div>
+          <span class="text-xl font-bold tracking-tight text-white">Feenion</span>
+          <span class="text-[10px] bg-slate-900/90 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full font-mono">About</span>
+        </a>
+
+        <!-- Consistent Nav Links -->
+        <nav class="flex items-center space-x-1.5 text-xs">
+          <a href="index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Overview</a>
+          <a href="docs.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Documentation</a>
+          <a href="about.html" class="px-3 py-1.5 rounded-lg text-indigo-300 font-semibold bg-indigo-600/20 border border-indigo-500/30 backdrop-blur-md shadow-inner transition">About</a>
+          <a href="community.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Community</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="px-3.5 py-1.5 bg-slate-900/80 hover:bg-slate-800/90 text-slate-200 font-medium rounded-lg border border-slate-800/80 transition text-xs flex items-center space-x-1.5 shadow-sm">
+          <span>⭐ GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Header with Grid Background -->
+  <section class="relative bg-grid py-16 border-b border-slate-800/50">
+    <div class="max-w-4xl mx-auto px-6 space-y-3">
+      <div class="text-[11px] font-mono text-indigo-400 uppercase tracking-wider">Project Mission & Architecture</div>
+      <h1 class="text-3xl font-bold text-white">About the Feenion Project</h1>
+      <p class="text-slate-400 text-sm">
+        Feenion is a brand-new, open-source self-hosted telemetry engine designed specifically for developers building AI agents, RAG search pipelines, and LLM applications.
+      </p>
+    </div>
+  </section>
+
+  <!-- Content Section -->
+  <main class="flex-1 max-w-4xl mx-auto px-6 py-12 space-y-8 text-xs text-slate-300 leading-relaxed">
+    <div class="space-y-4">
+      <h2 class="text-lg font-bold text-white">Why We Built Feenion</h2>
+      <p>
+        Most AI debugging tools require shipping sensitive prompt text, proprietary knowledge base documents, and API secrets to external SaaS vendors. Feenion was built to provide an open-source, self-hosted option that runs locally on your machine or private cloud server with zero data leaks.
+      </p>
+    </div>
+
+    <div class="space-y-4 border-t border-slate-800/80 pt-8">
+      <h2 class="text-lg font-bold text-white">Key Engineering Commitments</h2>
+      <ul class="space-y-2.5 list-disc list-inside text-slate-400">
+        <li><strong class="text-white">Apache 2.0 License</strong>: Completely open-source and free for commercial and personal use.</li>
+        <li><strong class="text-white">Zero-Overhead Memory Footprint</strong>: Uses SQLite in single-container mode (~40MB RAM) so it runs alongside your LLMs without consuming system memory.</li>
+        <li><strong class="text-white">Non-Blocking Queue Exporter</strong>: Decouples trace sending from main Python application threads.</li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/60 bg-slate-950 py-6 text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
+      <div>Feenion — Open-Source Self-Hosted AI Debugger (Apache 2.0 License)</div>
+      <div class="space-x-5">
+        <a href="index.html" class="hover:text-slate-300 transition">Overview</a>
+        <a href="docs.html" class="hover:text-slate-300 transition">Docs</a>
+        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="hover:text-slate-300 transition">GitHub Repository</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

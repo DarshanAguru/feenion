@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Feenion — Self-Hosted AI Application Debugger & Observability Platform</title>
+  <meta name="description" content="Feenion is an open-source, self-hosted AI debugging and observability engine for LLMs, RAG, and autonomous agents." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; color: #e2e8f0; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+    .bg-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 32px 32px; }
+    .card-border { border: 1px solid #1e2330; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased bg-[#080b11]">
+
+  <!-- Liquid Glass Header Navbar -->
+  <header class="bg-slate-950/70 backdrop-blur-xl border-b border-slate-800/60 sticky top-0 z-50 shadow-2xl px-6 py-2.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-6">
+        <a href="index.html" class="flex items-center space-x-3 group">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">F</div>
+          <span class="text-xl font-bold tracking-tight text-white">Feenion</span>
+          <span class="text-[10px] bg-slate-900/90 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full font-mono">Open-Source</span>
+        </a>
+
+        <!-- Consistent Nav Links -->
+        <nav class="flex items-center space-x-1.5 text-xs">
+          <a href="index.html" class="px-3 py-1.5 rounded-lg text-indigo-300 font-semibold bg-indigo-600/20 border border-indigo-500/30 backdrop-blur-md shadow-inner transition">Overview</a>
+          <a href="docs.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Documentation</a>
+          <a href="about.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">About</a>
+          <a href="community.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Community</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="px-3.5 py-1.5 bg-slate-900/80 hover:bg-slate-800/90 text-slate-200 font-medium rounded-lg border border-slate-800/80 transition text-xs flex items-center space-x-1.5 shadow-sm">
+          <span>⭐ GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative bg-grid py-20 border-b border-slate-800/50">
+    <div class="max-w-5xl mx-auto px-6 text-center space-y-6">
+      <div class="inline-flex items-center space-x-2 px-3 py-1 bg-indigo-950/60 border border-indigo-800/60 rounded-full text-indigo-400 text-xs font-mono">
+        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+        <span>Open-Source & 100% Self-Hosted</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+        AI Observability & Telemetry Engine for <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Production LLMs & Agents</span>
+      </h1>
+
+      <p class="text-base sm:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
+        Inspect LLM application traces, flamegraph waterfall timelines, latency-scaled mindmaps, prompt/response glimpses, token costs, and stack traces—100% self-hosted on your own hardware.
+      </p>
+
+      <div class="pt-2 flex items-center justify-center space-x-4">
+        <a href="docs.html" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-xl shadow-indigo-600/30 transition text-xs">
+          Explore Complete Documentation &rarr;
+        </a>
+        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold rounded-xl border border-slate-800 transition text-xs">
+          View GitHub Repository ⭐
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Code Snippet Tabs -->
+  <section class="py-16 max-w-5xl mx-auto px-6 space-y-6">
+    <div class="text-center space-y-2">
+      <h2 class="text-2xl font-bold text-white">Simple, Flexible Python SDK</h2>
+      <p class="text-xs text-slate-400">Instrument functions with decorators, context managers, LangChain callbacks, or OpenAI/Anthropic auto-wrappers.</p>
+    </div>
+
+    <!-- Tab Code Window -->
+    <div class="bg-slate-950 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden">
+      <div class="bg-slate-900/80 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs">
+        <div class="flex items-center space-x-3 text-slate-400 font-medium">
+          <button onclick="setCodeTab('decorators')" id="codeTab-decorators" class="text-white font-bold border-b-2 border-indigo-500 pb-1">@trace Decorator</button>
+          <button onclick="setCodeTab('langchain')" id="codeTab-langchain" class="hover:text-white pb-1">LangChain Callback</button>
+          <button onclick="setCodeTab('openai')" id="codeTab-openai" class="hover:text-white pb-1">OpenAI Auto-Wrapper</button>
+          <button onclick="setCodeTab('pricing')" id="codeTab-pricing" class="hover:text-white pb-1">Tunable Pricing</button>
+        </div>
+        <span class="text-[10px] font-mono text-slate-500">Python 3.10+</span>
+      </div>
+
+      <div class="p-5 font-mono text-xs text-slate-300 overflow-x-auto leading-relaxed">
+        <pre id="codeSnippetDisplay">
+<span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span, configure
+<span class="text-purple-400">from</span> feenion.exporters <span class="text-purple-400">import</span> HTTPExporter, AsyncExporter
+
+configure(exporter=AsyncExporter(HTTPExporter(<span class="text-emerald-400">"http://localhost:8000"</span>)))
+
+<span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-400">"rag_support_agent"</span>, span_type=<span class="text-emerald-400">"agent"</span>)
+<span class="text-purple-400">def</span> <span class="text-blue-400">run_rag_agent</span>(user_query: str):
+    docs = retrieve_documents(user_query)
+    <span class="text-purple-400">return</span> generate_answer(user_query, docs)</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Capabilities Grid -->
+  <section class="py-16 bg-slate-950/60 border-t border-b border-slate-800/50">
+    <div class="max-w-6xl mx-auto px-6 space-y-10">
+      <div class="text-center space-y-2">
+        <h2 class="text-2xl font-bold text-white">Engineered for Developer Privacy, Clarity & High Scale</h2>
+        <p class="text-xs text-slate-400">100% data control with rich real-time visual analytics.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+        <div class="bg-slate-900/60 p-6 rounded-2xl card-border space-y-3">
+          <div class="w-9 h-9 rounded-lg bg-indigo-950 text-indigo-400 flex items-center justify-center font-bold text-base">📋</div>
+          <h3 class="text-sm font-bold text-white">Trace Glimpse & Overview</h3>
+          <p class="text-slate-400 leading-relaxed">
+            Get an instant executive glimpse of user input prompts, final agent completions, token breakdowns, and duration KPIs before drilling into deep millisecond spans.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/60 p-6 rounded-2xl card-border space-y-3">
+          <div class="w-9 h-9 rounded-lg bg-purple-950 text-purple-400 flex items-center justify-center font-bold text-base">🌳</div>
+          <h3 class="text-sm font-bold text-white">Latency-Scaled D3 Mindmaps</h3>
+          <p class="text-slate-400 leading-relaxed">
+            Interactive node hierarchies where link distances scale proportionally to span latency, featuring animated flow pulses and interactive zoom controls.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/60 p-6 rounded-2xl card-border space-y-3">
+          <div class="w-9 h-9 rounded-lg bg-emerald-950 text-emerald-400 flex items-center justify-center font-bold text-base">🤖</div>
+          <h3 class="text-sm font-bold text-white">Model Intelligence Analytics</h3>
+          <p class="text-slate-400 leading-relaxed">
+            Dedicated breakdown tables tracking prompt/completion tokens, cumulative spend ($), average latency, and unit economics ($/1K tokens) by model and framework.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/60 bg-slate-950 py-6 text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
+      <div>Feenion — Open-Source Self-Hosted AI Debugger (Apache 2.0 License)</div>
+      <div class="space-x-5">
+        <a href="about.html" class="hover:text-slate-300 transition">About</a>
+        <a href="docs.html" class="hover:text-slate-300 transition">Docs</a>
+        <a href="community.html" class="hover:text-slate-300 transition">Community</a>
+        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="hover:text-slate-300 transition">GitHub Repository</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const snippets = {
+      decorators: `<span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span, configure
+<span class="text-purple-400">from</span> feenion.exporters <span class="text-purple-400">import</span> HTTPExporter, AsyncExporter
+
+configure(exporter=AsyncExporter(HTTPExporter(<span class="text-emerald-400">"http://localhost:8000"</span>)))
+
+<span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-400">"rag_support_agent"</span>, span_type=<span class="text-emerald-400">"agent"</span>)
+<span class="text-purple-400">def</span> <span class="text-blue-400">run_rag_agent</span>(user_query: str):
+    docs = retrieve_documents(user_query)
+    <span class="text-purple-400">return</span> generate_answer(user_query, docs)`,
+
+      langchain: `<span class="text-purple-400">from</span> feenion.integrations.langchain <span class="text-purple-400">import</span> FeenionCallbackHandler
+
+handler = FeenionCallbackHandler(trace_name=<span class="text-emerald-400">"support_agent_workflow"</span>)
+
+<span class="text-slate-500"># Attach callback to any LangChain agent, chain, or tool</span>
+result = agent_executor.invoke(
+    {<span class="text-emerald-400">"input"</span>: <span class="text-emerald-400">"Analyze customer retention trends"</span>},
+    config={<span class="text-emerald-400">"callbacks"</span>: [handler]}
+)`,
+
+      openai: `<span class="text-purple-400">from</span> openai <span class="text-purple-400">import</span> OpenAI
+<span class="text-purple-400">from</span> feenion.integrations.openai <span class="text-purple-400">import</span> wrap_openai
+
+client = wrap_openai(OpenAI())
+
+<span class="text-slate-500"># Prompt tokens, completion tokens, and dollar spend calculated automatically!</span>
+response = client.chat.completions.create(
+    model=<span class="text-emerald-400">"gpt-4o"</span>,
+    messages=[{<span class="text-emerald-400">"role"</span>: <span class="text-emerald-400">"user"</span>, <span class="text-emerald-400">"content"</span>: <span class="text-emerald-400">"Hello world!"</span>}]
+)`,
+
+      pricing: `<span class="text-purple-400">import</span> feenion
+
+<span class="text-slate-500"># Override or define custom rates ($ per 1M tokens)</span>
+feenion.configure(
+    model_pricing={
+        <span class="text-emerald-400">"gpt-4o"</span>: (<span class="text-emerald-300">2.50</span>, <span class="text-emerald-300">10.00</span>),
+        <span class="text-emerald-400">"custom-llama-3"</span>: (<span class="text-emerald-300">0.25</span>, <span class="text-emerald-300">0.75</span>),
+    }
+)`
+    };
+
+    function setCodeTab(tab) {
+      ['decorators', 'langchain', 'openai', 'pricing'].forEach(t => {
+        const btn = document.getElementById(`codeTab-${t}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = 'text-white font-bold border-b-2 border-indigo-500 pb-1';
+          } else {
+            btn.className = 'hover:text-white pb-1 text-slate-400';
+          }
+        }
+      });
+      document.getElementById('codeSnippetDisplay').innerHTML = snippets[tab];
+    }
+  </script>
+</body>
+</html>

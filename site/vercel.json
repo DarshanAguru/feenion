@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "routes": [
+    { "src": "/github", "status": 307, "headers": { "Location": "https://github.com/feenion/feenion" } },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
+

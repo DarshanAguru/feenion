@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  feenion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: feenion-server
+    ports:
+      - "8000:8000"
+    environment:
+      - FEENION_DATABASE_URL=sqlite:////app/data/feenion.db
+      - FEENION_LOG_LEVEL=INFO
+      - FEENION_RETENTION_DAYS=30
+    volumes:
+      - feenion_data:/app/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+volumes:
+  feenion_data:

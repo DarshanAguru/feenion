@@ -1,0 +1,9 @@
+fastapi>=0.115
+uvicorn[standard]>=0.34
+pydantic>=2.10
+pydantic-settings>=2.15
+sqlalchemy>=2.0
+alembic>=1.14
+redis>=5.0
+httpx>=0.28
+asyncpg>=0.31
