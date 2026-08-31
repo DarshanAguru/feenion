@@ -25,24 +25,44 @@ R = TypeVar("R")
 class SpanContextManager:
     """
     Dual sync/async context manager for spans, enabling both:
-      with span("name"):
+      with span("name", input={...}):
       async with span("name"):
     """
 
-    def __init__(self, tracer: Tracer, name: str, span_type: str = "custom", attributes: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        tracer: Tracer,
+        name: str,
+        span_type: str = "custom",
+        attributes: dict[str, Any] | None = None,
+        input: Any = None,
+        output: Any = None,
+    ) -> None:
         self.tracer = tracer
         self.name = name
         self.span_type = span_type
         self.attributes = attributes or {}
+        self.input = input
+        self.output = output
         self.span: Span | None = None
         self._token = None
+        self._auto_trace: Trace | None = None
+        self._auto_trace_token = None
 
     def __enter__(self) -> Span:
+        if get_current_trace_id() is None:
+            self._auto_trace = self.tracer.start_trace(name=self.name)
+            self._auto_trace_token = set_trace(self._auto_trace.trace_id)
+
         self.span = self.tracer.start_span(
             name=self.name,
             span_type=self.span_type,
             attributes=self.attributes,
         )
+        if self.input is not None:
+            self.span.input = self.input
+        if self.output is not None:
+            self.span.output = self.output
         self._token = set_span(self.span.span_id)
         return self.span
 
@@ -54,6 +74,15 @@ class SpanContextManager:
                 self.span.fail(exc_val)
             else:
                 self.span.finish()
+
+        if self._auto_trace is not None:
+            if exc_val is not None:
+                self._auto_trace.fail(exc_val)
+            else:
+                self._auto_trace.finish()
+            self.tracer._export(self._auto_trace)
+            if self._auto_trace_token is not None:
+                reset_trace(self._auto_trace_token)
 
     async def __aenter__(self) -> Span:
         return self.__enter__()
@@ -186,8 +215,18 @@ class Tracer:
         name: str,
         span_type: str = "custom",
         attributes: dict[str, Any] | None = None,
+        *,
+        input: Any = None,
+        output: Any = None,
     ) -> SpanContextManager:
-        return SpanContextManager(self, name=name, span_type=span_type, attributes=attributes)
+        return SpanContextManager(
+            self,
+            name=name,
+            span_type=span_type,
+            attributes=attributes,
+            input=input,
+            output=output,
+        )
 
     @overload
     def trace(self, func: Callable[P, R]) -> Callable[P, R]:
@@ -251,5 +290,14 @@ class Tracer:
         name: str,
         span_type: str = "custom",
         attributes: dict[str, Any] | None = None,
+        *,
+        input: Any = None,
+        output: Any = None,
     ) -> SpanContextManager:
-        return self.span_context(name=name, span_type=span_type, attributes=attributes)
+        return self.span_context(
+            name=name,
+            span_type=span_type,
+            attributes=attributes,
+            input=input,
+            output=output,
+        )

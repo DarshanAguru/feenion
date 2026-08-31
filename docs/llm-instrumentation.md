@@ -54,6 +54,30 @@ print(response.content[0].text)
 
 ---
 
+## Google Gemini Integration
+
+Instrument Google Gemini clients (`google-genai` or `google-generativeai`):
+
+```python
+from google import genai
+from feenion import configure
+from feenion.exporters import HTTPExporter, AsyncExporter
+from feenion.integrations.gemini import instrument_gemini
+
+configure(exporter=AsyncExporter(HTTPExporter("http://localhost:8000")))
+
+client = genai.Client()
+instrument_gemini(client)
+
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents="Explain distributed consensus algorithms."
+)
+print(response.text)
+```
+
+---
+
 ## Manual LLM Metrics Capture
 
 If using a custom or local LLM (e.g. Ollama, vLLM, llama.cpp):
@@ -69,5 +93,15 @@ with span("custom_llm_call", span_type="llm") as s:
         completion_tokens=45,
         cost=0.0
     )
+```
+
+---
+
+## Zero-Key Comprehensive Mock AI Ecosystem
+
+To test Feenion locally without setting up API keys or paid accounts, run our self-contained mock ecosystem script mimicking Google Gemini, OpenAI, Claude, Chroma vector retrieval, and Model Context Protocol (MCP) tools:
+
+```bash
+python examples/comprehensive_mock_ecosystem.py
 ```
 

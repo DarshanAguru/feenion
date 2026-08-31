@@ -1,0 +1,169 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-08-31",
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "items": [
+        {
+          "id": "what-is-feenion",
+          "title": "What is Feenion?",
+          "badge": "Concept",
+          "summary": "Feenion is an open-source, self-hosted AI debugging and execution observability engine for LLMs, RAG systems, and autonomous multi-agent pipelines."
+        },
+        {
+          "id": "installation",
+          "title": "Installation & Requirements",
+          "badge": "Setup",
+          "summary": "Step-by-step installation instructions for Docker, Docker Compose, and Python pip."
+        },
+        {
+          "id": "quickstart",
+          "title": "First 5-Minute Trace",
+          "badge": "Tutorial",
+          "summary": "Instrument your first Python AI function with Feenion in under 5 minutes."
+        }
+      ]
+    },
+    {
+      "id": "sdk-guide",
+      "title": "Python SDK Reference",
+      "items": [
+        {
+          "id": "sdk-decorators",
+          "title": "@trace & @async_trace",
+          "badge": "Core SDK",
+          "summary": "How to use function decorators to automatically capture request boundaries and trace lifecycles."
+        },
+        {
+          "id": "sdk-spans",
+          "title": "span() Context Manager",
+          "badge": "Core SDK",
+          "summary": "Manual span creation for granular execution blocks, loops, sub-tasks, and database queries."
+        },
+        {
+          "id": "sdk-metadata",
+          "title": "Attributes, Metrics & Tokens",
+          "badge": "Data Model",
+          "summary": "Recording token counts, estimated dollar costs, model parameters, and custom application metadata."
+        },
+        {
+          "id": "sdk-redaction",
+          "title": "PII & Secret Redaction",
+          "badge": "Security",
+          "summary": "Client-side masking of passwords, API tokens, credit cards, and sensitive customer data before export."
+        }
+      ]
+    },
+    {
+      "id": "ai-integrations",
+      "title": "AI & Framework Integrations",
+      "items": [
+        {
+          "id": "instrument-openai",
+          "title": "OpenAI Auto-Instrumentation",
+          "badge": "Integration",
+          "summary": "Zero-friction wrapping of OpenAI Python SDK client for automatic chat completion and embedding tracing."
+        },
+        {
+          "id": "instrument-gemini",
+          "title": "Google Gemini Auto-Instrumentation",
+          "badge": "Integration",
+          "summary": "Automatic token capture, cost calculation, and latency tracking for Gemini 2.0 Flash and Pro models."
+        },
+        {
+          "id": "instrument-anthropic",
+          "title": "Anthropic Claude Instrumentation",
+          "badge": "Integration",
+          "summary": "Automatic token capture and latency tracking for Claude 3.5 Sonnet, Opus, and Haiku models."
+        },
+        {
+          "id": "instrument-langchain",
+          "title": "LangChain & LangGraph Callbacks",
+          "badge": "Integration",
+          "summary": "Native FeenionCallbackHandler for multi-step LCEL chains, agents, and graph workflows."
+        },
+        {
+          "id": "mock-ecosystem",
+          "title": "Mock AI Ecosystem Demo",
+          "badge": "Demo",
+          "summary": "Zero-external-key executable recipe mocking Gemini, OpenAI, Claude, RAG, and MCP tool servers."
+        },
+        {
+          "id": "instrument-retrieval",
+          "title": "RAG & Vector Retrieval",
+          "badge": "RAG",
+          "summary": "Tracing document chunking, top_k retrieval, similarity score distributions, and knowledge base search."
+        },
+        {
+          "id": "instrument-agents",
+          "title": "Autonomous Agents & Tool Calling",
+          "badge": "Agents",
+          "summary": "Observing multi-turn reasoning loops, tool call arguments, execution outputs, and error handling."
+        }
+      ]
+    },
+    {
+      "id": "debugging-workflows",
+      "title": "Observability Workflows",
+      "items": [
+        {
+          "id": "debug-waterfall",
+          "title": "Waterfall Timeline & Critical Path",
+          "badge": "UI Feature",
+          "summary": "Analyzing hierarchical execution flamegraphs, duration percentiles (p50/p95/p99), and latency bottlenecks."
+        },
+        {
+          "id": "debug-mindmap",
+          "title": "D3 Execution DAG Mind Map",
+          "badge": "UI Feature",
+          "summary": "Interactive visual tree graph showing parent-child span causality and execution flow."
+        },
+        {
+          "id": "debug-errors",
+          "title": "Semantic Error Intelligence",
+          "badge": "Reliability",
+          "summary": "Clustering identical exceptions, error fingerprinting, and stack trace inspection."
+        },
+        {
+          "id": "debug-compare",
+          "title": "Comparative Trace Regression Diff",
+          "badge": "UI Feature",
+          "summary": "Side-by-side comparison modal to isolate why Trace A was slower or used more tokens than Trace B."
+        }
+      ]
+    },
+    {
+      "id": "deployment-ops",
+      "title": "Self-Hosting & Operations",
+      "items": [
+        {
+          "id": "deploy-docker",
+          "title": "Docker & Compose Deployment",
+          "badge": "Deployment",
+          "summary": "Production deployment architectures: Single-container SQLite WAL vs PostgreSQL + Redis cluster."
+        },
+        {
+          "id": "deploy-config",
+          "title": "Environment Variables & Retention",
+          "badge": "Config",
+          "summary": "Full reference of server configuration options, logging levels, and automated telemetry retention."
+        },
+        {
+          "id": "deploy-api",
+          "title": "REST & WebSocket API Reference",
+          "badge": "API",
+          "summary": "Complete OpenAPI endpoints reference for traces, spans, analytics, projects, and real-time streams."
+        },
+        {
+          "id": "troubleshooting",
+          "title": "Troubleshooting & FAQ",
+          "badge": "Help",
+          "summary": "Common setup issues, port binding conflicts, buffer tuning, and community FAQ."
+        }
+      ]
+    }
+  ]
+}
+

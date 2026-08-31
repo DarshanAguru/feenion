@@ -35,7 +35,7 @@ We are actively seeking community contributions in the following areas:
 
 ### 2. Fork & Clone
 ```bash
-git clone https://github.com/your-username/feenion.git
+git clone https://github.com/DarshanAguru/feenion.git
 cd feenion
 ```
 

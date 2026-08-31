@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 from datetime import datetime, timezone
-from typing import Tuple
+from typing import Tuple, Optional
 from sqlalchemy.orm import Session
 from fastapi import Header, HTTPException, Depends, Security
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
@@ -45,20 +45,35 @@ def get_current_project(
     db: Session = Depends(get_db),
     header_key: str | None = Security(api_key_header),
     bearer_credentials: HTTPAuthorizationCredentials | None = Security(http_bearer),
+    x_project_id: Optional[str] = Header(default=None, alias="X-Project-Id"),
+    x_project_name: Optional[str] = Header(default=None, alias="X-Project-Name"),
 ) -> Project:
+    # 1. Direct Project ID from UI header
+    if x_project_id:
+        proj = db.query(Project).filter(Project.id == x_project_id).first()
+        if proj:
+            return proj
+        # If user passed a project name as project_id (e.g. "default")
+        proj = db.query(Project).filter(Project.name == x_project_id).first()
+        if proj:
+            return proj
+
+    # 2. Direct Project Name from UI header
+    if x_project_name:
+        proj = db.query(Project).filter(Project.name == x_project_name).first()
+        if proj:
+            return proj
+
+    # 3. API Key Auth
     key_str = header_key
     if not key_str and bearer_credentials:
         key_str = bearer_credentials.credentials
 
-    if not key_str:
-        return get_or_create_default_project(db)
+    if key_str:
+        key_hash = hash_api_key(key_str)
+        api_key_record = db.query(APIKey).filter(APIKey.key_hash == key_hash, APIKey.revoked_at.is_(None)).first()
+        if api_key_record and api_key_record.project:
+            return api_key_record.project
 
-    key_hash = hash_api_key(key_str)
-    api_key_record = db.query(APIKey).filter(APIKey.key_hash == key_hash, APIKey.revoked_at.is_(None)).first()
-
-    if not api_key_record:
-        # Fallback to default project if key unknown in development or error out
-        return get_or_create_default_project(db)
-
-    return api_key_record.project
-
+    # 4. Fallback to default project
+    return get_or_create_default_project(db)

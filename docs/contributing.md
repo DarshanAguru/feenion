@@ -9,7 +9,7 @@ Thank you for your interest in contributing to Feenion!
 1. Fork and clone the repository:
 
 ```bash
-git clone https://github.com/feenion/feenion.git
+git clone https://github.com/DarshanAguru/feenion.git
 cd feenion
 ```
 

@@ -83,6 +83,18 @@ class Span:
         self.events.append(event)
         return event
 
+    def set_input(self, data: Any) -> None:
+        self.input = data
+
+    def set_output(self, data: Any) -> None:
+        self.output = data
+
+    def set_attribute(self, key: str, value: Any) -> None:
+        self.attributes[key] = value
+
+    def set_attributes(self, attrs: dict[str, Any]) -> None:
+        self.attributes.update(attrs)
+
     def set_llm_metrics(
         self,
         model: str,

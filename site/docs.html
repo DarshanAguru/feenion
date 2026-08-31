@@ -3,514 +3,793 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Feenion Documentation — Complete Guide & API Reference</title>
-  <meta name="description" content="Complete documentation, installation guide, UI manual, Python SDK reference, LangChain integration, and REST API specification for Feenion." />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; color: #e2e8f0; }
-    code, pre { font-family: 'JetBrains Mono', monospace; }
-    pre { background-color: #04070d; padding: 1rem; border-radius: 0.5rem; border: 1px solid #1e2330; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; color: #cbd5e1; }
-    code { font-size: 0.85em; color: #a5b4fc; }
-    .bg-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 28px 28px; }
-    .doc-table th { background-color: #0f172a; padding: 0.65rem 0.85rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; border-bottom: 1px solid #1e2330; text-align: left; }
-    .doc-table td { padding: 0.7rem 0.85rem; font-size: 0.75rem; border-bottom: 1px solid #1e2330/70; }
-    .doc-table tr:hover { background-color: rgba(15, 23, 42, 0.4); }
+  <title>Documentation — Feenion AI Debugger</title>
+  <meta name="description" content="Official beginner-to-pro documentation for Feenion: SDK instrumentation, distributed tracing, AI observability, and self-hosted deployment." />
+  <meta property="og:title" content="Documentation — Feenion AI Debugger" />
+  <meta property="og:description" content="Complete guide to instrumenting, debugging, and self-hosting AI applications with Feenion." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://feenion.fun/docs" />
+  <meta property="og:image" content="assets/og-image.svg" />
 
-    /* Dynamic Sidebar Active State */
-    .doc-nav-item { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border-left: 2px solid transparent; }
-    .doc-nav-item.active-chapter { border-left-color: #6366f1; background-color: rgba(99, 102, 241, 0.12); border-radius: 0 0.5rem 0.5rem 0; }
-    .doc-nav-item.active-chapter .chapter-title { color: #a5b4fc; font-weight: 700; }
-    .doc-nav-item.active-chapter .chapter-sub { color: #818cf8; }
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <!-- Tailwind CSS & Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #080b11; color: #e2e8f0; }
+    code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .doc-link.active {
+      color: #818cf8 !important;
+      font-weight: 600 !important;
+      border-left-color: #6366f1 !important;
+    }
+    /* Hide scrollbar completely across Chrome, Safari, Firefox, Edge */
+    #docsSidebar, .no-scrollbar {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+    #docsSidebar::-webkit-scrollbar, .no-scrollbar::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased bg-[#080b11]">
+<body class="min-h-screen flex flex-col antialiased bg-[#080b11] text-[#e2e8f0]">
 
-  <!-- Liquid Glass Header Navbar -->
-  <header class="bg-slate-950/70 backdrop-blur-xl border-b border-slate-800/60 sticky top-0 z-50 shadow-2xl px-6 py-2.5">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- Minimal Compact Navbar (h-12) -->
+  <header class="h-12 bg-[#080b11]/90 backdrop-blur-md border-b border-[#1e2330] sticky top-0 z-50 px-4 sm:px-6 transition-all">
+    <div class="max-w-7xl mx-auto h-full flex items-center justify-between">
       <div class="flex items-center space-x-6">
-        <a href="index.html" class="flex items-center space-x-3 group">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">F</div>
-          <span class="text-xl font-bold tracking-tight text-white">Feenion</span>
-          <span class="text-[10px] bg-slate-900/90 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full font-mono">Documentation</span>
+        <a href="index.html" class="flex items-center space-x-2 group">
+          <svg class="w-5 h-5 shrink-0 rounded group-hover:scale-105 transition-transform" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="6" fill="#090D16" />
+            <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#1E2330" />
+            <path d="M8 7C8 6.44772 8.44772 6 9 6H12C12.5523 6 13 6.44772 13 7V25C13 25.5523 12.5523 26 12 26H9C8.44772 26 8 25.5523 8 25V7Z" fill="url(#nav-grad)" />
+            <path d="M12 6.5H22C22.8284 6.5 23.5 7.17157 23.5 8C23.5 8.82843 22.8284 9.5 22 9.5H12V6.5Z" fill="url(#nav-grad)" />
+            <path d="M12 14.5H18C18.8284 14.5 19.5 15.1716 19.5 16C19.5 16.8284 18.8284 17.5 18 17.5H12V14.5Z" fill="url(#nav-grad)" />
+            <circle cx="23.5" cy="8" r="2" fill="#C7D2FE" />
+            <circle cx="19.5" cy="16" r="1.8" fill="#A5B4FC" />
+            <circle cx="10.5" cy="24" r="1.5" fill="#818CF8" />
+            <defs>
+              <linearGradient id="nav-grad" x1="8" y1="6" x2="24" y2="26" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#818CF8" />
+                <stop offset="1" stop-color="#4F46E5" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="text-xs font-bold font-mono text-white tracking-tight">Feenion</span>
         </a>
 
-        <!-- Consistent Nav Links -->
-        <nav class="flex items-center space-x-1.5 text-xs">
-          <a href="index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Overview</a>
-          <a href="docs.html" class="px-3 py-1.5 rounded-lg text-indigo-300 font-semibold bg-indigo-600/20 border border-indigo-500/30 backdrop-blur-md shadow-inner transition">Documentation</a>
-          <a href="about.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">About</a>
-          <a href="community.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Community</a>
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden md:flex items-center space-x-1 text-[12px]">
+          <a href="index.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Overview</a>
+          <a href="docs.html" class="px-2 py-0.5 rounded text-white font-medium bg-slate-800/80">Docs</a>
+          <a href="architecture.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Architecture</a>
+          <a href="examples.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Examples</a>
+          <a href="about.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">About</a>
+          <a href="community.html" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Community</a>
         </nav>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="px-3.5 py-1.5 bg-slate-900/80 hover:bg-slate-800/90 text-slate-200 font-medium rounded-lg border border-slate-800/80 transition text-xs flex items-center space-x-1.5 shadow-sm">
-          <span>⭐ GitHub</span>
+      <!-- Right: GitHub -->
+      <div class="flex items-center space-x-2.5 text-xs">
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="px-2.5 py-1 bg-slate-800/90 hover:bg-slate-700 text-slate-100 font-medium rounded border border-slate-700 transition-colors flex items-center space-x-1.5 shadow-sm text-[11px]">
+          <span>GitHub</span>
+          <span class="text-slate-400 text-[10px]">★</span>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Hero Banner with Grid Pattern -->
-  <section class="relative bg-grid py-10 border-b border-slate-800/50">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="inline-flex items-center space-x-2 px-3 py-1 bg-indigo-950/60 border border-indigo-800/60 rounded-full text-indigo-400 text-xs font-mono mb-3">
-        <span>📖 Full API Reference & Manual</span>
-      </div>
-      <h1 class="text-3xl font-extrabold text-white">Feenion Developer Manual & Complete API Reference</h1>
-      <p class="text-slate-400 text-xs mt-1.5 max-w-3xl leading-relaxed">
-        Exhaustive reference for the Python SDK, function parameters, LangChain/OpenAI integrations, tunable pricing engine, React dashboard, and REST/WebSocket APIs.
-      </p>
-    </div>
-  </section>
-
-  <!-- Docs Layout with Consolidated Dynamic Sidebar -->
-  <div class="flex-1 max-w-7xl w-full mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-4 gap-10">
+  <!-- 3-Column Documentation Layout -->
+  <div class="flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row px-4 sm:px-6 py-8 gap-8">
     
-    <!-- Dynamic Sidebar Doc Navigation (Consolidated Scroll-Spy) -->
-    <aside class="md:col-span-1 sticky top-20 h-fit max-h-[85vh] overflow-y-auto pr-3 space-y-2 text-xs">
-      <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">Table of Contents</div>
+    <!-- Left Interactive Sticky Navigation Sidebar (Hidden Scrollbar) -->
+    <aside id="docsSidebar" class="w-full md:w-64 shrink-0 select-none md:sticky md:top-20 md:h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar space-y-6 text-xs pr-2">
+      <!-- Search Input Filter -->
+      <div class="relative mb-4">
+        <input
+          id="docSearch"
+          type="text"
+          placeholder="Filter documentation..."
+          oninput="filterDocs(this.value)"
+          class="w-full pl-7 pr-3 py-1.5 rounded-lg bg-[#0d111a] border border-[#1e2330] focus:border-indigo-500 focus:outline-none text-xs text-slate-200 placeholder-slate-500 font-sans"
+        />
+        <span class="absolute left-2.5 top-2 text-slate-500 text-xs">🔍</span>
+      </div>
 
-      <!-- Chapter 1 -->
-      <a href="#getting-started" class="doc-nav-item block p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">
-        <div class="chapter-title font-semibold text-slate-200 text-xs flex items-center space-x-2">
-          <span>🚀</span>
-          <span>1. Getting Started & Setup</span>
+      <div id="sidebarMenu" class="space-y-5">
+        <!-- Section 1 -->
+        <div class="doc-group">
+          <span class="text-[11px] uppercase font-mono font-bold text-slate-400 tracking-wider block mb-1.5">
+            1. Getting Started
+          </span>
+          <div class="space-y-0.5 border-l-2 border-slate-800">
+            <a href="#what-is-feenion" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">What is Feenion?</a>
+            <a href="#quickstart" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Docker Quickstart</a>
+            <a href="#pip-install" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Python SDK Setup</a>
+            <a href="#first-trace" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Your First 5-Min Trace</a>
+          </div>
         </div>
-        <div class="chapter-sub text-[11px] text-slate-500 mt-0.5 ml-6">Overview, Docker & Quickstart</div>
-      </a>
 
-      <!-- Chapter 2 -->
-      <a href="#python-sdk-reference" class="doc-nav-item block p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">
-        <div class="chapter-title font-semibold text-slate-200 text-xs flex items-center space-x-2">
-          <span>🛠️</span>
-          <span>2. Python SDK Functions</span>
+        <!-- Section 2 -->
+        <div class="doc-group">
+          <span class="text-[11px] uppercase font-mono font-bold text-slate-400 tracking-wider block mb-1.5">
+            2. Core Architecture
+          </span>
+          <div class="space-y-0.5 border-l-2 border-slate-800">
+            <a href="#data-model" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Traces, Spans & Events</a>
+            <a href="#context-propagation" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Context Propagation</a>
+            <a href="#async-exporter" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Async Batch Exporter</a>
+          </div>
         </div>
-        <div class="chapter-sub text-[11px] text-slate-500 mt-0.5 ml-6">@trace, with span(), Pricing, Config</div>
-      </a>
 
-      <!-- Chapter 3 -->
-      <a href="#framework-integrations" class="doc-nav-item block p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">
-        <div class="chapter-title font-semibold text-slate-200 text-xs flex items-center space-x-2">
-          <span>🦜</span>
-          <span>3. Framework Integrations</span>
+        <!-- Section 3 -->
+        <div class="doc-group">
+          <span class="text-[11px] uppercase font-mono font-bold text-slate-400 tracking-wider block mb-1.5">
+            3. Python SDK Deep-Dive
+          </span>
+          <div class="space-y-0.5 border-l-2 border-slate-800">
+            <a href="#sdk-trace-decorator" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">@trace & @async_trace</a>
+            <a href="#sdk-span-context" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">span() Context Manager</a>
+            <a href="#sdk-tokens-cost" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Token & Cost Tracking</a>
+            <a href="#sdk-redaction" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">PII & Secret Redaction</a>
+          </div>
         </div>
-        <div class="chapter-sub text-[11px] text-slate-500 mt-0.5 ml-6">LangChain, OpenAI & Anthropic</div>
-      </a>
 
-      <!-- Chapter 4 -->
-      <a href="#react-dashboard-manual" class="doc-nav-item block p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">
-        <div class="chapter-title font-semibold text-slate-200 text-xs flex items-center space-x-2">
-          <span>📊</span>
-          <span>4. React Dashboard Manual</span>
+        <!-- Section 4 -->
+        <div class="doc-group">
+          <span class="text-[11px] uppercase font-mono font-bold text-slate-400 tracking-wider block mb-1.5">
+            4. AI Frameworks
+          </span>
+          <div class="space-y-0.5 border-l-2 border-slate-800">
+            <a href="#instrument-openai" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">OpenAI Auto-Wrap</a>
+            <a href="#instrument-gemini" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Google Gemini</a>
+            <a href="#instrument-anthropic" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Anthropic Claude</a>
+            <a href="#instrument-langchain" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">LangChain Callbacks</a>
+            <a href="#instrument-rag" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">RAG & Vector Retrieval</a>
+            <a href="#instrument-agents" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Multi-Tool Agents</a>
+          </div>
         </div>
-        <div class="chapter-sub text-[11px] text-slate-500 mt-0.5 ml-6">Glimpse, Waterfall, Mindmap, SLA</div>
-      </a>
 
-      <!-- Chapter 5 -->
-      <a href="#deployment-and-api" class="doc-nav-item block p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">
-        <div class="chapter-title font-semibold text-slate-200 text-xs flex items-center space-x-2">
-          <span>⚙️</span>
-          <span>5. Deployment & REST API</span>
+        <!-- Section 5 -->
+        <div class="doc-group">
+          <span class="text-[11px] uppercase font-mono font-bold text-slate-400 tracking-wider block mb-1.5">
+            5. Debugging Workflows
+          </span>
+          <div class="space-y-0.5 border-l-2 border-slate-800">
+            <a href="#debug-waterfall" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Waterfall & Critical Path</a>
+            <a href="#debug-dag" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">D3 DAG Mind Map</a>
+            <a href="#debug-errors" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Error Fingerprinting</a>
+            <a href="#debug-compare" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Trace Regression Diff</a>
+          </div>
         </div>
-        <div class="chapter-sub text-[11px] text-slate-500 mt-0.5 ml-6">Environment Vars & WebSockets</div>
-      </a>
+
+        <!-- Section 6 -->
+        <div class="doc-group">
+          <span class="text-[11px] uppercase font-mono font-bold text-slate-400 tracking-wider block mb-1.5">
+            6. Self-Hosting & Ops
+          </span>
+          <div class="space-y-0.5 border-l-2 border-slate-800">
+            <a href="#deploy-docker" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Production Docker</a>
+            <a href="#deploy-env" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Environment Variables</a>
+            <a href="#api-reference" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">REST & WebSocket API</a>
+            <a href="#faq" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Troubleshooting & FAQ</a>
+          </div>
+        </div>
+      </div>
     </aside>
 
-    <!-- Main Content Area (Consolidated Chapters) -->
-    <main class="md:col-span-3 space-y-20 text-xs text-slate-300 leading-relaxed">
+    <!-- Main Content Area -->
+    <main class="flex-1 min-w-0 space-y-12 text-sm leading-relaxed">
       
-      <!-- CHAPTER 1: GETTING STARTED & SETUP -->
-      <section id="getting-started" class="space-y-8 scroll-mt-24">
-        <div class="border-b border-slate-800/80 pb-4">
-          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 bg-indigo-950/80 border border-indigo-800/60 text-indigo-400 rounded-full text-[10px] font-mono mb-2">
-            <span>Chapter 1</span>
-          </div>
-          <h2 class="text-2xl font-extrabold text-white tracking-tight">Getting Started & Quickstart</h2>
-          <p class="text-slate-400 text-xs mt-1">Platform architecture, installation instructions, 60-second quickstart, and demo simulation generator.</p>
+      <!-- Section 1: Getting Started -->
+      <section id="what-is-feenion" class="space-y-4 pt-4 border-b border-slate-800/80 pb-10">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
+          Chapter 1 &bull; Getting Started
         </div>
+        <h1 class="text-2xl sm:text-3xl font-bold font-mono text-white tracking-tight">
+          What is Feenion?
+        </h1>
+        <p class="text-slate-300">
+          <strong>Feenion</strong> is an open-source, 100% self-hosted observability and debugging platform built specifically for LLM applications, RAG pipelines, and autonomous multi-agent tool loops.
+        </p>
+        <p class="text-slate-400">
+          Traditional APMs only capture raw HTTP status codes or generic server errors. When an agent loops infinitely, retrieves irrelevant vector chunks, or hallucinates due to prompt bloat, traditional tools remain blind. Feenion captures the <strong>full causal execution graph</strong>: exact prompts, completions, tokens, calculated costs, tool arguments, and retrieval scores.
+        </p>
+      </section>
 
-        <!-- 1.1 Overview -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            <span>Platform Overview</span>
-          </h3>
-          <p class="text-slate-400 text-xs leading-relaxed">
-            Feenion is a 100% self-hosted, open-source AI debugging and observability engine. It captures complete execution trees, user prompt inputs, completion outputs, token metrics, dynamic model costs, vector retrieval scores, and error stack traces locally on your infrastructure with zero external SaaS dependencies.
-          </p>
-        </div>
-
-        <!-- 1.2 Installation -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            <span>Installation & Server Startup</span>
-          </h3>
-          <p class="text-slate-400 text-xs">Start the Feenion server in single-container mode (~40MB RAM) using SQLite and an in-memory queue:</p>
-          <pre><code>git clone https://github.com/feenion/feenion.git
+      <!-- Section: Docker Quickstart -->
+      <section id="quickstart" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Docker Quickstart</h2>
+        <p class="text-slate-300">
+          Spin up the complete Feenion server and React dashboard with embedded SQLite WAL storage in one command:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-indigo-300 overflow-x-auto"><code>git clone https://github.com/DarshanAguru/feenion.git
 cd feenion
 docker compose up -d</code></pre>
-          <p class="text-slate-400 text-xs">Install the official Python SDK client:</p>
-          <pre><code>pip install feenion</code></pre>
-        </div>
-
-        <!-- 1.3 60-Second Quickstart -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            <span>60-Second Quickstart Code</span>
-          </h3>
-          <pre><code>from feenion import trace, span, configure
-from feenion.exporters import HTTPExporter, AsyncExporter
-
-# Configure async non-blocking export transport
-configure(exporter=AsyncExporter(HTTPExporter("http://localhost:8000")))
-
-@trace(name="customer_support_pipeline", span_type="agent")
-def handle_support_query(user_query: str):
-    # Span 1: Vector Search
-    with span("kb_retrieval", span_type="retrieval") as s:
-        s.input = {"query": user_query}
-        docs = ["Doc #1: Feenion runs 100% locally on your machine."]
-        s.output = {"documents": docs}
-
-    # Span 2: LLM Completion
-    with span("llm_response", span_type="llm") as s:
-        s.input = {"prompt": user_query, "context": docs}
-        answer = "Feenion is a self-hosted AI observability platform."
-        s.output = {"answer": answer}
-        s.set_llm_metrics(model="gpt-4o", prompt_tokens=210, completion_tokens=45, cost=0.00098)
-        return answer
-
-if __name__ == "__main__":
-    print(handle_support_query("What is Feenion?"))</code></pre>
-        </div>
-
-        <!-- 1.4 Interactive Demo -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            <span>Interactive Simulation Demo CLI</span>
-          </h3>
-          <p class="text-slate-400 text-xs">Run the included simulation generator to populate your dashboard with realistic live multi-agent traces:</p>
-          <pre><code>python examples/demo.py</code></pre>
-        </div>
+        <p class="text-slate-400 text-xs">
+          Open <a href="http://localhost:8000" target="_blank" class="text-indigo-400 underline">http://localhost:8000</a> in your browser to view the live dashboard.
+        </p>
       </section>
 
-      <!-- CHAPTER 2: PYTHON SDK FUNCTIONS & API REFERENCE -->
-      <section id="python-sdk-reference" class="space-y-8 scroll-mt-24">
-        <div class="border-b border-slate-800/80 pb-4">
-          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 bg-purple-950/80 border border-purple-800/60 text-purple-400 rounded-full text-[10px] font-mono mb-2">
-            <span>Chapter 2</span>
-          </div>
-          <h2 class="text-2xl font-extrabold text-white tracking-tight">Python SDK Functions & Parameters Reference</h2>
-          <p class="text-slate-400 text-xs mt-1">Detailed signatures, argument descriptions, return types, and lifecycle methods for all SDK tools.</p>
-        </div>
-
-        <!-- 2.1 @trace -->
-        <div class="space-y-3">
-          <div class="flex items-center space-x-2">
-            <span class="px-2 py-0.5 bg-indigo-950 text-indigo-300 border border-indigo-800 font-mono text-[10px] rounded">Decorator</span>
-            <h3 class="text-sm font-bold text-white font-mono">feenion.trace(name=None, span_type="general", attributes=None)</h3>
-          </div>
-          <p class="text-slate-400 text-xs">
-            Wraps functions or <code>asyncio</code> coroutines into a top-level execution trace. Propagates trace context variables to nested child spans and flushes telemetry upon completion.
-          </p>
-          <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-            <table class="w-full text-left doc-table">
-              <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
-              <tbody class="divide-y divide-slate-800 font-mono text-[11px]">
-                <tr><td class="text-indigo-300">name</td><td>Optional[str]</td><td>func.__name__</td><td class="text-slate-300 font-sans">Trace identifier name shown in the sidebar.</td></tr>
-                <tr><td class="text-indigo-300">span_type</td><td>str</td><td>"general"</td><td class="text-slate-300 font-sans">Category: <code>"agent"</code>, <code>"llm"</code>, <code>"retrieval"</code>, <code>"tool"</code>.</td></tr>
-                <tr><td class="text-indigo-300">attributes</td><td>Optional[Dict]</td><td>{}</td><td class="text-slate-300 font-sans">Custom metadata dictionary.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 2.2 with span() -->
-        <div class="space-y-3">
-          <div class="flex items-center space-x-2">
-            <span class="px-2 py-0.5 bg-purple-950 text-purple-300 border border-purple-800 font-mono text-[10px] rounded">Context Manager</span>
-            <h3 class="text-sm font-bold text-white font-mono">feenion.span(name, span_type="general", attributes=None)</h3>
-          </div>
-          <p class="text-slate-400 text-xs">Context manager creating child spans within the active trace. Yields a <code>Span</code> object.</p>
-          <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-            <table class="w-full text-left doc-table">
-              <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
-              <tbody class="divide-y divide-slate-800 font-mono text-[11px]">
-                <tr><td class="text-indigo-300">name</td><td>str</td><td><em>Required</em></td><td class="text-slate-300 font-sans">Operation name for the span.</td></tr>
-                <tr><td class="text-indigo-300">span_type</td><td>str</td><td>"general"</td><td class="text-slate-300 font-sans">Span category: <code>"llm"</code>, <code>"retrieval"</code>, <code>"tool"</code>.</td></tr>
-                <tr><td class="text-indigo-300">attributes</td><td>Optional[Dict]</td><td>{}</td><td class="text-slate-300 font-sans">Key-value metadata attributes.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 2.3 Span Object Methods -->
-        <div class="space-y-3">
-          <div class="flex items-center space-x-2">
-            <span class="px-2 py-0.5 bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono text-[10px] rounded">Class API</span>
-            <h3 class="text-sm font-bold text-white font-mono">Span Model Methods</h3>
-          </div>
-          <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-            <table class="w-full text-left doc-table">
-              <thead><tr><th>Method / Field</th><th>Signature</th><th>Description</th></tr></thead>
-              <tbody class="divide-y divide-slate-800 font-mono text-[11px]">
-                <tr><td class="text-indigo-300">s.set_llm_metrics(...)</td><td>(model, prompt_tokens, completion_tokens, total_tokens=None, cost=None)</td><td class="text-slate-300 font-sans">Records token metrics and dollar cost. Automatically rolls up to the parent trace.</td></tr>
-                <tr><td class="text-indigo-300">s.input</td><td>Any (Dict, str, list)</td><td class="text-slate-300 font-sans">Sets input prompt, parameters, or function arguments.</td></tr>
-                <tr><td class="text-indigo-300">s.output</td><td>Any (Dict, str, list)</td><td class="text-slate-300 font-sans">Sets completion text, returned documents, or tool output.</td></tr>
-                <tr><td class="text-indigo-300">s.fail(...)</td><td>(error: BaseException)</td><td class="text-slate-300 font-sans">Marks span as failed, recording error type, message, and stack trace.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 2.4 configure() & Pricing Registry -->
-        <div class="space-y-3">
-          <div class="flex items-center space-x-2">
-            <span class="px-2 py-0.5 bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono text-[10px] rounded">Engine</span>
-            <h3 class="text-sm font-bold text-white font-mono">feenion.configure() & Tunable Pricing Registry</h3>
-          </div>
-          <pre><code>import feenion
-
-# Global pricing override ($ per 1 Million tokens)
-feenion.configure(
-    model_pricing={
-        "gpt-4o": (2.50, 10.00),         # $2.50 prompt, $10.00 completion per 1M tokens
-        "claude-3-5-sonnet": (3.00, 15.00),
-        "custom-llama-3": (0.25, 0.75),
-    }
-)
-
-# Runtime model rate update
-feenion.set_model_pricing("mistral-large", prompt_per_1m=2.00, completion_per_1m=6.00)</code></pre>
-        </div>
+      <!-- Section: Python SDK Setup -->
+      <section id="pip-install" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Python SDK Setup</h2>
+        <p class="text-slate-300">
+          Install the official lightweight Python SDK in your application environment:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-indigo-300 overflow-x-auto"><code>pip install feenion</code></pre>
       </section>
 
-      <!-- CHAPTER 3: FRAMEWORK INTEGRATIONS -->
-      <section id="framework-integrations" class="space-y-8 scroll-mt-24">
-        <div class="border-b border-slate-800/80 pb-4">
-          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 bg-amber-950/80 border border-amber-800/60 text-amber-400 rounded-full text-[10px] font-mono mb-2">
-            <span>Chapter 3</span>
-          </div>
-          <h2 class="text-2xl font-extrabold text-white tracking-tight">Framework Integrations</h2>
-          <p class="text-slate-400 text-xs mt-1">Native callback handlers and auto-instrumentation wrappers for LangChain, OpenAI, and Anthropic.</p>
+      <!-- Section: First Trace -->
+      <section id="first-trace" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Your First 5-Minute Trace</h2>
+        <p class="text-slate-300">
+          Configure the client and annotate your functions with <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">@trace</code> and <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">span()</code>:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span, configure
+
+<span class="text-slate-500"># Point SDK to your local or self-hosted server</span>
+configure(server_url=<span class="text-emerald-300">"http://localhost:8000"</span>)
+
+<span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-300">"customer_support_agent"</span>, span_type=<span class="text-emerald-300">"agent"</span>)
+<span class="text-purple-400">def</span> <span class="text-blue-400">handle_query</span>(user_query: <span class="text-amber-300">str</span>):
+    <span class="text-purple-400">with</span> span(<span class="text-emerald-300">"vector_kb_search"</span>, span_type=<span class="text-emerald-300">"retrieval"</span>, input={<span class="text-emerald-300">"q"</span>: user_query}):
+        docs = [<span class="text-emerald-300">"Reset password at /settings"</span>, <span class="text-emerald-300">"API keys are under Security"</span>]
+
+    <span class="text-purple-400">with</span> span(<span class="text-emerald-300">"llm_synthesis"</span>, span_type=<span class="text-emerald-300">"llm"</span>):
+        <span class="text-purple-400">return</span> f<span class="text-emerald-300">"Answer for {user_query}: {docs[0]}"</span>
+
+handle_query(<span class="text-emerald-300">"How do I reset my password?"</span>)</code></pre>
+      </section>
+
+      <!-- Section: Core Architecture -->
+      <section id="data-model" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
+          Chapter 2 &bull; Core Architecture
         </div>
+        <h2 class="text-xl font-bold font-mono text-white">Traces, Spans & Events Data Model</h2>
+        <p class="text-slate-300">
+          Feenion models execution as a hierarchical Directed Acyclic Graph (DAG):
+        </p>
+        <ul class="list-disc list-inside space-y-2 text-slate-300 pl-2">
+          <li><strong>Trace</strong>: The top-level root operation representing the end-to-end request (e.g. an API endpoint or agent task).</li>
+          <li><strong>Span</strong>: A timed unit of work within a trace (e.g., LLM generation, vector search, tool execution, function call).</li>
+          <li><strong>Event</strong>: An instantaneous timestamped milestone attached to a span (e.g. streaming first token received).</li>
+        </ul>
+      </section>
 
-        <!-- 3.1 LangChain -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>LangChain Integration (FeenionCallbackHandler)</span>
-          </h3>
-          <p class="text-slate-400 text-xs">Captures chains, agent loops, tools, retrievers, and LLMs into a single unified trace with automated token and cost tracking:</p>
-          <pre><code>from feenion.integrations.langchain import FeenionCallbackHandler
+      <!-- Section: Context Propagation -->
+      <section id="context-propagation" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Context Propagation</h2>
+        <p class="text-slate-300">
+          Feenion uses Python's native <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">contextvars.ContextVar</code> to maintain the current active trace and parent span IDs across nested sync and async calls without requiring manual ID passing.
+        </p>
+      </section>
 
-handler = FeenionCallbackHandler(trace_name="conversational_retrieval_agent")
+      <!-- Section: Async Batch Exporter -->
+      <section id="async-exporter" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Non-Blocking Async Exporter</h2>
+        <p class="text-slate-300">
+          When a span finishes, it is pushed to an in-memory lock-free queue. A dedicated background daemon thread flushes batches of traces over HTTP to the ingestion API every 500ms (or upon buffer fullness). Application threads are never blocked by telemetry export.
+        </p>
+      </section>
 
-# Attach callback to any LangChain agent, chain, or tool
-response = agent_executor.invoke(
-    {"input": "How do I setup database failover?"},
-    config={"callbacks": [handler]},
-)</code></pre>
+      <!-- Section: Python SDK Deep-Dive -->
+      <section id="sdk-trace-decorator" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
+          Chapter 3 &bull; Python SDK Deep-Dive
         </div>
+        <h2 class="text-xl font-bold font-mono text-white">@trace & @async_trace Decorators</h2>
+        <p class="text-slate-300">
+          Decorate any synchronous or asynchronous Python function to automatically track execution:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> async_trace
 
-        <!-- 3.2 OpenAI & Anthropic Wrappers -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>OpenAI & Anthropic SDK Auto-Instrumentation</span>
-          </h3>
-          <p class="text-slate-400 text-xs">
-            Feenion provides both <code>instrument_openai(client)</code> / <code>wrap_openai(client)</code> and <code>instrument_anthropic(client)</code> / <code>wrap_anthropic(client)</code>. They wrap the client and automatically track completion texts, token counts, and dollar spend:
-          </p>
-          <pre><code># Option A: Functional Wrapper Style
-from openai import OpenAI
-from feenion.integrations.openai import wrap_openai
+<span class="text-indigo-400">@async_trace</span>(name=<span class="text-emerald-300">"async_pipeline"</span>, span_type=<span class="text-emerald-300">"agent"</span>)
+<span class="text-purple-400">async def</span> <span class="text-blue-400">process_stream</span>(payload: <span class="text-amber-300">dict</span>):
+    <span class="text-purple-400">await</span> asyncio.sleep(<span class="text-amber-300">0.05</span>)
+    <span class="text-purple-400">return</span> {<span class="text-emerald-300">"status"</span>: <span class="text-emerald-300">"success"</span>}</code></pre>
+      </section>
 
-client = wrap_openai(OpenAI())
-res = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[{"role": "user", "content": "Explain quantum computing in 2 sentences."}],
-)
+      <!-- Section: span Context Manager -->
+      <section id="sdk-span-context" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">span() Context Manager</h2>
+        <p class="text-slate-300">
+          Use the <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">span()</code> context manager for sub-operations:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"db_lookup"</span>, span_type=<span class="text-emerald-300">"tool"</span>, input={<span class="text-emerald-300">"user_id"</span>: <span class="text-amber-300">42</span>}) <span class="text-purple-400">as</span> s:
+    result = db.query(...)
+    s.set_output(result)
+    s.set_metric(<span class="text-emerald-300">"rows_returned"</span>, len(result))</code></pre>
+      </section>
 
-# Option B: In-Place Instrumentation Style
-from openai import OpenAI
-from feenion.integrations.openai import instrument_openai
+      <!-- Section: Token & Cost Tracking -->
+      <section id="sdk-tokens-cost" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Token & Cost Tracking</h2>
+        <p class="text-slate-300">
+          Feenion contains built-in pricing tables for standard models (e.g. GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro). You can also set custom token usage explicitly:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code>s.set_tokens(prompt_tokens=<span class="text-amber-300">512</span>, completion_tokens=<span class="text-amber-300">128</span>)
+s.set_attribute(<span class="text-emerald-300">"model"</span>, <span class="text-emerald-300">"gpt-4o"</span>)</code></pre>
+      </section>
+
+      <!-- Section: PII Redaction -->
+      <section id="sdk-redaction" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Client-Side Sensitive PII & Secret Redaction</h2>
+        <p class="text-slate-300">
+          Mask sensitive fields in payload dicts before they leave application memory:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> feenion.redaction <span class="text-purple-400">import</span> Redactor
+
+redactor = Redactor(sensitive_keys={<span class="text-emerald-300">"api_key"</span>, <span class="text-emerald-300">"password"</span>, <span class="text-emerald-300">"auth_token"</span>, <span class="text-emerald-300">"ssn"</span>})
+safe_payload = redactor.redact(raw_payload)</code></pre>
+      </section>
+
+      <!-- Section: AI Frameworks -->
+      <section id="instrument-openai" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
+          Chapter 4 &bull; Framework Auto-Instrumentation
+        </div>
+        <h2 class="text-xl font-bold font-mono text-white">OpenAI Auto-Instrumentation</h2>
+        <p class="text-slate-300">
+          Wrap the official <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">OpenAI</code> client with one line:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> openai <span class="text-purple-400">import</span> OpenAI
+<span class="text-purple-400">from</span> feenion.integrations.openai <span class="text-purple-400">import</span> instrument_openai
 
 client = OpenAI()
-instrument_openai(client)
+instrument_openai(client)</code></pre>
+      </section>
 
-# Anthropic Auto-Wrapper Style
-from anthropic import Anthropic
-from feenion.integrations.anthropic import wrap_anthropic
+      <!-- Section: Google Gemini -->
+      <section id="instrument-gemini" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Google Gemini Auto-Instrumentation</h2>
+        <p class="text-slate-300">
+          Wrap Google Gemini clients (<code class="text-indigo-300">google-genai</code> or <code class="text-indigo-300">google-generativeai</code>) in one line:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">from</span> google <span class="text-purple-400">import</span> genai
+<span class="text-purple-400">from</span> feenion.integrations.gemini <span class="text-purple-400">import</span> instrument_gemini
 
-claude = wrap_anthropic(Anthropic())
-res = claude.messages.create(
-    model="claude-3-5-sonnet-20241022",
-    max_tokens=100,
-    messages=[{"role": "user", "content": "Hello Claude!"}],
+client = genai.Client()
+instrument_gemini(client)
+
+response = client.models.generate_content(
+    model=<span class="text-emerald-300">"gemini-2.0-flash"</span>,
+    contents=<span class="text-emerald-300">"Explain vector embeddings in machine learning."</span>
 )</code></pre>
+      </section>
+
+      <!-- Section: Anthropic Claude -->
+      <section id="instrument-anthropic" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Anthropic Claude Auto-Instrumentation</h2>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> anthropic <span class="text-purple-400">import</span> Anthropic
+<span class="text-purple-400">from</span> feenion.integrations.anthropic <span class="text-purple-400">import</span> instrument_anthropic
+
+client = Anthropic()
+instrument_anthropic(client)</code></pre>
+      </section>
+
+      <!-- Section: LangChain Callbacks -->
+      <section id="instrument-langchain" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">LangChain & LangGraph Callbacks</h2>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> feenion.integrations.langchain <span class="text-purple-400">import</span> FeenionCallbackHandler
+
+handler = FeenionCallbackHandler()
+chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-emerald-300">"AI Debugging"</span>}, config={<span class="text-emerald-300">"callbacks"</span>: [handler]})</code></pre>
+      </section>
+
+      <!-- Section: RAG & Vector Retrieval -->
+      <section id="instrument-rag" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">RAG & Vector Retrieval Observability</h2>
+        <p class="text-slate-300">
+          Instrument retrieval spans to capture similarity scores, chunk IDs, and query text:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"chroma_kb_query"</span>, span_type=<span class="text-emerald-300">"retrieval"</span>, input={<span class="text-emerald-300">"query"</span>: q, <span class="text-emerald-300">"top_k"</span>: <span class="text-amber-300">5</span>}) <span class="text-purple-400">as</span> s:
+    chunks = vector_store.similarity_search_with_score(q, k=<span class="text-amber-300">5</span>)
+    s.set_output([{<span class="text-emerald-300">"text"</span>: doc.page_content, <span class="text-emerald-300">"score"</span>: score} <span class="text-purple-400">for</span> doc, score <span class="text-purple-400">in</span> chunks])</code></pre>
+      </section>
+
+      <!-- Section: Multi-Tool Agents -->
+      <section id="instrument-agents" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Autonomous Agents & Tool Calling</h2>
+        <p class="text-slate-300">
+          Track multi-turn reasoning loops, tool call arguments, execution outputs, and error recovery:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"sql_executor"</span>, span_type=<span class="text-emerald-300">"tool"</span>, input={<span class="text-emerald-300">"sql"</span>: query_str}) <span class="text-purple-400">as</span> s:
+    s.set_attribute(<span class="text-emerald-300">"tool_name"</span>, <span class="text-emerald-300">"database_reader"</span>)
+    res = db.execute(query_str)
+    s.set_output(res)</code></pre>
+      </section>
+
+      <!-- Section: Observability Workflows -->
+      <section id="debug-waterfall" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
+          Chapter 5 &bull; Debugging Workflows
+        </div>
+        <h2 class="text-xl font-bold font-mono text-white">Waterfall Timeline & Critical Path</h2>
+        <p class="text-slate-300">
+          The Waterfall Timeline view provides an interactive flamegraph of all child spans. Feenion automatically highlights the <strong>critical path</strong> that contributed most to the overall request duration, allowing you to instantly spot latency bottlenecks.
+        </p>
+      </section>
+
+      <!-- Section: D3 DAG Mind Map -->
+      <section id="debug-dag" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">D3 Execution DAG Mind Map</h2>
+        <p class="text-slate-300">
+          The Mind Map view renders the full parent-child causality tree of your AI execution. Link distances scale proportionally to latency, and color-coded nodes represent LLMs (purple), retrievals (amber), tools (cyan), and exceptions (rose).
+        </p>
+      </section>
+
+      <!-- Section: Error Fingerprinting -->
+      <section id="debug-errors" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Semantic Error Intelligence</h2>
+        <p class="text-slate-300">
+          Feenion clusters similar exceptions using semantic error fingerprinting. Click any fingerprint to see the full stack trace, occurrence frequency, affected models, and deep links to sample traces.
+        </p>
+      </section>
+
+      <!-- Section: Trace Regression Diff -->
+      <section id="debug-compare" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Comparative Trace Regression Diff</h2>
+        <p class="text-slate-300">
+          Open two traces side-by-side to immediately compare durations, token inflations, cost variances, and prompt differences to determine why a regression occurred.
+        </p>
+      </section>
+
+      <!-- Section: Self-Hosting & Deployment -->
+      <section id="deploy-docker" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
+          Chapter 6 &bull; Self-Hosting & Operations
+        </div>
+        <h2 class="text-xl font-bold font-mono text-white">Production Docker Deployment</h2>
+        <p class="text-slate-300">
+          Deploy Feenion as a single all-in-one container using SQLite Write-Ahead Logging:
+        </p>
+        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">version:</span> <span class="text-emerald-300">'3.8'</span>
+<span class="text-purple-400">services:</span>
+  <span class="text-purple-400">feenion:</span>
+    <span class="text-purple-400">image:</span> <span class="text-emerald-300">feenion/feenion:latest</span>
+    <span class="text-purple-400">ports:</span>
+      - <span class="text-emerald-300">"8000:8000"</span>
+    <span class="text-purple-400">environment:</span>
+      - <span class="text-emerald-300">FEENION_DATABASE_URL=sqlite:////app/data/feenion.db</span>
+      - <span class="text-emerald-300">FEENION_RETENTION_DAYS=30</span>
+    <span class="text-purple-400">volumes:</span>
+      - <span class="text-emerald-300">feenion_data:/app/data</span>
+    <span class="text-purple-400">restart:</span> <span class="text-emerald-300">unless-stopped</span></code></pre>
+      </section>
+
+      <!-- Section: Environment Variables -->
+      <section id="deploy-env" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Environment Variables Reference</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse border border-[#1e2330]">
+            <thead>
+              <tr class="bg-[#0d111a] text-slate-300 font-mono">
+                <th class="p-2.5 border border-[#1e2330]">Variable</th>
+                <th class="p-2.5 border border-[#1e2330]">Default</th>
+                <th class="p-2.5 border border-[#1e2330]">Description</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#1e2330] font-mono text-slate-300">
+              <tr>
+                <td class="p-2.5 text-indigo-300">FEENION_DATABASE_URL</td>
+                <td class="p-2.5 text-slate-400">sqlite:////app/data/feenion.db</td>
+                <td class="p-2.5 text-slate-300">Database connection string (SQLite WAL or PostgreSQL)</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 text-indigo-300">FEENION_REDIS_URL</td>
+                <td class="p-2.5 text-slate-400">""</td>
+                <td class="p-2.5 text-slate-300">Optional Redis queue URL for distributed workers</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 text-indigo-300">FEENION_LOG_LEVEL</td>
+                <td class="p-2.5 text-slate-400">INFO</td>
+                <td class="p-2.5 text-slate-300">Logging level (DEBUG, INFO, WARNING, ERROR)</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 text-indigo-300">FEENION_RETENTION_DAYS</td>
+                <td class="p-2.5 text-slate-400">30</td>
+                <td class="p-2.5 text-slate-300">Automatic retention period for traces and spans</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
-      <!-- CHAPTER 4: REACT DASHBOARD MANUAL -->
-      <section id="react-dashboard-manual" class="space-y-8 scroll-mt-24">
-        <div class="border-b border-slate-800/80 pb-4">
-          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 bg-emerald-950/80 border border-emerald-800/60 text-emerald-400 rounded-full text-[10px] font-mono mb-2">
-            <span>Chapter 4</span>
+      <!-- Section: REST & WebSocket API -->
+      <section id="api-reference" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">REST & WebSocket API Reference</h2>
+        <div class="space-y-3 font-mono text-xs">
+          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
+            <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 mr-2 font-bold">POST</span>
+            <strong class="text-white">/api/v1/traces</strong>
+            <p class="text-slate-400 mt-1 font-sans text-xs">Ingests an array of execution traces and child spans.</p>
           </div>
-          <h2 class="text-2xl font-extrabold text-white tracking-tight">React Observability Dashboard Manual</h2>
-          <p class="text-slate-400 text-xs mt-1">Trace Glimpse, Waterfall Flamegraphs, Latency-Scaled D3 Mindmaps, Live Stream Pause, and Model Analytics.</p>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="font-bold text-indigo-300 text-xs">📋 Trace Glimpse & Overview</div>
-            <p class="text-slate-400 text-[11px] leading-relaxed">
-              Instant executive card presenting duration KPIs, prompt query input, final agent output, and token distributions before inspecting deep spans.
-            </p>
+          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
+            <span class="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 mr-2 font-bold">GET</span>
+            <strong class="text-white">/api/v1/traces</strong>
+            <p class="text-slate-400 mt-1 font-sans text-xs">Query traces with filters (status, time_window, environment, search, model, sort_by).</p>
           </div>
-          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="font-bold text-purple-300 text-xs">⏱️ Waterfall Timeline</div>
-            <p class="text-slate-400 text-[11px] leading-relaxed">
-              Visualizes execution depth with millisecond precision and color-coded span types (<code>LLM</code>, <code>Retrieval</code>, <code>Tool</code>, <code>Error</code>).
-            </p>
+
+          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
+            <span class="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 mr-2 font-bold">GET</span>
+            <strong class="text-white">/api/v1/analytics/overview</strong>
+            <p class="text-slate-400 mt-1 font-sans text-xs">Calculates health score, p95 latency, error rates, and what-changed insights.</p>
           </div>
-          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="font-bold text-amber-300 text-xs">🌳 Latency-Scaled Mindmap Tree</div>
-            <p class="text-slate-400 text-[11px] leading-relaxed">
-              D3 graph where connection lengths scale in proportion to span latency, featuring animated flow pulses and interactive zoom controls.
-            </p>
+
+          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
+            <span class="px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 mr-2 font-bold">POST</span>
+            <strong class="text-white">/api/v1/admin/traces/purge</strong>
+            <p class="text-slate-400 mt-1 font-sans text-xs">Purges all telemetry data when given confirmation payload {"confirmation": "delete everything"}.</p>
           </div>
-          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="font-bold text-emerald-300 text-xs">⏸️ Live Stream Freeze</div>
-            <p class="text-slate-400 text-[11px] leading-relaxed">
-              During high-frequency production ingestion, freeze the stream (<code>⏸️ Pause Feed</code>) to inspect traces without viewport jumping.
-            </p>
-          </div>
-          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="font-bold text-pink-300 text-xs">🤖 Model Intelligence Table</div>
-            <p class="text-slate-400 text-[11px] leading-relaxed">
-              Tracks calls, prompt tokens, completion tokens, volume, cumulative spend ($), avg latency, and cost/1K tokens per model in real-time.
-            </p>
-          </div>
-          <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="font-bold text-rose-300 text-xs">🛡️ Batch Selection & Purge</div>
-            <p class="text-slate-400 text-[11px] leading-relaxed">
-              Select multiple traces with list checkboxes for single-call batch deletion or authenticate with <code>admin:admin</code> to purge the full engine.
-            </p>
+
+          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
+            <span class="px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 mr-2 font-bold">WS</span>
+            <strong class="text-white">/api/v1/ws/telemetry</strong>
+            <p class="text-slate-400 mt-1 font-sans text-xs">Real-time WebSocket stream for live trace broadcasts.</p>
           </div>
         </div>
       </section>
 
-      <!-- CHAPTER 5: DEPLOYMENT & REST API -->
-      <section id="deployment-and-api" class="space-y-8 scroll-mt-24">
-        <div class="border-b border-slate-800/80 pb-4">
-          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 rounded-full text-[10px] font-mono mb-2">
-            <span>Chapter 5</span>
+      <!-- Section: FAQ -->
+      <section id="faq" class="space-y-4 pb-16">
+        <h2 class="text-xl font-bold font-mono text-white">Troubleshooting & FAQ</h2>
+        <div class="space-y-4">
+          <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-1.5">
+            <h4 class="font-bold text-white font-mono text-xs">Does Feenion slow down my application?</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              No. The Python SDK pushes spans to an in-memory queue, and a background thread flushes them asynchronously. Spans execute with zero network delay on user requests.
+            </p>
           </div>
-          <h2 class="text-2xl font-extrabold text-white tracking-tight">Deployment & REST API Specification</h2>
-          <p class="text-slate-400 text-xs mt-1">Environment variables configuration and complete REST / WebSocket endpoint table.</p>
-        </div>
 
-        <!-- 5.1 Env Vars -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-            <span>Environment Variables</span>
-          </h3>
-          <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-            <table class="w-full text-left doc-table">
-              <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
-              <tbody class="divide-y divide-slate-800 font-mono text-[11px]">
-                <tr><td class="text-indigo-300">FEENION_DATABASE_URL</td><td>sqlite:////app/data/feenion.db</td><td class="text-slate-300 font-sans">SQLite or PostgreSQL database connection string</td></tr>
-                <tr><td class="text-indigo-300">FEENION_REDIS_URL</td><td>"" (in-memory queue)</td><td class="text-slate-300 font-sans">Optional Redis URI for queue buffering</td></tr>
-                <tr><td class="text-indigo-300">FEENION_RETENTION_DAYS</td><td>30</td><td class="text-slate-300 font-sans">Automatic trace partition purging window (days)</td></tr>
-                <tr><td class="text-indigo-300">FEENION_ADMIN_USER</td><td>admin</td><td class="text-slate-300 font-sans">Admin dashboard username</td></tr>
-                <tr><td class="text-indigo-300">FEENION_ADMIN_PASSWORD</td><td>admin</td><td class="text-slate-300 font-sans">Admin dashboard password</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 5.2 REST Endpoints -->
-        <div class="space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-            <span>REST & WebSocket API Endpoints</span>
-          </h3>
-          <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-            <table class="w-full text-left doc-table">
-              <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
-              <tbody class="divide-y divide-slate-800 font-mono text-[11px]">
-                <tr><td class="text-emerald-400">POST</td><td class="text-slate-200">/api/v1/traces</td><td class="text-slate-300 font-sans">Ingest traces and nested spans</td></tr>
-                <tr><td class="text-indigo-400">GET</td><td class="text-slate-200">/api/v1/traces</td><td class="text-slate-300 font-sans">List trace summaries with prompt/model search</td></tr>
-                <tr><td class="text-indigo-400">GET</td><td class="text-slate-200">/api/v1/traces/{id}/spans</td><td class="text-slate-300 font-sans">Get all spans for flamegraphs/mindmaps</td></tr>
-                <tr><td class="text-indigo-400">GET</td><td class="text-slate-200">/api/v1/errors</td><td class="text-slate-300 font-sans">Grouped exception fingerprints</td></tr>
-                <tr><td class="text-rose-400">POST</td><td class="text-slate-200">/api/v1/admin/traces/batch-delete</td><td class="text-slate-300 font-sans">Batch delete selected traces (Basic Auth)</td></tr>
-                <tr><td class="text-rose-400">DELETE</td><td class="text-slate-200">/api/v1/admin/traces</td><td class="text-slate-300 font-sans">Purge all telemetry data (Basic Auth)</td></tr>
-                <tr><td class="text-purple-400">WS</td><td class="text-slate-200">/api/v1/ws/telemetry</td><td class="text-slate-300 font-sans">Real-time WebSocket telemetry stream</td></tr>
-              </tbody>
-            </table>
+          <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-1.5">
+            <h4 class="font-bold text-white font-mono text-xs">Can I use Feenion with Ollama or local LLMs?</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Yes. Simply use the <code class="text-indigo-300">span()</code> context manager or OpenAI client wrapper pointed to your local Ollama/vLLM base URL.
+            </p>
           </div>
         </div>
       </section>
-
     </main>
   </div>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-center text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
-      <span>© 2026 Feenion Open Source Project. Apache 2.0 Licensed.</span>
-      <div class="flex space-x-6">
-        <a href="https://github.com/feenion/feenion" class="hover:text-slate-300 transition">GitHub</a>
-        <a href="docs.html" class="hover:text-slate-300 transition">Docs</a>
-        <a href="community.html" class="hover:text-slate-300 transition">Community</a>
+  <!-- Clean Footer -->
+  <footer class="py-10 border-t border-[#1e2330] bg-[#080b11] text-xs text-slate-400 select-none">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="font-mono text-white font-bold">Feenion</span>
+        <span class="text-slate-600">&bull;</span>
+        <span>Open-source AI debugger released under the Apache 2.0 license.</span>
+      </div>
+
+      <div class="flex items-center space-x-6">
+        <a href="index.html" class="hover:text-white transition-colors">Overview</a>
+        <a href="docs.html" class="hover:text-white transition-colors">Documentation</a>
+        <a href="architecture.html" class="hover:text-white transition-colors">Architecture</a>
+        <a href="examples.html" class="hover:text-white transition-colors">Examples</a>
+        <a href="about.html" class="hover:text-white transition-colors">About</a>
+        <a href="community.html" class="hover:text-white transition-colors">Community</a>
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="hover:text-white transition-colors">GitHub ↗</a>
       </div>
     </div>
   </footer>
 
-  <!-- Consolidated Dynamic Scroll-Spy Script -->
+  <!-- Dynamic Table of Contents Active Scroll Tracker & Search Script -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const chapterSections = document.querySelectorAll('section[id]');
-      const navItems = document.querySelectorAll('.doc-nav-item');
-
-      function updateActiveChapter() {
-        let activeId = '';
-        const scrollPosition = window.scrollY + 180;
-
-        chapterSections.forEach(section => {
-          const top = section.offsetTop;
-          const height = section.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            activeId = section.getAttribute('id');
+    function filterDocs(query) {
+      const q = query.toLowerCase().trim();
+      const groups = document.querySelectorAll('.doc-group');
+      groups.forEach(group => {
+        const links = group.querySelectorAll('.doc-link');
+        let anyVisible = false;
+        links.forEach(link => {
+          const text = link.innerText.toLowerCase();
+          if (!q || text.includes(q)) {
+            link.style.display = 'block';
+            anyVisible = true;
+          } else {
+            link.style.display = 'none';
           }
         });
+        group.style.display = anyVisible ? 'block' : 'none';
+      });
+    }
 
-        if (!activeId && window.scrollY < 250 && chapterSections.length > 0) {
-          activeId = chapterSections[0].getAttribute('id');
-        }
+    // Active Scroll Spy & Synchronized Sidebar Auto-Scroll
+    document.addEventListener('DOMContentLoaded', () => {
+      const links = Array.from(document.querySelectorAll('.doc-link'));
+      const sections = Array.from(document.querySelectorAll('main section[id]'));
+      const sidebar = document.getElementById('docsSidebar');
+      let currentActiveHref = '';
+      let isManualClick = false;
 
-        navItems.forEach(item => {
-          const href = item.getAttribute('href');
-          if (href === `#${activeId}`) {
-            item.classList.add('active-chapter');
+      function autoScrollSidebar(activeLink) {
+        if (!sidebar || !activeLink) return;
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
+
+        // Calculate link position relative to sidebar
+        const relativeTop = linkRect.top - sidebarRect.top;
+        const targetScrollTop = sidebar.scrollTop + relativeTop - (sidebar.clientHeight / 2) + (linkRect.height / 2);
+
+        sidebar.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: 'smooth'
+        });
+      }
+
+      function activateLink(targetLink) {
+        if (!targetLink) return;
+        const href = targetLink.getAttribute('href');
+        if (currentActiveHref === href) return;
+        currentActiveHref = href;
+
+        links.forEach(link => {
+          if (link === targetLink) {
+            link.classList.add('active', 'text-indigo-400', 'font-semibold');
+            link.classList.remove('text-slate-400');
+            autoScrollSidebar(targetLink);
           } else {
-            item.classList.remove('active-chapter');
+            link.classList.remove('active', 'text-indigo-400', 'font-semibold');
+            link.classList.add('text-slate-400');
           }
         });
       }
 
-      window.addEventListener('scroll', updateActiveChapter, { passive: true });
-      updateActiveChapter();
+      function updateActiveSection() {
+        if (isManualClick || !sections.length) return;
+
+        // Check if scrolled near bottom of page (reach last index points like FAQ)
+        const scrollBottom = window.innerHeight + window.scrollY;
+        const pageHeight = document.documentElement.scrollHeight;
+        if (scrollBottom >= pageHeight - 120) {
+          const lastSection = sections[sections.length - 1];
+          const lastLink = document.querySelector(`.doc-link[href="#${lastSection.id}"]`);
+          if (lastLink) {
+            activateLink(lastLink);
+            return;
+          }
+        }
+
+        // Find active section by top boundary
+        const headerThreshold = 140;
+        let activeSection = sections[0];
+        for (let i = 0; i < sections.length; i++) {
+          const rect = sections[i].getBoundingClientRect();
+          if (rect.top <= headerThreshold) {
+            activeSection = sections[i];
+          } else {
+            break;
+          }
+        }
+
+        if (activeSection) {
+          const matchingLink = document.querySelector(`.doc-link[href="#${activeSection.id}"]`);
+          if (matchingLink) {
+            activateLink(matchingLink);
+          }
+        }
+      }
+
+      window.addEventListener('scroll', updateActiveSection, { passive: true });
+      updateActiveSection();
+
+      // Click handling
+      links.forEach(link => {
+        link.addEventListener('click', () => {
+          isManualClick = true;
+          activateLink(link);
+          setTimeout(() => { isManualClick = false; }, 600);
+        });
+      });
     });
+
+    // Interactive 3D Glowing & Elastic Dot Matrix Canvas
+    (function initDotMatrix() {
+      const canvas = document.getElementById('dotCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      let mouse = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
+      const spacing = 26;
+      const glowRadius = 110;
+      const maxPull = 5.0;
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.targetX = e.clientX;
+        mouse.targetY = e.clientY;
+      });
+
+      window.addEventListener('mouseleave', () => {
+        mouse.targetX = -1000;
+        mouse.targetY = -1000;
+      });
+
+      function render(time) {
+        mouse.x += (mouse.targetX - mouse.x) * 0.12;
+        mouse.y += (mouse.targetY - mouse.y) * 0.12;
+
+        ctx.clearRect(0, 0, width, height);
+
+        for (let x = spacing / 2; x < width; x += spacing) {
+          for (let y = spacing / 2; y < height; y += spacing) {
+            const dx = mouse.x - x;
+            const dy = mouse.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            let drawX = x;
+            let drawY = y;
+            let dotRadius = 0.95;
+            let alpha = 0.14;
+            let fillStyle = 'rgba(71, 85, 105, ';
+
+            if (dist < glowRadius) {
+              const q = 1 - dist / glowRadius;
+              const factor = q * q * (3 - 2 * q);
+
+              const pullFactor = factor * maxPull;
+              const angle = Math.atan2(dy, dx);
+              drawX += Math.cos(angle) * pullFactor;
+              drawY += Math.sin(angle) * pullFactor;
+
+              dotRadius = 0.95 + factor * 1.35;
+              alpha = 0.14 + factor * 0.76;
+
+              if (factor > 0.5) {
+                fillStyle = 'rgba(165, 180, 252, ';
+              } else {
+                fillStyle = 'rgba(129, 140, 248, ';
+              }
+            } else {
+              const idleWave = Math.sin(time * 0.0018 + (x + y) * 0.03) * 0.03;
+              alpha = Math.max(0.08, alpha + idleWave);
+            }
+
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, dotRadius, 0, Math.PI * 2);
+            ctx.fillStyle = fillStyle + alpha + ')';
+            ctx.fill();
+          }
+        }
+
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    })();
   </script>
+
+  <!-- Interactive 3D Glowing & Elastic Dot Matrix Canvas Background -->
+  <canvas id="dotCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
 </body>
 </html>

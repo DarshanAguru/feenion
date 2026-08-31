@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" fill="none">
+  <!-- Dark Obsidian Background -->
+  <rect width="1200" height="630" fill="#080B11" />
+  
+  <!-- Subtle Grid Pattern -->
+  <defs>
+    <pattern id="og-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="1" fill="#1E293B" />
+    </pattern>
+    <linearGradient id="og-grad" x1="500" y1="120" x2="700" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#818CF8" />
+      <stop offset="0.5" stop-color="#6366F1" />
+      <stop offset="1" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="glow-grad" x1="600" y1="100" x2="600" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1" stop-opacity="0.15" />
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#og-grid)" />
+  <circle cx="600" cy="220" r="280" fill="url(#glow-grad)" filter="blur(40px)" />
+
+  <!-- Feenion Icon (Centered, 140x140) -->
+  <g transform="translate(530, 90)">
+    <rect width="140" height="140" rx="32" fill="#090D16" stroke="#1E2330" stroke-width="2" />
+    <path d="M38 32C38 30.3431 39.3431 29 41 29H54C55.6569 29 57 30.3431 57 32V108C57 109.657 55.6569 111 54 111H41C39.3431 111 38 109.657 38 108V32Z" fill="url(#og-grad)" />
+    <path d="M54 31H98C101.314 31 104 33.6863 104 37C104 40.3137 101.314 43 98 43H54V31Z" fill="url(#og-grad)" />
+    <path d="M54 65H80C83.3137 65 86 67.6863 86 71C86 74.3137 83.3137 77 80 77H54V65Z" fill="url(#og-grad)" />
+    <circle cx="104" cy="37" r="9" fill="#C7D2FE" />
+    <circle cx="86" cy="71" r="8" fill="#A5B4FC" />
+    <circle cx="47.5" cy="103" r="7" fill="#818CF8" />
+  </g>
+
+  <!-- Wordmark -->
+  <text x="600" y="300" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', system-ui, -apple-system, sans-serif" font-weight="800" font-size="54" letter-spacing="-1">Feenion</text>
+
+  <!-- Tagline Pill -->
+  <g transform="translate(435, 335)">
+    <rect width="330" height="36" rx="18" fill="#1E1B4B" stroke="#4338CA" stroke-width="1" />
+    <text x="165" y="23" text-anchor="middle" fill="#A5B4FC" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="600">Open-Source AI Debugger</text>
+  </g>
+
+  <!-- Description -->
+  <text x="600" y="425" text-anchor="middle" fill="#E2E8F0" font-family="'Inter', system-ui, -apple-system, sans-serif" font-weight="600" font-size="28">
+    Debug AI systems like you debug production software.
+  </text>
+  <text x="600" y="465" text-anchor="middle" fill="#94A3B8" font-family="'Inter', system-ui, -apple-system, sans-serif" font-size="18">
+    100% Self-Hosted • LLMs • Autonomous Agents • Vector RAG • Distributed Tracing
+  </text>
+
+  <!-- Domain Badge -->
+  <text x="600" y="560" text-anchor="middle" fill="#6366F1" font-family="'JetBrains Mono', monospace" font-size="18" font-weight="600">
+    https://feenion.fun
+  </text>
+</svg>
+

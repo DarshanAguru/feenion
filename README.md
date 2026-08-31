@@ -1,148 +1,277 @@
-# Feenion — Self-Hosted AI Application Debugger & Observability Platform
+<p align="center">
+  <img src="assets/icon.svg" width="72" height="72" alt="Feenion Icon" />
+</p>
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-brightgreen.svg)](https://www.python.org/)
-[![Docker](https://img.shields.io/badge/Docker-Lightweight-blue.svg)](https://www.docker.com/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-Async-009688.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-Vite-61DAFB.svg)](https://reactjs.org/)
+<h1 align="center">Feenion</h1>
 
-**Feenion** is an open-source, self-hosted AI debugging and observability platform designed for developers building LLM applications, RAG pipelines, and autonomous agent frameworks. It provides millisecond trace timelines, animated execution trees, prompt & output glimpse cards, tunable model pricing, and comprehensive model intelligence analytics—all running 100% locally with zero sensitive data leaving your infrastructure.
+<p align="center">
+  <strong>Open-source, self-hosted AI debugging and observability platform.</strong><br/>
+  <em>Debug AI systems like you debug production software.</em>
+</p>
+
+<p align="center">
+  <a href="https://feenion.fun">Website</a> •
+  <a href="https://feenion.fun/docs">Documentation</a> •
+  <a href="https://feenion.fun/architecture">Architecture</a> •
+  <a href="https://feenion.fun/examples">Examples</a> •
+  <a href="#quickstart">Quickstart</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/License-Apache_2.0-indigo.svg" alt="License" />
+  <img src="https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg" alt="Python" />
+  <img src="https://img.shields.io/badge/Docker-Self--Hosted-blue.svg" alt="Docker" />
+  <img src="https://img.shields.io/badge/FastAPI-Async-009688.svg" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB.svg" alt="React" />
+  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen.svg" alt="PRs Welcome" />
+</p>
 
 ---
 
-## 🌟 Key Features
+## ⚡ What is Feenion?
 
-- ⚡ **Zero-Overhead & Lightweight (< 40MB RAM)**: Single-command Docker startup with zero external SQL or Redis dependencies. Runs alongside local Ollama or cloud LLMs without system bloat.
-- ⚛️ **Modern React Observability Dashboard**: Fast, responsive Vite React interface with real-time WebSocket telemetry updates.
-- 📋 **Trace Glimpse & Overview**: Instant high-level glimpse of user input prompts, final agent completions, token breakdowns, and duration KPIs before inspecting raw spans.
-- 🌲 **Latency-Proportional Mindmaps & Waterfall Timelines**: Interactive D3 trees with connection lengths proportional to latency, alongside millisecond flamegraph waterfalls.
-- 🤖 **LLM Model & Framework Intelligence Analytics**: Dedicated breakdowns of token volume (input/output), total spend ($), average latency, and cost per 1K tokens by model (OpenAI, Anthropic, Gemini, LangChain, etc.).
-- 🦜 **First-Class Framework Integrations**:
-  - **LangChain**: Native `FeenionCallbackHandler` and `instrument_langchain()` for chains, agents, tools, and retrievers.
-  - **OpenAI**: Drop-in client wrapper `wrap_openai(client)`.
-  - **Anthropic**: Drop-in client wrapper `wrap_anthropic(client)`.
-  - **Custom Functions**: Elegant `@trace` decorator and `with span(...)` context manager.
-- 💵 **Tunable Model Pricing & Live Catalog Sync**: Customize prompt/completion rates per model or sync live pricing automatically.
-- ⏸️ **High-Velocity Feed Freeze**: Pause incoming live streams (`⏸️ Pause Feed`) during high-traffic surges to inspect traces without viewport jumping.
-- 🛡️ **Admin Data Management & Batch Deletion**: Multi-select traces for batch deletion or purge all telemetry data securely.
+**Feenion** is an open-source, self-hosted developer observability engine built specifically for LLM applications, RAG pipelines, and autonomous multi-step agents.
+
+Traditional APM tools only report flat HTTP timeouts or generic exceptions. Feenion captures the **entire internal execution story**:
+
+```text
+User Query
+    │
+    ▼
+[ Agent Reasoning ] ──► [ Vector Retrieval (top_k=5) ]
+    │
+    ▼
+[ Tool Execution (db.query) ] ──► [ LLM Synthesis (gpt-4o) ]
+    │
+    ▼
+Response + Exact Tokens + Exact Cost + Critical Path Latency
+```
+
+### 🔒 100% Self-Hosted & Privacy-First
+- **Zero Cloud Leakage**: Your proprietary prompts, vector embeddings, retrieved documents, and API keys never leave your infrastructure.
+- **Lightweight (< 40MB RAM)**: Embedded single-container mode runs SQLite with Write-Ahead Logging (WAL) alongside your local Ollama or cloud models.
+- **Non-Blocking Ingestion**: Background worker threads decouple trace export from application execution so user requests are never delayed.
 
 ---
 
-## ⚡ Quickstart (Run in 2 Commands)
+## 🚀 Quickstart
 
-### 1. Launch Feenion Server
+### 1. Launch Feenion Server with Docker
 
 ```bash
-git clone https://github.com/feenion/feenion.git
+git clone https://github.com/DarshanAguru/feenion.git
 cd feenion
 docker compose up -d
 ```
 
-Open **[http://localhost:8000](http://localhost:8000)** in your browser to access the dashboard.
+Open **[http://localhost:8000](http://localhost:8000)** to view the live dashboard.
 
-### 2. Run the Interactive Telemetry Demo
-
-Install dependencies and run the included simulation script:
-
-```bash
-pip install -e .
-python examples/demo.py
-```
-
-The demo simulates real-world OpenAI, Anthropic, and LangChain agent pipelines with live token metrics, multi-tool reasoning, and error captures.
-
----
-
-## 💻 Python SDK Usage
-
-### Installation
+### 2. Install the Python SDK
 
 ```bash
 pip install feenion
 ```
 
-### Basic Tracing
+### 3. Trace Your First Function
 
 ```python
 from feenion import trace, span, configure
-from feenion.exporters import HTTPExporter, AsyncExporter
 
-# Configure async background exporter
-configure(exporter=AsyncExporter(HTTPExporter("http://localhost:8000")))
+# Configure target Feenion server
+configure(server_url="http://localhost:8000")
 
 @trace(name="customer_support_agent", span_type="agent")
-def handle_support_ticket(query: str):
-    # 1. Retrieval Span
-    with span("knowledge_base_search", span_type="retrieval") as s:
-        s.input = {"query": query}
-        docs = ["KB Article #104: Password Reset Guide"]
-        s.output = {"docs": docs}
+def handle_support_query(user_query: str):
+    with span("vector_kb_search", span_type="retrieval", input={"query": user_query}):
+        docs = search_knowledge_base(user_query)
 
-    # 2. LLM Completion Span
-    with span("llm_response", span_type="llm") as s:
-        s.input = {"query": query, "context": docs}
-        response = "Please visit settings to reset your password."
-        s.output = {"response": response}
-        s.set_llm_metrics(
-            model="gpt-4o",
-            prompt_tokens=320,
-            completion_tokens=45,
-            cost=0.00125,
-        )
-        return response
+    with span("llm_synthesis", span_type="llm"):
+        return generate_answer(user_query, docs)
 
-if __name__ == "__main__":
-    print(handle_support_ticket("How do I reset my password?"))
+handle_support_query("How do I rotate my API keys?")
 ```
 
-### LangChain Integration
+---
 
-```python
-from feenion.integrations.langchain import FeenionCallbackHandler
+## 🏗️ System Architecture
 
-handler = FeenionCallbackHandler(trace_name="rag_agent_workflow")
-
-# Pass handler to any LangChain agent, chain, or runnable
-agent_executor.invoke({"input": "Analyze quarterly revenue"}, config={"callbacks": [handler]})
+```text
+  ┌────────────────────────────────────────────────────────┐
+  │                 YOUR PYTHON APPLICATION                │
+  │   FastAPI • LangChain • LlamaIndex • Autogen • CrewAI  │
+  └──────────────────────────┬─────────────────────────────┘
+                             │
+                      Feenion SDK
+                (ContextVar + Async Queue)
+                             │
+                             ▼  Non-blocking HTTP Batches
+  ┌────────────────────────────────────────────────────────┐
+  │                  FEENION INGESTION API                 │
+  │               FastAPI • Python 3.12 Runtime            │
+  └─────────────┬───────────────────────────┬──────────────┘
+                │                           │
+                ▼                           ▼
+  ┌──────────────────────────┐    ┌────────────────────────┐
+  │      STORAGE ENGINE      │    │  WEBSOCKET BROADCASTER │
+  │ SQLite WAL / PostgreSQL  │    │  Live Telemetry Stream │
+  └─────────────┬────────────┘    └─────────┬──────────────┘
+                │                           │
+                └─────────────┬─────────────┘
+                              ▼
+  ┌────────────────────────────────────────────────────────┐
+  │               FEENION REACT DASHBOARD                  │
+  │  Waterfall Timeline • D3 Mindmaps • Error Intelligence │
+  └────────────────────────────────────────────────────────┘
 ```
 
-### Tunable Pricing
+---
+
+## 🧩 Framework Integrations
+
+### 1. OpenAI Auto-Instrumentation
 
 ```python
-import feenion
+from openai import OpenAI
+from feenion.integrations.openai import instrument_openai
 
-# Override or define custom model pricing rates ($ per 1M tokens)
-feenion.configure(
-    model_pricing={
-        "gpt-4o": (2.50, 10.00),
-        "custom-llama-3": (0.20, 0.60),
-    }
+client = OpenAI()
+instrument_openai(client)
+
+# All chat completions now record prompt/completion tokens, duration, and calculated cost!
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Explain raft consensus."}]
 )
 ```
 
+### 2. Google Gemini Auto-Instrumentation
+
+```python
+from google import genai
+from feenion.integrations.gemini import instrument_gemini
+
+client = genai.Client()
+instrument_gemini(client)
+
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    contents="Explain vector embeddings in machine learning."
+)
+```
+
+### 3. Anthropic Auto-Instrumentation
+
+```python
+from anthropic import Anthropic
+from feenion.integrations.anthropic import instrument_anthropic
+
+client = Anthropic()
+instrument_anthropic(client)
+
+response = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Analyze system architecture."}]
+)
+```
+
+### 4. LangChain Native Callback
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from feenion.integrations.langchain import FeenionCallbackHandler
+
+handler = FeenionCallbackHandler()
+llm = ChatOpenAI(model="gpt-4o", callbacks=[handler])
+
+prompt = ChatPromptTemplate.from_template("Summarize: {topic}")
+chain = prompt | llm
+chain.invoke({"topic": "Distributed Tracing"}, config={"callbacks": [handler]})
+```
+
+### 5. Zero-Key Comprehensive Mock AI Ecosystem
+
+Run the standalone executable mock demo mimicking Gemini, OpenAI, Claude, RAG retrievers, and Model Context Protocol (MCP) tools:
+
+```bash
+python examples/comprehensive_mock_ecosystem.py
+```
+
+### 6. Client-Side Sensitive PII & Secret Redaction
+
+```python
+from feenion.redaction import Redactor
+
+# Custom sensitive keys are automatically masked before payloads leave application memory
+redactor = Redactor(sensitive_keys={"api_key", "password", "auth_token", "ssn"})
+```
+
 ---
 
-## 📊 Dashboard Capabilities
+## 📊 Core Observability Features
 
-| View | Purpose |
-| :--- | :--- |
-| **⚡ Traces & Glimpse** | Instant prompt & response glimpses, millisecond waterfall timelines, and latency-scaled mindmaps. |
-| **📊 Metrics & Analytics** | Model intelligence breakdown table, token volume doughnuts, spend distributions, and latency SLAs ($P_{50}, P_{90}, P_{99}$). |
-| **⚠️ Error Debugger** | Exception fingerprints, occurrence counters, and 1-click failing trace inspection. |
-| **🛡️ Admin Management** | Batch trace selection and one-click data purges with credentials (`admin:admin`). |
+- ⏱️ **Distributed Waterfall Timeline**: Interactive time-scale flamegraphs with critical path highlights and duration percentiles (p50, p75, p90, p95, p99).
+- 🌳 **D3 Mind Map DAG**: Hierarchical execution trees with link distances scaled proportionally to latency.
+- 🎯 **Error Intelligence**: Semantic error fingerprinting that clusters identical exceptions and links to root cause spans.
+- 🤖 **Model Analytics Matrix**: Comprehensive breakdown of prompt vs completion tokens, cumulative spend ($), and cost per 1K tokens by model.
+- ⏸️ **High-Velocity Feed Freeze**: Pause incoming live streams (`⏸️ Pause Feed`) during high-traffic bursts to inspect traces without viewport jumping.
+- 🔍 **Comparative Trace Regression Diff**: Side-by-side comparison modal to isolate why Trace A was 3x slower or used 4x more tokens than Trace B.
 
 ---
 
-## 📚 Documentation & Resources
+## ⚙️ Configuration Options
 
-- 🌐 [Official Documentation Site](site/docs.html)
-- 🛠️ [SDK Guide & API Reference](docs/sdk.md)
-- 🤖 [LLM Auto-Instrumentation](docs/llm-instrumentation.md)
-- 🌲 [Tracing & Mindmap Visualization](docs/tracing.md)
-- 📡 [REST & WebSocket API Spec](docs/api.md)
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `FEENION_DATABASE_URL` | `sqlite:////app/data/feenion.db` | Storage connection string (SQLite WAL or PostgreSQL) |
+| `FEENION_REDIS_URL` | `""` | Optional Redis URL for distributed asynchronous queues |
+| `FEENION_LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `FEENION_RETENTION_DAYS` | `30` | Auto-retention period for trace telemetry |
+
+---
+
+## 🛠️ Local Development & Contributing
+
+Contributions are welcome! Feenion is built in the open.
+
+```bash
+# 1. Clone repo
+git clone https://github.com/DarshanAguru/feenion.git
+cd feenion
+
+# 2. Setup Python environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r server/requirements.txt
+pip install -e ".[dev]"
+
+# 3. Run test suite
+pytest
+
+# 4. Build Frontend UI
+cd web
+npm install
+npm run build
+```
+
+Please review our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
+
+---
+
+## 🗺️ Project Roadmap
+
+- [x] Python SDK with non-blocking async batch exporter
+- [x] OpenAI, Anthropic, and LangChain auto-instrumentation
+- [x] Waterfall distributed timeline & D3 latency mind map
+- [x] Semantic error grouping & stack trace viewer
+- [x] Model economics & prompt inflation analytics
+- [ ] TypeScript / Node.js SDK
+- [ ] OpenTelemetry (OTel) Collector receiver
+- [ ] Automated RAG context evaluation metrics (Faithfulness & Relevance)
 
 ---
 
 ## 📄 License
 
-Feenion is open-source software licensed under the [Apache License 2.0](LICENSE).
+Feenion is open-source software licensed under the **[Apache License 2.0](LICENSE)**.

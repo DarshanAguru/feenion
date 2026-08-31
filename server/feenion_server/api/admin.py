@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import secrets
-from uuid import UUID
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -16,29 +14,30 @@ router = APIRouter(
     tags=["admin"],
 )
 
-security = HTTPBasic()
 trace_store = TraceStore()
 
-def verify_admin(credentials: HTTPBasicCredentials = Depends(security)) -> str:
-    correct_username = secrets.compare_digest(credentials.username, "admin")
-    correct_password = secrets.compare_digest(credentials.password, "admin")
-    if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin credentials (expected admin:admin)",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
+class PurgeAllRequest(BaseModel):
+    confirmation: Optional[str] = None
 
 class BatchDeleteRequest(BaseModel):
     trace_ids: list[str]
+    confirmation: Optional[str] = None
 
 @router.delete("/traces")
+@router.post("/traces/purge")
 async def clear_all_traces(
+    body: Optional[PurgeAllRequest] = None,
+    confirmation: Optional[str] = None,
     db: Session = Depends(get_db),
-    admin_user: str = Depends(verify_admin),
 ):
-    """Purge all traces, spans, and events from the database."""
+    """Purge all traces, spans, and events from the database with 'delete everything' confirmation."""
+    conf = (body.confirmation if body and body.confirmation else None) or confirmation
+    if not conf or conf.strip().lower() != "delete everything":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation text mismatch. You must enter 'delete everything' to purge all data.",
+        )
+
     db.query(EventModel).delete()
     db.query(SpanModel).delete()
     db.query(TraceModel).delete()
@@ -50,22 +49,26 @@ async def clear_all_traces(
     # Broadcast instant WebSocket refresh to connected dashboards
     await manager.broadcast({
         "type": "data_cleared",
-        "message": "All traces purged by admin",
+        "message": "All traces purged",
     })
 
     return {
         "status": "success",
         "message": "All telemetry traces, spans, and events have been purged.",
-        "admin": admin_user,
     }
 
 @router.post("/traces/batch-delete")
 async def batch_delete_traces(
     body: BatchDeleteRequest,
     db: Session = Depends(get_db),
-    admin_user: str = Depends(verify_admin),
 ):
-    """Delete multiple selected traces and their spans and events in a single operation."""
+    """Delete multiple selected traces and their spans and events with 'delete selected' confirmation."""
+    if body.confirmation and body.confirmation.strip().lower() != "delete selected":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation text mismatch. You must enter 'delete selected' to delete selected traces.",
+        )
+
     ids = [str(t_id).strip() for t_id in body.trace_ids if str(t_id).strip()]
     if not ids:
         return {"status": "success", "deleted_count": 0, "message": "No trace IDs provided"}
@@ -84,17 +87,15 @@ async def batch_delete_traces(
         "status": "success",
         "deleted_count": len(ids),
         "message": f"Successfully deleted {len(ids)} traces.",
-        "admin": admin_user,
     }
 
 @router.delete("/traces/{trace_id}")
 async def delete_single_trace(
-    trace_id: UUID,
+    trace_id: str,
     db: Session = Depends(get_db),
-    admin_user: str = Depends(verify_admin),
 ):
     """Delete a single trace and its associated spans and events."""
-    str_id = str(trace_id)
+    str_id = str(trace_id).strip()
     trace = db.query(TraceModel).filter(TraceModel.id == str_id).first()
     if not trace:
         raise HTTPException(status_code=404, detail="Trace not found")
@@ -112,5 +113,4 @@ async def delete_single_trace(
     return {
         "status": "success",
         "message": f"Trace {str_id} deleted.",
-        "admin": admin_user,
     }

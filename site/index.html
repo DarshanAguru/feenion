@@ -3,213 +3,585 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Feenion — Self-Hosted AI Application Debugger & Observability Platform</title>
-  <meta name="description" content="Feenion is an open-source, self-hosted AI debugging and observability engine for LLMs, RAG, and autonomous agents." />
+  <title>Feenion — Open-Source AI Debugger & Observability Platform</title>
+  <meta name="description" content="Debug AI systems like production software. Full-DAG execution traces, token costs, latency flamegraphs, and error diagnostics for LLMs, RAG, and Agents." />
+  
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <!-- Tailwind CSS & Fonts -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              900: '#312e81',
+              950: '#090d16',
+            }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; color: #e2e8f0; }
-    code, pre { font-family: 'JetBrains Mono', monospace; }
-    .bg-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 32px 32px; }
-    .card-border { border: 1px solid #1e2330; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #080b11; color: #e2e8f0; }
+    code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* Interactive Dot Grid Canvas styling */
+    #dotCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased bg-[#080b11]">
+<body class="min-h-screen flex flex-col antialiased bg-[#080b11] text-[#e2e8f0] selection:bg-indigo-500/30 selection:text-indigo-200 relative overflow-x-hidden">
 
-  <!-- Liquid Glass Header Navbar -->
-  <header class="bg-slate-950/70 backdrop-blur-xl border-b border-slate-800/60 sticky top-0 z-50 shadow-2xl px-6 py-2.5">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- Interactive Glowing Dot Grid Canvas Background -->
+  <canvas id="dotCanvas"></canvas>
+
+  <!-- Minimal Compact Navbar (h-12) -->
+  <header class="h-12 bg-[#080b11]/85 backdrop-blur-md border-b border-[#1e2330] sticky top-0 z-50 px-4 sm:px-6 transition-all relative">
+    <div class="max-w-7xl mx-auto h-full flex items-center justify-between">
+      <!-- Left: Brand Logo & Nav -->
       <div class="flex items-center space-x-6">
-        <a href="index.html" class="flex items-center space-x-3 group">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">F</div>
-          <span class="text-xl font-bold tracking-tight text-white">Feenion</span>
-          <span class="text-[10px] bg-slate-900/90 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full font-mono">Open-Source</span>
+        <a href="index.html" class="flex items-center space-x-2 group">
+          <svg class="w-5 h-5 shrink-0 rounded group-hover:scale-105 transition-transform" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="6" fill="#090D16" />
+            <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#1E2330" />
+            <path d="M8 7C8 6.44772 8.44772 6 9 6H12C12.5523 6 13 6.44772 13 7V25C13 25.5523 12.5523 26 12 26H9C8.44772 26 8 25.5523 8 25V7Z" fill="url(#nav-grad)" />
+            <path d="M12 6.5H22C22.8284 6.5 23.5 7.17157 23.5 8C23.5 8.82843 22.8284 9.5 22 9.5H12V6.5Z" fill="url(#nav-grad)" />
+            <path d="M12 14.5H18C18.8284 14.5 19.5 15.1716 19.5 16C19.5 16.8284 18.8284 17.5 18 17.5H12V14.5Z" fill="url(#nav-grad)" />
+            <circle cx="23.5" cy="8" r="2" fill="#C7D2FE" />
+            <circle cx="19.5" cy="16" r="1.8" fill="#A5B4FC" />
+            <circle cx="10.5" cy="24" r="1.5" fill="#818CF8" />
+            <defs>
+              <linearGradient id="nav-grad" x1="8" y1="6" x2="24" y2="26" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#818CF8" />
+                <stop offset="1" stop-color="#4F46E5" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="text-xs font-bold font-mono text-white tracking-tight">Feenion</span>
         </a>
 
-        <!-- Consistent Nav Links -->
-        <nav class="flex items-center space-x-1.5 text-xs">
-          <a href="index.html" class="px-3 py-1.5 rounded-lg text-indigo-300 font-semibold bg-indigo-600/20 border border-indigo-500/30 backdrop-blur-md shadow-inner transition">Overview</a>
-          <a href="docs.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Documentation</a>
-          <a href="about.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">About</a>
-          <a href="community.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Community</a>
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden md:flex items-center space-x-1 text-[12px]">
+          <a href="index.html" class="px-2 py-0.5 rounded text-white font-medium bg-slate-800/80">Overview</a>
+          <a href="docs.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Docs</a>
+          <a href="architecture.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Architecture</a>
+          <a href="examples.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Examples</a>
+          <a href="about.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">About</a>
+          <a href="community.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Community</a>
         </nav>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="px-3.5 py-1.5 bg-slate-900/80 hover:bg-slate-800/90 text-slate-200 font-medium rounded-lg border border-slate-800/80 transition text-xs flex items-center space-x-1.5 shadow-sm">
-          <span>⭐ GitHub</span>
+      <!-- Right: GitHub -->
+      <div class="flex items-center space-x-2.5 text-xs">
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="px-2.5 py-1 bg-slate-800/90 hover:bg-slate-700 text-slate-100 font-medium rounded border border-slate-700 transition-colors flex items-center space-x-1.5 shadow-sm text-[11px]">
+          <span>GitHub</span>
+          <span class="text-slate-400 text-[10px]">★</span>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="relative bg-grid py-20 border-b border-slate-800/50">
-    <div class="max-w-5xl mx-auto px-6 text-center space-y-6">
-      <div class="inline-flex items-center space-x-2 px-3 py-1 bg-indigo-950/60 border border-indigo-800/60 rounded-full text-indigo-400 text-xs font-mono">
-        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-        <span>Open-Source & 100% Self-Hosted</span>
-      </div>
+  <!-- Content Wrapper (Positioned above interactive canvas) -->
+  <div class="relative z-10 flex-1 flex flex-col">
 
-      <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-        AI Observability & Telemetry Engine for <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Production LLMs & Agents</span>
-      </h1>
-
-      <p class="text-base sm:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
-        Inspect LLM application traces, flamegraph waterfall timelines, latency-scaled mindmaps, prompt/response glimpses, token costs, and stack traces—100% self-hosted on your own hardware.
-      </p>
-
-      <div class="pt-2 flex items-center justify-center space-x-4">
-        <a href="docs.html" class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-xl shadow-indigo-600/30 transition text-xs">
-          Explore Complete Documentation &rarr;
-        </a>
-        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold rounded-xl border border-slate-800 transition text-xs">
-          View GitHub Repository ⭐
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Interactive Code Snippet Tabs -->
-  <section class="py-16 max-w-5xl mx-auto px-6 space-y-6">
-    <div class="text-center space-y-2">
-      <h2 class="text-2xl font-bold text-white">Simple, Flexible Python SDK</h2>
-      <p class="text-xs text-slate-400">Instrument functions with decorators, context managers, LangChain callbacks, or OpenAI/Anthropic auto-wrappers.</p>
-    </div>
-
-    <!-- Tab Code Window -->
-    <div class="bg-slate-950 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden">
-      <div class="bg-slate-900/80 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs">
-        <div class="flex items-center space-x-3 text-slate-400 font-medium">
-          <button onclick="setCodeTab('decorators')" id="codeTab-decorators" class="text-white font-bold border-b-2 border-indigo-500 pb-1">@trace Decorator</button>
-          <button onclick="setCodeTab('langchain')" id="codeTab-langchain" class="hover:text-white pb-1">LangChain Callback</button>
-          <button onclick="setCodeTab('openai')" id="codeTab-openai" class="hover:text-white pb-1">OpenAI Auto-Wrapper</button>
-          <button onclick="setCodeTab('pricing')" id="codeTab-pricing" class="hover:text-white pb-1">Tunable Pricing</button>
+    <!-- 1. Hero Section: Intuition & Value Proposition -->
+    <section class="pt-14 pb-14 border-b border-[#1e2330]">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-5">
+        
+        <!-- Tagline Pill -->
+        <div class="inline-flex items-center space-x-2 px-3 py-1 bg-[#0d111a]/80 backdrop-blur border border-[#1e2330] rounded-full text-indigo-400 text-xs font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Open-Source AI Debugger &bull; Self-Hosted</span>
         </div>
-        <span class="text-[10px] font-mono text-slate-500">Python 3.10+</span>
+
+        <!-- Main Title -->
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          Debug AI systems like you debug production software.
+        </h1>
+
+        <!-- Layman's Intuition Summary -->
+        <p class="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+          When normal software fails, you get stack traces, database logs, and error lines. But when an AI agent hallucinates, stalls for 10 seconds, or burns through \$50 in tokens, it’s an opaque black box.
+        </p>
+        <p class="text-xs sm:text-sm text-indigo-300 max-w-xl mx-auto font-mono">
+          Feenion gives you complete X-ray vision into every prompt, retrieval chunk, tool call, and token dollar — 100% locally on your machine.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+          <a href="docs.html" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
+            <span>Get Started in 5 Minutes</span>
+            <span>→</span>
+          </a>
+          <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#0d111a] hover:bg-slate-800 text-slate-200 text-xs font-medium border border-[#1e2330] transition flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span>Star on GitHub</span>
+          </a>
+        </div>
       </div>
+    </section>
 
-      <div class="p-5 font-mono text-xs text-slate-300 overflow-x-auto leading-relaxed">
-        <pre id="codeSnippetDisplay">
-<span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span, configure
-<span class="text-purple-400">from</span> feenion.exporters <span class="text-purple-400">import</span> HTTPExporter, AsyncExporter
-
-configure(exporter=AsyncExporter(HTTPExporter(<span class="text-emerald-400">"http://localhost:8000"</span>)))
-
-<span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-400">"rag_support_agent"</span>, span_type=<span class="text-emerald-400">"agent"</span>)
-<span class="text-purple-400">def</span> <span class="text-blue-400">run_rag_agent</span>(user_query: str):
-    docs = retrieve_documents(user_query)
-    <span class="text-purple-400">return</span> generate_answer(user_query, docs)</pre>
-      </div>
-    </div>
-  </section>
-
-  <!-- Core Capabilities Grid -->
-  <section class="py-16 bg-slate-950/60 border-t border-b border-slate-800/50">
-    <div class="max-w-6xl mx-auto px-6 space-y-10">
-      <div class="text-center space-y-2">
-        <h2 class="text-2xl font-bold text-white">Engineered for Developer Privacy, Clarity & High Scale</h2>
-        <p class="text-xs text-slate-400">100% data control with rich real-time visual analytics.</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-        <div class="bg-slate-900/60 p-6 rounded-2xl card-border space-y-3">
-          <div class="w-9 h-9 rounded-lg bg-indigo-950 text-indigo-400 flex items-center justify-center font-bold text-base">📋</div>
-          <h3 class="text-sm font-bold text-white">Trace Glimpse & Overview</h3>
-          <p class="text-slate-400 leading-relaxed">
-            Get an instant executive glimpse of user input prompts, final agent completions, token breakdowns, and duration KPIs before drilling into deep millisecond spans.
+    <!-- 2. The Problem vs. The Solution (Layman's Terms) -->
+    <section class="py-14 border-b border-[#1e2330] bg-[#090d16]/50">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
+        
+        <div class="text-center max-w-2xl mx-auto space-y-2">
+          <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Why Building AI Applications is Hard
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            Modern AI apps aren't single API calls — they are complex distributed systems of prompts, vector databases, and multi-step tool reasoning.
           </p>
         </div>
 
-        <div class="bg-slate-900/60 p-6 rounded-2xl card-border space-y-3">
-          <div class="w-9 h-9 rounded-lg bg-purple-950 text-purple-400 flex items-center justify-center font-bold text-base">🌳</div>
-          <h3 class="text-sm font-bold text-white">Latency-Scaled D3 Mindmaps</h3>
-          <p class="text-slate-400 leading-relaxed">
-            Interactive node hierarchies where link distances scale proportionally to span latency, featuring animated flow pulses and interactive zoom controls.
-          </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Problem 1 -->
+          <div class="p-5 rounded-xl bg-[#0d111a] border border-[#1e2330] space-y-2.5">
+            <div class="w-7 h-7 rounded bg-rose-950/80 border border-rose-800 text-rose-300 flex items-center justify-center font-bold text-xs">
+              ✕
+            </div>
+            <h3 class="text-xs font-bold text-white font-mono">The Black-Box Failure Problem</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              When an agent gives a bad answer, you don't know whether the user query was misunderstood, the vector database retrieved irrelevant docs, or the LLM failed to synthesize the answer.
+            </p>
+          </div>
+
+          <!-- Problem 2 -->
+          <div class="p-5 rounded-xl bg-[#0d111a] border border-[#1e2330] space-y-2.5">
+            <div class="w-7 h-7 rounded bg-amber-950/80 border border-amber-800 text-amber-300 flex items-center justify-center font-bold text-xs">
+              $
+            </div>
+            <h3 class="text-xs font-bold text-white font-mono">Runaway Token Costs & Latency</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              A single multi-turn agent loop can silently make 12 LLM calls, taking 18 seconds and costing \$0.40 per request. Without tracing, you cannot identify which step is the bottleneck.
+            </p>
+          </div>
+
+          <!-- Problem 3 -->
+          <div class="p-5 rounded-xl bg-[#0d111a] border border-[#1e2330] space-y-2.5">
+            <div class="w-7 h-7 rounded bg-indigo-950/80 border border-indigo-800 text-indigo-300 flex items-center justify-center font-bold text-xs">
+              🔒
+            </div>
+            <h3 class="text-xs font-bold text-white font-mono">SaaS Data Privacy Liabilities</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Sending sensitive user prompts, private enterprise knowledge base chunks, and customer conversations to external cloud observability platforms creates compliance and security risks.
+            </p>
+          </div>
         </div>
 
-        <div class="bg-slate-900/60 p-6 rounded-2xl card-border space-y-3">
-          <div class="w-9 h-9 rounded-lg bg-emerald-950 text-emerald-400 flex items-center justify-center font-bold text-base">🤖</div>
-          <h3 class="text-sm font-bold text-white">Model Intelligence Analytics</h3>
-          <p class="text-slate-400 leading-relaxed">
-            Dedicated breakdown tables tracking prompt/completion tokens, cumulative spend ($), average latency, and unit economics ($/1K tokens) by model and framework.
-          </p>
-        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800/60 bg-slate-950 py-6 text-xs text-slate-500">
-    <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
-      <div>Feenion — Open-Source Self-Hosted AI Debugger (Apache 2.0 License)</div>
-      <div class="space-x-5">
-        <a href="about.html" class="hover:text-slate-300 transition">About</a>
-        <a href="docs.html" class="hover:text-slate-300 transition">Docs</a>
-        <a href="community.html" class="hover:text-slate-300 transition">Community</a>
-        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="hover:text-slate-300 transition">GitHub Repository</a>
+    <!-- 3. How Feenion Solves It: Interactive Visual Trace Demonstration -->
+    <section class="py-14 border-b border-[#1e2330]">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+        
+        <div class="text-center max-w-2xl mx-auto space-y-2">
+          <div class="inline-flex items-center space-x-1 text-[11px] font-mono text-indigo-400 uppercase tracking-wider">
+            <span>The Solution: Causality Tracing</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            See exactly what happened at every step
+          </h2>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Feenion reconstructs the entire execution causality tree so you can inspect inputs, outputs, tokens, latency, and costs for each component.
+          </p>
+        </div>
+
+        <!-- Realistic Interactive Trace Card Flamegraph -->
+        <div class="rounded-xl bg-[#090d16] border border-[#1e2330] shadow-2xl overflow-hidden text-xs">
+          <!-- Trace Header -->
+          <div class="px-4 py-2.5 bg-[#0d111a] border-b border-[#1e2330] flex flex-wrap items-center justify-between text-slate-400 font-mono text-[11px] gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+              <span class="text-white font-bold">customer_support_pipeline</span>
+              <span class="text-slate-500">tr_8fa9102c</span>
+            </div>
+            <div class="flex items-center gap-4">
+              <span>Total Latency: <strong class="text-slate-200">1,240ms</strong></span>
+              <span>Tokens: <strong class="text-slate-200">842 tok</strong></span>
+              <span>Cost: <strong class="text-emerald-400 font-bold">$0.0034</strong></span>
+            </div>
+          </div>
+
+          <!-- Trace Spans List -->
+          <div class="p-4 space-y-2 font-mono">
+            <!-- Root Agent Span -->
+            <div class="flex items-center justify-between p-2 rounded bg-[#080b11] border border-slate-800/80">
+              <div class="flex items-center gap-2 w-44 sm:w-64 truncate">
+                <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 text-[10px] border border-emerald-800 font-bold">agent</span>
+                <span class="text-slate-200 truncate font-semibold">handle_support_request</span>
+              </div>
+              <div class="flex-1 mx-3 h-2 bg-slate-800 rounded-full overflow-hidden relative">
+                <div class="absolute left-0 top-0 h-full bg-emerald-500 rounded-full w-full"></div>
+              </div>
+              <span class="text-slate-400 text-[11px] w-16 text-right">1,240ms</span>
+            </div>
+
+            <!-- Vector Retrieval Span -->
+            <div class="flex items-center justify-between p-2 rounded bg-[#080b11] border border-slate-800/80 pl-6 sm:pl-8">
+              <div class="flex items-center gap-2 w-44 sm:w-64 truncate">
+                <span class="px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 text-[10px] border border-amber-800 font-bold">retrieval</span>
+                <span class="text-slate-300 truncate">kb_vector_search (top_k=5)</span>
+              </div>
+              <div class="flex-1 mx-3 h-2 bg-slate-800 rounded-full overflow-hidden relative">
+                <div class="absolute left-[3%] top-0 h-full bg-amber-500 rounded-full w-[24%]"></div>
+              </div>
+              <span class="text-slate-400 text-[11px] w-16 text-right">298ms</span>
+            </div>
+
+            <!-- Database / Tool Call Span -->
+            <div class="flex items-center justify-between p-2 rounded bg-[#080b11] border border-slate-800/80 pl-6 sm:pl-8">
+              <div class="flex items-center gap-2 w-44 sm:w-64 truncate">
+                <span class="px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 text-[10px] border border-cyan-800 font-bold">tool</span>
+                <span class="text-slate-300 truncate">fetch_user_account_status</span>
+              </div>
+              <div class="flex-1 mx-3 h-2 bg-slate-800 rounded-full overflow-hidden relative">
+                <div class="absolute left-[28%] top-0 h-full bg-cyan-500 rounded-full w-[15%]"></div>
+              </div>
+              <span class="text-slate-400 text-[11px] w-16 text-right">186ms</span>
+            </div>
+
+            <!-- LLM Call Span -->
+            <div class="flex items-center justify-between p-2 rounded bg-[#080b11] border border-slate-800/80 pl-6 sm:pl-8">
+              <div class="flex items-center gap-2 w-44 sm:w-64 truncate">
+                <span class="px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 text-[10px] border border-purple-800 font-bold">llm</span>
+                <span class="text-slate-300 truncate">gpt-4o synthesis</span>
+              </div>
+              <div class="flex-1 mx-3 h-2 bg-slate-800 rounded-full overflow-hidden relative">
+                <div class="absolute left-[44%] top-0 h-full bg-purple-500 rounded-full w-[55%]"></div>
+              </div>
+              <span class="text-slate-400 text-[11px] w-16 text-right">682ms</span>
+            </div>
+          </div>
+
+          <!-- Flamegraph Insight Footnote -->
+          <div class="px-4 py-2 bg-[#0d111a] border-t border-[#1e2330] flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-400 gap-2">
+            <div>Critical Path: <span class="text-rose-400">gpt-4o synthesis (55% total time)</span></div>
+            <div class="text-slate-300">Retrieved 5 chunks &bull; 0 errors &bull; Status 200 OK</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. How to Use It: Quickstart in 2 Steps -->
+    <section class="py-14 border-b border-[#1e2330] bg-[#090d16]/30">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
+        
+        <div class="text-center max-w-2xl mx-auto space-y-2">
+          <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Up and running in two simple steps
+          </h2>
+          <p class="text-xs text-slate-400">
+            No heavy cloud infrastructure. Feenion runs as a single lightweight container and a Python library.
+          </p>
+        </div>
+
+        <!-- 2-Step Quickstart Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 font-mono text-xs">
+          <!-- Step 1: Spin up Server -->
+          <div class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] space-y-3">
+            <div class="flex items-center justify-between text-indigo-400">
+              <span class="font-bold">STEP 1: Start Feenion Server</span>
+              <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Docker</span>
+            </div>
+            <p class="text-slate-300 text-[11px] font-sans">
+              Spins up the telemetry ingestion server and React UI with embedded SQLite WAL storage on <code class="text-indigo-300">localhost:8000</code>.
+            </p>
+            <div class="p-2.5 rounded-lg bg-[#080b11] border border-slate-800 flex items-center justify-between text-slate-200">
+              <span>docker compose up -d</span>
+              <button onclick="copySnippet('docker compose up -d', this)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700">Copy</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Install SDK -->
+          <div class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] space-y-3">
+            <div class="flex items-center justify-between text-indigo-400">
+              <span class="font-bold">STEP 2: Install Python SDK</span>
+              <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">pip</span>
+            </div>
+            <p class="text-slate-300 text-[11px] font-sans">
+              Install the zero-overhead client into your Python AI backend or agent framework.
+            </p>
+            <div class="p-2.5 rounded-lg bg-[#080b11] border border-slate-800 flex items-center justify-between text-slate-200">
+              <span>pip install feenion</span>
+              <button onclick="copySnippet('pip install feenion', this)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Framework Integration Tabs -->
+        <div class="rounded-xl bg-[#090d16] border border-[#1e2330] shadow-xl overflow-hidden">
+          <div class="flex items-center border-b border-[#1e2330] bg-[#0d111a] px-3 text-xs font-mono overflow-x-auto">
+            <button onclick="switchTab('openai')" id="tab-openai" class="px-3 py-2.5 text-indigo-300 border-b-2 border-indigo-500 font-medium">OpenAI</button>
+            <button onclick="switchTab('gemini')" id="tab-gemini" class="px-3 py-2.5 text-slate-400 hover:text-slate-200">Google Gemini</button>
+            <button onclick="switchTab('anthropic')" id="tab-anthropic" class="px-3 py-2.5 text-slate-400 hover:text-slate-200">Anthropic Claude</button>
+            <button onclick="switchTab('langchain')" id="tab-langchain" class="px-3 py-2.5 text-slate-400 hover:text-slate-200">LangChain</button>
+            <button onclick="switchTab('rag')" id="tab-rag" class="px-3 py-2.5 text-slate-400 hover:text-slate-200">Custom RAG</button>
+          </div>
+
+          <!-- Tab 1: OpenAI -->
+          <pre id="code-openai" class="p-4 text-xs font-mono text-slate-200 leading-relaxed overflow-x-auto bg-[#080b11]"><code><span class="text-purple-400">from</span> openai <span class="text-purple-400">import</span> OpenAI
+<span class="text-purple-400">from</span> feenion.integrations.openai <span class="text-purple-400">import</span> instrument_openai
+
+client = OpenAI()
+instrument_openai(client)
+
+<span class="text-slate-500"># Automatically captures tokens, latency, cost, and trace context:</span>
+response = client.chat.completions.create(
+    model=<span class="text-emerald-300">"gpt-4o"</span>,
+    messages=[{<span class="text-emerald-300">"role"</span>: <span class="text-emerald-300">"user"</span>, <span class="text-emerald-300">"content"</span>: <span class="text-emerald-300">"Explain Raft Consensus Algorithm."</span>}]
+)</code></pre>
+
+          <!-- Tab 2: Gemini -->
+          <pre id="code-gemini" class="hidden p-4 text-xs font-mono text-slate-200 leading-relaxed overflow-x-auto bg-[#080b11]"><code><span class="text-purple-400">from</span> google <span class="text-purple-400">import</span> genai
+<span class="text-purple-400">from</span> feenion.integrations.gemini <span class="text-purple-400">import</span> instrument_gemini
+
+client = genai.Client()
+instrument_gemini(client)
+
+response = client.models.generate_content(
+    model=<span class="text-emerald-300">"gemini-2.0-flash"</span>,
+    contents=<span class="text-emerald-300">"Explain vector embeddings in machine learning."</span>
+)</code></pre>
+
+          <!-- Tab 3: Anthropic -->
+          <pre id="code-anthropic" class="hidden p-4 text-xs font-mono text-slate-200 leading-relaxed overflow-x-auto bg-[#080b11]"><code><span class="text-purple-400">from</span> anthropic <span class="text-purple-400">import</span> Anthropic
+<span class="text-purple-400">from</span> feenion.integrations.anthropic <span class="text-purple-400">import</span> instrument_anthropic
+
+client = Anthropic()
+instrument_anthropic(client)
+
+response = client.messages.create(
+    model=<span class="text-emerald-300">"claude-3-5-sonnet-20241022"</span>,
+    max_tokens=<span class="text-amber-300">1024</span>,
+    messages=[{<span class="text-emerald-300">"role"</span>: <span class="text-emerald-300">"user"</span>, <span class="text-emerald-300">"content"</span>: <span class="text-emerald-300">"Analyze system architecture."</span>}]
+)</code></pre>
+
+          <!-- Tab 4: LangChain -->
+          <pre id="code-langchain" class="hidden p-4 text-xs font-mono text-slate-200 leading-relaxed overflow-x-auto bg-[#080b11]"><code><span class="text-purple-400">from</span> langchain_openai <span class="text-purple-400">import</span> ChatOpenAI
+<span class="text-purple-400">from</span> feenion.integrations.langchain <span class="text-purple-400">import</span> FeenionCallbackHandler
+
+handler = FeenionCallbackHandler()
+llm = ChatOpenAI(model=<span class="text-emerald-300">"gpt-4o"</span>, callbacks=[handler])
+
+chain = prompt | llm
+chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-emerald-300">"Observability"</span>}, config={<span class="text-emerald-300">"callbacks"</span>: [handler]})</code></pre>
+
+          <!-- Tab 5: Custom RAG -->
+          <pre id="code-rag" class="hidden p-4 text-xs font-mono text-slate-200 leading-relaxed overflow-x-auto bg-[#080b11]"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span
+
+<span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-300">"rag_query_pipeline"</span>, span_type=<span class="text-emerald-300">"agent"</span>)
+<span class="text-purple-400">def</span> <span class="text-blue-400">search_and_answer</span>(query: <span class="text-amber-300">str</span>):
+    <span class="text-purple-400">with</span> span(<span class="text-emerald-300">"chroma_vector_search"</span>, span_type=<span class="text-emerald-300">"retrieval"</span>, input={<span class="text-emerald-300">"q"</span>: query}):
+        docs = vector_db.query(query, top_k=<span class="text-amber-300">5</span>)
+
+    <span class="text-purple-400">with</span> span(<span class="text-emerald-300">"synthesize_response"</span>, span_type=<span class="text-emerald-300">"llm"</span>):
+        <span class="text-purple-400">return</span> generate_answer(query, docs)</code></pre>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. Key Platform Capabilities Grid -->
+    <section class="py-14 border-b border-[#1e2330]">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
+        
+        <div class="text-center max-w-2xl mx-auto space-y-2">
+          <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Developer tools built for production scale
+          </h2>
+          <p class="text-xs text-slate-400">
+            Everything needed to inspect, benchmark, and debug AI workloads.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <!-- Feature 1 -->
+          <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+            <div class="text-indigo-400 font-mono text-[11px] font-bold">01 / WATERFALL</div>
+            <h3 class="font-bold text-white font-mono">Flamegraph Timelines</h3>
+            <p class="text-slate-400 leading-relaxed text-[11px]">
+              Instantly identify slow vector lookups and model latencies along the critical path.
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+            <div class="text-indigo-400 font-mono text-[11px] font-bold">02 / MIND MAP</div>
+            <h3 class="font-bold text-white font-mono">D3 Execution DAG</h3>
+            <p class="text-slate-400 leading-relaxed text-[11px]">
+              Visualize complex parent-child causality graphs across agents, tools, and retrievers.
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+            <div class="text-indigo-400 font-mono text-[11px] font-bold">03 / COST REGISTRY</div>
+            <h3 class="font-bold text-white font-mono">Real-Time Financials</h3>
+            <p class="text-slate-400 leading-relaxed text-[11px]">
+              Dynamic pricing registry calculates exact token expenditures per model and workspace.
+            </p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+            <div class="text-indigo-400 font-mono text-[11px] font-bold">04 / ZERO-LOCKIN</div>
+            <h3 class="font-bold text-white font-mono">Apache 2.0 Open Source</h3>
+            <p class="text-slate-400 leading-relaxed text-[11px]">
+              Run forever on your own hardware without per-seat pricing or cloud vendor lock-in.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Clean Minimal Footer -->
+  <footer class="py-8 border-t border-[#1e2330] bg-[#080b11] text-xs text-slate-400 select-none relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="font-mono text-white font-bold">Feenion</span>
+        <span class="text-slate-600">&bull;</span>
+        <span>Open-source AI debugger released under the Apache 2.0 license.</span>
+      </div>
+
+      <div class="flex items-center space-x-6">
+        <a href="index.html" class="hover:text-white transition-colors">Overview</a>
+        <a href="docs.html" class="hover:text-white transition-colors">Documentation</a>
+        <a href="architecture.html" class="hover:text-white transition-colors">Architecture</a>
+        <a href="examples.html" class="hover:text-white transition-colors">Examples</a>
+        <a href="about.html" class="hover:text-white transition-colors">About</a>
+        <a href="community.html" class="hover:text-white transition-colors">Community</a>
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="hover:text-white transition-colors">GitHub ↗</a>
       </div>
     </div>
   </footer>
 
+  <!-- Scripts: Interactive Tabs & Mouse-Reactive Glowing Dot Grid Matrix -->
   <script>
-    const snippets = {
-      decorators: `<span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span, configure
-<span class="text-purple-400">from</span> feenion.exporters <span class="text-purple-400">import</span> HTTPExporter, AsyncExporter
-
-configure(exporter=AsyncExporter(HTTPExporter(<span class="text-emerald-400">"http://localhost:8000"</span>)))
-
-<span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-400">"rag_support_agent"</span>, span_type=<span class="text-emerald-400">"agent"</span>)
-<span class="text-purple-400">def</span> <span class="text-blue-400">run_rag_agent</span>(user_query: str):
-    docs = retrieve_documents(user_query)
-    <span class="text-purple-400">return</span> generate_answer(user_query, docs)`,
-
-      langchain: `<span class="text-purple-400">from</span> feenion.integrations.langchain <span class="text-purple-400">import</span> FeenionCallbackHandler
-
-handler = FeenionCallbackHandler(trace_name=<span class="text-emerald-400">"support_agent_workflow"</span>)
-
-<span class="text-slate-500"># Attach callback to any LangChain agent, chain, or tool</span>
-result = agent_executor.invoke(
-    {<span class="text-emerald-400">"input"</span>: <span class="text-emerald-400">"Analyze customer retention trends"</span>},
-    config={<span class="text-emerald-400">"callbacks"</span>: [handler]}
-)`,
-
-      openai: `<span class="text-purple-400">from</span> openai <span class="text-purple-400">import</span> OpenAI
-<span class="text-purple-400">from</span> feenion.integrations.openai <span class="text-purple-400">import</span> wrap_openai
-
-client = wrap_openai(OpenAI())
-
-<span class="text-slate-500"># Prompt tokens, completion tokens, and dollar spend calculated automatically!</span>
-response = client.chat.completions.create(
-    model=<span class="text-emerald-400">"gpt-4o"</span>,
-    messages=[{<span class="text-emerald-400">"role"</span>: <span class="text-emerald-400">"user"</span>, <span class="text-emerald-400">"content"</span>: <span class="text-emerald-400">"Hello world!"</span>}]
-)`,
-
-      pricing: `<span class="text-purple-400">import</span> feenion
-
-<span class="text-slate-500"># Override or define custom rates ($ per 1M tokens)</span>
-feenion.configure(
-    model_pricing={
-        <span class="text-emerald-400">"gpt-4o"</span>: (<span class="text-emerald-300">2.50</span>, <span class="text-emerald-300">10.00</span>),
-        <span class="text-emerald-400">"custom-llama-3"</span>: (<span class="text-emerald-300">0.25</span>, <span class="text-emerald-300">0.75</span>),
+    function copySnippet(text, btn) {
+      navigator.clipboard.writeText(text);
+      const original = btn.innerText;
+      btn.innerText = 'Copied!';
+      setTimeout(() => btn.innerText = original, 2000);
     }
-)`
-    };
 
-    function setCodeTab(tab) {
-      ['decorators', 'langchain', 'openai', 'pricing'].forEach(t => {
-        const btn = document.getElementById(`codeTab-${t}`);
-        if (btn) {
-          if (t === tab) {
-            btn.className = 'text-white font-bold border-b-2 border-indigo-500 pb-1';
-          } else {
-            btn.className = 'hover:text-white pb-1 text-slate-400';
+    function switchTab(tabName) {
+      ['openai', 'gemini', 'anthropic', 'langchain', 'rag'].forEach(t => {
+        const el = document.getElementById(`code-${t}`);
+        const tab = document.getElementById(`tab-${t}`);
+        if (el) el.classList.add('hidden');
+        if (tab) tab.className = 'px-3 py-2.5 text-slate-400 hover:text-slate-200';
+      });
+      const activeEl = document.getElementById(`code-${tabName}`);
+      const activeTab = document.getElementById(`tab-${tabName}`);
+      if (activeEl) activeEl.classList.remove('hidden');
+      if (activeTab) activeTab.className = 'px-3 py-2.5 text-indigo-300 border-b-2 border-indigo-500 font-medium';
+    }
+
+    // Interactive 3D Glowing & Elastic Dot Matrix Canvas
+    (function initDotMatrix() {
+      const canvas = document.getElementById('dotCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      let mouse = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
+      const spacing = 26;
+      const glowRadius = 110; // Refined compact radius
+      const maxPull = 5.0;     // 3D elastic displacement towards cursor
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.targetX = e.clientX;
+        mouse.targetY = e.clientY;
+      });
+
+      window.addEventListener('mouseleave', () => {
+        mouse.targetX = -1000;
+        mouse.targetY = -1000;
+      });
+
+      function render(time) {
+        // Smooth mouse lerping with gentle inertia
+        mouse.x += (mouse.targetX - mouse.x) * 0.12;
+        mouse.y += (mouse.targetY - mouse.y) * 0.12;
+
+        ctx.clearRect(0, 0, width, height);
+
+        for (let x = spacing / 2; x < width; x += spacing) {
+          for (let y = spacing / 2; y < height; y += spacing) {
+            const dx = mouse.x - x;
+            const dy = mouse.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            let drawX = x;
+            let drawY = y;
+            let dotRadius = 0.95;
+            let alpha = 0.14;
+            let fillStyle = 'rgba(71, 85, 105, '; // default subtle slate dot
+
+            if (dist < glowRadius) {
+              const q = 1 - dist / glowRadius;
+              const factor = q * q * (3 - 2 * q); // Smoothstep curve
+
+              // 3D elastic pull towards cursor
+              const pullFactor = factor * maxPull;
+              const angle = Math.atan2(dy, dx);
+              drawX += Math.cos(angle) * pullFactor;
+              drawY += Math.sin(angle) * pullFactor;
+
+              dotRadius = 0.95 + factor * 1.35;
+              alpha = 0.14 + factor * 0.76;
+
+              if (factor > 0.5) {
+                fillStyle = 'rgba(165, 180, 252, '; // Bright electric lavender/indigo highlight
+              } else {
+                fillStyle = 'rgba(129, 140, 248, '; // Soft ambient indigo
+              }
+            } else {
+              // Subtle organic breathing wave when idle
+              const idleWave = Math.sin(time * 0.0018 + (x + y) * 0.03) * 0.03;
+              alpha = Math.max(0.08, alpha + idleWave);
+            }
+
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, dotRadius, 0, Math.PI * 2);
+            ctx.fillStyle = fillStyle + alpha + ')';
+            ctx.fill();
           }
         }
-      });
-      document.getElementById('codeSnippetDisplay').innerHTML = snippets[tab];
-    }
+
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    })();
   </script>
 </body>
 </html>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 44" fill="none">
+  <!-- Feenion Icon Mark -->
+  <g transform="translate(2, 2)">
+    <rect width="40" height="40" rx="9" fill="#090D16" />
+    <rect x="0.5" y="0.5" width="39" height="39" rx="8.5" stroke="#1E2330" />
+    <path d="M11 9C11 8.44772 11.4477 8 12 8H16C16.5523 8 17 8.44772 17 9V31C17 31.5523 16.5523 32 16 32H12C11.4477 32 11 31.5523 11 31V9Z" fill="url(#logo-grad)" />
+    <path d="M16 8.5H28C28.8284 8.5 29.5 9.17157 29.5 10C29.5 10.8284 28.8284 11.5 28 11.5H16V8.5Z" fill="url(#logo-grad)" />
+    <path d="M16 18.5H23C23.8284 18.5 24.5 19.1716 24.5 20C24.5 20.8284 23.8284 21.5 23 21.5H16V18.5Z" fill="url(#logo-grad)" />
+    <circle cx="29.5" cy="10" r="2.5" fill="#C7D2FE" />
+    <circle cx="24.5" cy="20" r="2.2" fill="#A5B4FC" />
+    <circle cx="14" cy="30" r="2" fill="#818CF8" />
+  </g>
+
+  <!-- Wordmark Text -->
+  <text x="56" y="29" fill="#FFFFFF" font-family="'Inter', system-ui, -apple-system, sans-serif" font-weight="700" font-size="22" letter-spacing="-0.5">Feenion</text>
+
+  <defs>
+    <linearGradient id="logo-grad" x1="11" y1="8" x2="30" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#818CF8" />
+      <stop offset="1" stop-color="#4F46E5" />
+    </linearGradient>
+  </defs>
+</svg>
+

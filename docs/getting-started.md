@@ -19,7 +19,7 @@ Welcome to **Feenion**! This guide walks you through setting up Feenion in ultra
 Clone the repository and spin up Feenion:
 
 ```bash
-git clone https://github.com/feenion/feenion.git
+git clone https://github.com/DarshanAguru/feenion.git
 cd feenion
 docker compose up -d
 ```

@@ -1,88 +1,264 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>About Feenion — Open-Source AI Telemetry Project</title>
-  <meta name="description" content="Feenion is a brand-new open-source, self-hosted AI debugging and observability project." />
+  <title>About Feenion — Open-Source AI Telemetry</title>
+  <meta name="description" content="Why Feenion was built, its open-source philosophy, and the developer behind the project." />
+
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <!-- Tailwind CSS & Fonts -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; color: #e2e8f0; }
-    code, pre { font-family: 'JetBrains Mono', monospace; }
-    .bg-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 28px 28px; }
+    code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between antialiased bg-[#080b11]">
+<body class="min-h-screen flex flex-col antialiased bg-[#080b11] text-[#e2e8f0]">
 
-  <!-- Liquid Glass Header Navbar -->
-  <header class="bg-slate-950/70 backdrop-blur-xl border-b border-slate-800/60 sticky top-0 z-50 shadow-2xl px-6 py-2.5">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- Minimal Compact Navbar (h-12) -->
+  <header class="h-12 bg-[#080b11]/90 backdrop-blur-md border-b border-[#1e2330] sticky top-0 z-50 px-4 sm:px-6 transition-all">
+    <div class="max-w-7xl mx-auto h-full flex items-center justify-between">
       <div class="flex items-center space-x-6">
-        <a href="index.html" class="flex items-center space-x-3 group">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">F</div>
-          <span class="text-xl font-bold tracking-tight text-white">Feenion</span>
-          <span class="text-[10px] bg-slate-900/90 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full font-mono">About</span>
+        <a href="index.html" class="flex items-center space-x-2 group">
+          <svg class="w-5 h-5 shrink-0 rounded group-hover:scale-105 transition-transform" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="7" fill="#090D16" />
+            <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" stroke="#1E2330" />
+            <path d="M8 7C8 6.44772 8.44772 6 9 6H12C12.5523 6 13 6.44772 13 7V25C13 25.5523 12.5523 26 12 26H9C8.44772 26 8 25.5523 8 25V7Z" fill="url(#abt-nav-grad)" />
+            <path d="M12 6.5H22C22.8284 6.5 23.5 7.17157 23.5 8C23.5 8.82843 22.8284 9.5 22 9.5H12V6.5Z" fill="url(#abt-nav-grad)" />
+            <path d="M12 14.5H18C18.8284 14.5 19.5 15.1716 19.5 16C19.5 16.8284 18.8284 17.5 18 17.5H12V14.5Z" fill="url(#abt-nav-grad)" />
+            <circle cx="23.5" cy="8" r="2" fill="#C7D2FE" />
+            <circle cx="19.5" cy="16" r="1.8" fill="#A5B4FC" />
+            <circle cx="10.5" cy="24" r="1.5" fill="#818CF8" />
+            <defs>
+              <linearGradient id="abt-nav-grad" x1="8" y1="6" x2="24" y2="26" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#818CF8" />
+                <stop offset="1" stop-color="#4F46E5" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="text-xs font-bold font-mono text-white tracking-tight">Feenion</span>
         </a>
 
-        <!-- Consistent Nav Links -->
-        <nav class="flex items-center space-x-1.5 text-xs">
-          <a href="index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Overview</a>
-          <a href="docs.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Documentation</a>
-          <a href="about.html" class="px-3 py-1.5 rounded-lg text-indigo-300 font-semibold bg-indigo-600/20 border border-indigo-500/30 backdrop-blur-md shadow-inner transition">About</a>
-          <a href="community.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/60 transition">Community</a>
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden md:flex items-center space-x-1 text-[12px]">
+          <a href="index.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Overview</a>
+          <a href="docs.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Docs</a>
+          <a href="architecture.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Architecture</a>
+          <a href="examples.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Examples</a>
+          <a href="about.html" class="px-2 py-0.5 rounded text-white font-medium bg-slate-800/80">About</a>
+          <a href="community.html" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Community</a>
         </nav>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="px-3.5 py-1.5 bg-slate-900/80 hover:bg-slate-800/90 text-slate-200 font-medium rounded-lg border border-slate-800/80 transition text-xs flex items-center space-x-1.5 shadow-sm">
-          <span>⭐ GitHub</span>
+      <!-- Right: GitHub -->
+      <div class="flex items-center space-x-2.5 text-xs">
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="px-2.5 py-1 bg-slate-800/90 hover:bg-slate-700 text-slate-100 font-medium rounded border border-slate-700 transition-colors flex items-center space-x-1.5 shadow-sm text-[11px]">
+          <span>GitHub</span>
+          <span class="text-slate-400 text-[10px]">★</span>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Hero Header with Grid Background -->
-  <section class="relative bg-grid py-16 border-b border-slate-800/50">
-    <div class="max-w-4xl mx-auto px-6 space-y-3">
-      <div class="text-[11px] font-mono text-indigo-400 uppercase tracking-wider">Project Mission & Architecture</div>
-      <h1 class="text-3xl font-bold text-white">About the Feenion Project</h1>
-      <p class="text-slate-400 text-sm">
-        Feenion is a brand-new, open-source self-hosted telemetry engine designed specifically for developers building AI agents, RAG search pipelines, and LLM applications.
+  <!-- Hero Header -->
+  <section class="py-10 border-b border-[#1e2330] bg-[#090d16]">
+    <div class="max-w-4xl mx-auto px-6 space-y-2 text-center">
+      <div class="text-[10px] font-mono text-indigo-400 uppercase tracking-wider">Mission & Philosophy</div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+        About the Feenion Project
+      </h1>
+      <p class="text-xs text-slate-400 max-w-2xl mx-auto leading-relaxed">
+        Why Feenion exists, how it approaches AI observability, and our commitment to open-source software.
       </p>
     </div>
   </section>
 
-  <!-- Content Section -->
-  <main class="flex-1 max-w-4xl mx-auto px-6 py-12 space-y-8 text-xs text-slate-300 leading-relaxed">
+  <!-- Main Content -->
+  <main class="flex-1 max-w-4xl mx-auto px-6 py-12 space-y-12 text-xs leading-relaxed">
+    
+    <!-- Why Feenion Exists -->
     <div class="space-y-4">
-      <h2 class="text-lg font-bold text-white">Why We Built Feenion</h2>
-      <p>
-        Most AI debugging tools require shipping sensitive prompt text, proprietary knowledge base documents, and API secrets to external SaaS vendors. Feenion was built to provide an open-source, self-hosted option that runs locally on your machine or private cloud server with zero data leaks.
+      <h2 class="text-lg font-bold text-white font-mono">Why Feenion Exists</h2>
+      <p class="text-slate-300">
+        AI engineering has exploded with abstractions—prompt chains, vector databases, rerankers, agents, and multi-tool workflows. Yet developers are often left guessing why an agent spent 8 seconds in a loop or why a retrieval step failed.
+      </p>
+      <p class="text-slate-300">
+        Existing SaaS observability platforms force developers to send their confidential customer prompts, proprietary business documents, and API keys to third-party cloud vendors. Feenion was created to provide a <strong>100% self-hosted, open-source alternative</strong> where all telemetry stays under your complete control.
       </p>
     </div>
 
-    <div class="space-y-4 border-t border-slate-800/80 pt-8">
-      <h2 class="text-lg font-bold text-white">Key Engineering Commitments</h2>
-      <ul class="space-y-2.5 list-disc list-inside text-slate-400">
-        <li><strong class="text-white">Apache 2.0 License</strong>: Completely open-source and free for commercial and personal use.</li>
-        <li><strong class="text-white">Zero-Overhead Memory Footprint</strong>: Uses SQLite in single-container mode (~40MB RAM) so it runs alongside your LLMs without consuming system memory.</li>
-        <li><strong class="text-white">Non-Blocking Queue Exporter</strong>: Decouples trace sending from main Python application threads.</li>
-      </ul>
-    </div>
-  </main>
+    <!-- Design Principles -->
+    <div class="space-y-4 border-t border-[#1e2330] pt-8">
+      <h2 class="text-lg font-bold text-white font-mono">Core Design Principles</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+          <span class="font-bold text-indigo-300 block font-mono">1. Local & Self-Hosted</span>
+          <p class="text-slate-400 text-[11px]">
+            Zero cloud vendor lock-in. Run with Docker in one command on your laptop or private cloud.
+          </p>
+        </div>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800/60 bg-slate-950 py-6 text-xs text-slate-500">
-    <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
-      <div>Feenion — Open-Source Self-Hosted AI Debugger (Apache 2.0 License)</div>
-      <div class="space-x-5">
-        <a href="index.html" class="hover:text-slate-300 transition">Overview</a>
-        <a href="docs.html" class="hover:text-slate-300 transition">Docs</a>
-        <a href="https://github.com/feenion/feenion" target="_blank" rel="noopener" class="hover:text-slate-300 transition">GitHub Repository</a>
+        <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+          <span class="font-bold text-purple-300 block font-mono">2. Actionable Insights Over Metric Dumps</span>
+          <p class="text-slate-400 text-[11px]">
+            Every screen answers questions: Is my AI healthy? What changed? Where is the bottleneck?
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+          <span class="font-bold text-cyan-300 block font-mono">3. Lightweight & Non-Blocking</span>
+          <p class="text-slate-400 text-[11px]">
+            Decoupled asynchronous background workers ensure telemetry collection never slows user requests.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#090d16] border border-[#1e2330] space-y-2">
+          <span class="font-bold text-emerald-300 block font-mono">4. 100% Open Source</span>
+          <p class="text-slate-400 text-[11px]">
+            Licensed under Apache 2.0. Inspect, modify, and extend any part of the codebase.
+          </p>
+        </div>
       </div>
     </div>
+
+    <!-- Creator Section -->
+    <div class="space-y-4 border-t border-[#1e2330] pt-8">
+      <h2 class="text-lg font-bold text-white font-mono">Built by Darshan</h2>
+      <p class="text-slate-300 leading-relaxed">
+        Feenion was built by Darshan as an engineering project to explore distributed tracing in AI applications from first principles. I enjoy building developer tools that demystify complex software systems and give engineers full clarity over their applications.
+      </p>
+      <div class="flex items-center gap-4 text-xs font-mono pt-1 text-slate-400">
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="text-indigo-400 hover:text-indigo-300">GitHub Repository ↗</a>
+      </div>
+    </div>
+
+    <!-- Project Roadmap -->
+    <div class="space-y-4 border-t border-[#1e2330] pt-8">
+      <h2 class="text-lg font-bold text-white font-mono">Project Roadmap</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+        <div class="p-4 rounded-xl bg-[#090d16] border border-emerald-900/40 space-y-2">
+          <span class="text-emerald-400 font-bold block">✓ Completed</span>
+          <ul class="text-[11px] text-slate-400 space-y-1">
+            <li>&bull; Core Python SDK Tracing</li>
+            <li>&bull; Non-Blocking Async Exporter</li>
+            <li>&bull; Waterfall Distributed Timeline</li>
+            <li>&bull; D3 Mind Map DAG Visualizer</li>
+            <li>&bull; Error Fingerprinting Intelligence</li>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#090d16] border border-indigo-900/40 space-y-2">
+          <span class="text-indigo-300 font-bold block">○ In Progress</span>
+          <ul class="text-[11px] text-slate-400 space-y-1">
+            <li>&bull; Advanced Loop Detectors</li>
+            <li>&bull; RAG Quality Scorer</li>
+            <li>&bull; Trace Regression Diff Engine</li>
+            <li>&bull; Multi-Environment Filters</li>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#090d16] border border-slate-800 space-y-2">
+          <span class="text-slate-300 font-bold block">○ Planned</span>
+          <ul class="text-[11px] text-slate-400 space-y-1">
+            <li>&bull; OpenTelemetry OTLP Ingest</li>
+            <li>&bull; Local Trace Replay CLI</li>
+            <li>&bull; Automated Evaluation Metrics</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
   </footer>
 
+  <!-- Interactive 3D Glowing & Elastic Dot Matrix Canvas -->
+  <canvas id="dotCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+  <script>
+    (function initDotMatrix() {
+      const canvas = document.getElementById('dotCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      let mouse = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
+      const spacing = 26;
+      const glowRadius = 110;
+      const maxPull = 5.0;
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.targetX = e.clientX;
+        mouse.targetY = e.clientY;
+      });
+
+      window.addEventListener('mouseleave', () => {
+        mouse.targetX = -1000;
+        mouse.targetY = -1000;
+      });
+
+      function render(time) {
+        mouse.x += (mouse.targetX - mouse.x) * 0.12;
+        mouse.y += (mouse.targetY - mouse.y) * 0.12;
+
+        ctx.clearRect(0, 0, width, height);
+
+        for (let x = spacing / 2; x < width; x += spacing) {
+          for (let y = spacing / 2; y < height; y += spacing) {
+            const dx = mouse.x - x;
+            const dy = mouse.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            let drawX = x;
+            let drawY = y;
+            let dotRadius = 0.95;
+            let alpha = 0.14;
+            let fillStyle = 'rgba(71, 85, 105, ';
+
+            if (dist < glowRadius) {
+              const q = 1 - dist / glowRadius;
+              const factor = q * q * (3 - 2 * q);
+
+              const pullFactor = factor * maxPull;
+              const angle = Math.atan2(dy, dx);
+              drawX += Math.cos(angle) * pullFactor;
+              drawY += Math.sin(angle) * pullFactor;
+
+              dotRadius = 0.95 + factor * 1.35;
+              alpha = 0.14 + factor * 0.76;
+
+              if (factor > 0.5) {
+                fillStyle = 'rgba(165, 180, 252, ';
+              } else {
+                fillStyle = 'rgba(129, 140, 248, ';
+              }
+            } else {
+              const idleWave = Math.sin(time * 0.0018 + (x + y) * 0.03) * 0.03;
+              alpha = Math.max(0.08, alpha + idleWave);
+            }
+
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, dotRadius, 0, Math.PI * 2);
+            ctx.fillStyle = fillStyle + alpha + ')';
+            ctx.fill();
+          }
+        }
+
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    })();
+  </script>
 </body>
 </html>

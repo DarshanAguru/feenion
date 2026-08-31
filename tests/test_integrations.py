@@ -60,6 +60,8 @@ def test_trace_replay():
     summary = engine.replay_summary()
     assert summary["total_spans"] == 2
 
+from feenion.integrations.gemini import instrument_gemini, wrap_gemini
+
 def test_openai_and_anthropic_wrappers():
     mock_openai = SimpleNamespace(
         chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kw: SimpleNamespace(choices=[], usage=None)))
@@ -72,3 +74,16 @@ def test_openai_and_anthropic_wrappers():
     )
     wrapped_claude = wrap_anthropic(mock_anthropic)
     assert wrapped_claude is mock_anthropic
+
+    mock_genai_client = SimpleNamespace(
+        models=SimpleNamespace(generate_content=lambda *args, **kw: SimpleNamespace(text="gemini response", usage_metadata=None))
+    )
+    wrapped_gemini = wrap_gemini(mock_genai_client)
+    assert wrapped_gemini is mock_genai_client
+
+    mock_legacy_model = SimpleNamespace(
+        model_name="gemini-1.5-pro",
+        generate_content=lambda *args, **kw: SimpleNamespace(text="legacy response", usage_metadata=None)
+    )
+    wrapped_legacy = wrap_gemini(mock_legacy_model)
+    assert wrapped_legacy is mock_legacy_model
