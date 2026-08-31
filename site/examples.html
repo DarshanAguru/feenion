@@ -8,96 +8,179 @@
 
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="apple-touch-icon" href="assets/icon.svg" />
-  <!-- Tailwind CSS & Fonts -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; color: #e2e8f0; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #080b11; background-image: radial-gradient(rgba(148,163,184,0.12) 1px, transparent 1px); background-size: 24px 24px; color: #e2e8f0; }
     code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-card { position: relative; overflow: hidden; background: rgba(15,23,42,0.50); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 12px 32px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.035); }
+    .glass-card::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: var(--drop-opacity, 0); background: radial-gradient(290px circle at var(--drop-x, -200px) var(--drop-y, -200px), rgba(167,139,250,0.20), rgba(129,140,248,0.105) 24%, rgba(56,189,248,0.04) 46%, transparent 70%); transition: opacity 160ms ease; }
+    .glass-card > * { position: relative; }
+
+    pre, code { max-width: 100%; }
+    pre { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: pre; }
+    .glass-inner { background: rgba(7,11,19,0.72); backdrop-filter: blur(16px) saturate(1.1); -webkit-backdrop-filter: blur(16px) saturate(1.1); border: 1px solid rgba(255,255,255,0.09); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+    body { isolation: isolate; }
+    body > :not(#dotCanvas) { position: relative; z-index: 1; }
+    body > header { isolation: isolate; z-index: 100 !important; }
+    #mobileMenuBackdrop { z-index: 100 !important; }
+    #mobileMenu { z-index: 101 !important; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased bg-[#080b11] text-[#e2e8f0]">
 
-  <!-- Minimal Compact Navbar (h-12) -->
-  <header class="h-12 bg-[#080b11]/90 backdrop-blur-md border-b border-[#1e2330] sticky top-0 z-50 px-4 sm:px-6 transition-all">
+  <!-- Ultra-Modern Glassmorphic Navbar (h-14) -->
+  <header class="h-14 bg-[#080b11]/90 backdrop-blur-xl border-b border-white/[0.08] sticky top-0 z-50 px-4 sm:px-6 transition-all relative">
     <div class="max-w-7xl mx-auto h-full flex items-center justify-between">
-      <div class="flex items-center space-x-6">
-        <a href="index.html" class="flex items-center space-x-2 group">
-          <svg class="w-5 h-5 shrink-0 rounded group-hover:scale-105 transition-transform" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="32" height="32" rx="6" fill="#090D16" />
-            <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#1E2330" />
-            <path d="M8 7C8 6.44772 8.44772 6 9 6H12C12.5523 6 13 6.44772 13 7V25C13 25.5523 12.5523 26 12 26H9C8.44772 26 8 25.5523 8 25V7Z" fill="url(#ex-nav-grad)" />
-            <path d="M12 6.5H22C22.8284 6.5 23.5 7.17157 23.5 8C23.5 8.82843 22.8284 9.5 22 9.5H12V6.5Z" fill="url(#ex-nav-grad)" />
-            <path d="M12 14.5H18C18.8284 14.5 19.5 15.1716 19.5 16C19.5 16.8284 18.8284 17.5 18 17.5H12V14.5Z" fill="url(#ex-nav-grad)" />
-            <circle cx="23.5" cy="8" r="2" fill="#C7D2FE" />
-            <circle cx="19.5" cy="16" r="1.8" fill="#A5B4FC" />
-            <circle cx="10.5" cy="24" r="1.5" fill="#818CF8" />
-            <defs>
-              <linearGradient id="ex-nav-grad" x1="8" y1="6" x2="24" y2="26" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#818CF8" />
-                <stop offset="1" stop-color="#4F46E5" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <span class="text-xs font-bold font-mono text-white tracking-tight">Feenion</span>
+
+      <!-- Left: Logo & Desktop Navigation -->
+      <div class="flex items-center space-x-8">
+        <a href="index.html" class="flex items-center space-x-2.5 group">
+          <div class="p-1 rounded-lg bg-[#0d111a] border border-white/10 group-hover:border-indigo-500/50 transition-colors shadow-sm">
+            <svg class="w-5 h-5 shrink-0 rounded group-hover:scale-105 transition-transform" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="6" fill="#090D16" />
+              <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#1E2330" />
+              <path d="M8 7C8 6.44772 8.44772 6 9 6H12C12.5523 6 13 6.44772 13 7V25C13 25.5523 12.5523 26 12 26H9C8.44772 26 8 25.5523 8 25V7Z" fill="url(#nav-grad)" />
+              <path d="M12 6.5H22C22.8284 6.5 23.5 7.17157 23.5 8C23.5 8.82843 22.8284 9.5 22 9.5H12V6.5Z" fill="url(#nav-grad)" />
+              <path d="M12 14.5H18C18.8284 14.5 19.5 15.1716 19.5 16C19.5 16.8284 18.8284 17.5 18 17.5H12V14.5Z" fill="url(#nav-grad)" />
+              <circle cx="23.5" cy="8" r="2" fill="#C7D2FE" />
+              <circle cx="19.5" cy="16" r="1.8" fill="#A5B4FC" />
+              <circle cx="10.5" cy="24" r="1.5" fill="#818CF8" />
+              <defs>
+                <linearGradient id="nav-grad" x1="8" y1="6" x2="24" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#818CF8" />
+                  <stop offset="1" stop-color="#4F46E5" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <span class="text-sm font-bold font-mono text-white tracking-tight">Feenion</span>
+          <span class="hidden sm:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">v0.1.0</span>
         </a>
 
         <!-- Desktop Navigation Links -->
-        <nav class="hidden md:flex items-center space-x-1 text-[12px]">
-          <a href="index.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Overview</a>
-          <a href="docs.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Docs</a>
-          <a href="architecture.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Architecture</a>
-          <a href="examples.html" class="px-2 py-0.5 rounded text-white font-medium bg-slate-800/80">Examples</a>
-          <a href="about.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">About</a>
-          <a href="community.html" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Community</a>
+        <nav class="hidden md:flex items-center space-x-1 text-xs font-mono">
+          <a href="index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Overview</a>
+          <a href="docs.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Docs</a>
+          <a href="architecture.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Architecture</a>
+          <a href="examples.html" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 font-bold border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all">Examples</a>
+          <a href="about.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">About</a>
+          <a href="community.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Community</a>
         </nav>
       </div>
 
-      <!-- Right: GitHub -->
+      <!-- Right: Action Buttons & Hamburger -->
       <div class="flex items-center space-x-2.5 text-xs">
-        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="px-2.5 py-1 bg-slate-800/90 hover:bg-slate-700 text-slate-100 font-medium rounded border border-slate-700 transition-colors flex items-center space-x-1.5 shadow-sm text-[11px]">
-          <span>GitHub</span>
-          <span class="text-slate-400 text-[10px]">★</span>
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0d111a] hover:bg-slate-800 text-slate-200 border border-white/10 hover:border-slate-600 transition-all font-mono text-[11px]">
+          <svg class="w-3.5 h-3.5 text-amber-400 fill-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>Star</span>
+          <span class="text-slate-500">&bull;</span>
+          <span class="text-slate-400 font-bold">GitHub</span>
+        </a>
+
+        <a href="docs.html" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white font-semibold font-mono text-xs shadow-md shadow-indigo-500/20 transition-all">
+          <span>Get Started</span>
+          <span>&rarr;</span>
+        </a>
+
+        <!-- Mobile Hamburger Toggle Button -->
+        <button id="mobileMenuBtn" aria-label="Toggle Navigation" class="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent hover:border-slate-700 transition-all focus:outline-none">
+          <svg id="hamburgerOpenIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="hamburgerCloseIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobileMenuBackdrop" class="fixed inset-0 bg-black/75 z-40 hidden md:hidden transition-opacity"></div>
+
+    <!-- Mobile Dropdown Navigation Menu (Solid & Compact) -->
+    <div id="mobileMenu" class="hidden md:hidden border-b border-[#1e2330] bg-[#090d16] px-4 py-3 shadow-2xl relative z-50 text-xs font-mono">
+      <div class="grid grid-cols-2 gap-2 pb-2.5 border-b border-[#1e2330]">
+        <a href="index.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>⚡</span>
+          <span>Overview</span>
+        </a>
+        <a href="docs.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>📖</span>
+          <span>Docs</span>
+        </a>
+        <a href="architecture.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>🏗️</span>
+          <span>Architecture</span>
+        </a>
+        <a href="examples.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 font-bold transition-colors">
+          <span>🧪</span>
+          <span>Examples</span>
+        </a>
+        <a href="about.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>👤</span>
+          <span>About</span>
+        </a>
+        <a href="community.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>💬</span>
+          <span>Community</span>
+        </a>
+      </div>
+
+      <div class="pt-2.5 flex items-center gap-2">
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-semibold transition-all">
+          <svg class="w-3.5 h-3.5 text-amber-400 fill-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>GitHub ★</span>
+        </a>
+        <a href="docs.html" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] transition-all">
+          <span>Get Started &rarr;</span>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Hero Header -->
-  <section class="py-10 border-b border-[#1e2330] bg-[#090d16]">
-    <div class="max-w-4xl mx-auto px-6 space-y-2 text-center">
-      <div class="text-[10px] font-mono text-indigo-400 uppercase tracking-wider">Ready-to-Use Code Patterns</div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-        Feenion Recipes & SDK Examples
-      </h1>
-      <p class="text-xs text-slate-400 max-w-2xl mx-auto leading-relaxed">
-        Explore production code patterns for RAG search pipelines, LangChain callbacks, OpenAI, Gemini, and Claude wrappers.
-      </p>
-    </div>
-  </section>
+  <!-- Content Wrapper -->
+  <div class="relative z-10 flex-1 flex flex-col">
 
-  <!-- Recipes List -->
-  <main class="flex-1 max-w-4xl mx-auto px-6 py-12 space-y-12 text-xs leading-relaxed">
-    
+    <!-- Hero Header -->
+    <section class="pt-8 pb-4 px-4 sm:px-6">
+      <div class="max-w-4xl mx-auto p-8 rounded-2xl shadow-2xl text-center space-y-2 glass-card">
+        <div class="text-[10px] font-mono text-indigo-400 uppercase tracking-wider">Ready-to-Use Code Patterns</div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          Feenion Recipes & SDK Examples
+        </h1>
+        <p class="text-xs text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          Explore production code patterns for RAG search pipelines, LangChain callbacks, OpenAI, Gemini, and Claude wrappers.
+        </p>
+      </div>
+    </section>
+
+    <!-- Recipes List -->
+    <main class="flex-1 max-w-4xl mx-auto w-full px-6 py-8 my-4 space-y-10 text-xs leading-relaxed rounded-2xl shadow-2xl glass-card">
+
     <!-- Example 1: RAG Pipeline -->
     <div class="space-y-3">
-      <div class="flex items-center justify-between">
-        <h2 class="text-base font-bold text-white font-mono flex items-center gap-2">
-          <span>🔍</span> 1. RAG Vector Search & Re-ranking Pipeline
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <h2 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+          <span>🔍</span> <span>1. RAG Vector Search &amp; Re-ranking Pipeline</span>
         </h2>
-        <span class="text-[11px] font-mono text-amber-400">span_type="retrieval"</span>
+        <span class="text-[11px] font-mono text-amber-400 shrink-0">span_type="retrieval"</span>
       </div>
       <p class="text-slate-300">
         Trace query embeddings, vector similarity search, document filtering, and final LLM synthesis with relevance scores:
       </p>
 
-      <div class="rounded-xl bg-[#090d16] border border-[#1e2330] overflow-hidden">
-        <div class="bg-[#0d111a] px-3 py-1.5 border-b border-[#1e2330] text-[11px] font-mono text-slate-400">rag_pipeline.py</div>
-        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed"><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span
+      <div class="rounded-xl overflow-hidden glass-card">
+        <div class="px-3 py-1.5 border-b border-white/[0.06] text-[11px] font-mono text-slate-400 glass-inner rounded-none">rag_pipeline.py</div>
+        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed overflow-x-auto text-[11px] sm:text-xs glass-inner rounded-none"><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span
 
 <span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-400">"rag_knowledge_search"</span>, span_type=<span class="text-emerald-400">"retrieval"</span>)
 <span class="text-purple-400">async def</span> <span class="text-blue-400">search_and_answer</span>(user_query: str):
-    <span class="text-purple-400">with</span> span(<span class="text-emerald-400">"vector_similarity_search"</span>, span_type=<span class="text-emerald-400">"retrieval"</span>, input={<span class="text-emerald-400">"query"</span>: user_query}):
+    <span class="text-purple-400">with</span> span(<span class="text-emerald-400">"vector_similarity_search"</span>, span_type=<span class="text-emerald-400">"retrieval"</span>):
         raw_docs = <span class="text-purple-400">await</span> qdrant_client.search(query=user_query, limit=10)
 
     <span class="text-purple-400">with</span> span(<span class="text-emerald-400">"cohere_rerank"</span>, span_type=<span class="text-emerald-400">"retrieval"</span>):
@@ -112,24 +195,24 @@
     </div>
 
     <!-- Example 2: Multi-Step Agent -->
-    <div class="space-y-3 border-t border-[#1e2330] pt-8">
-      <div class="flex items-center justify-between">
-        <h2 class="text-base font-bold text-white font-mono flex items-center gap-2">
-          <span>🤖</span> 2. Autonomous Multi-Step Agent with Tool Calling
+    <div class="space-y-3 border-t border-white/[0.06] pt-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <h2 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+          <span>🤖</span> <span>2. Autonomous Multi-Step Agent with Tool Calling</span>
         </h2>
-        <span class="text-[11px] font-mono text-indigo-400">span_type="agent"</span>
+        <span class="text-[11px] font-mono text-indigo-400 shrink-0">span_type="agent"</span>
       </div>
       <p class="text-slate-300">
         Trace tool execution loops, parameter generation, database lookups, and error recovery branches:
       </p>
 
-      <div class="rounded-xl bg-[#090d16] border border-[#1e2330] overflow-hidden">
-        <div class="bg-[#0d111a] px-3 py-1.5 border-b border-[#1e2330] text-[11px] font-mono text-slate-400">agent_tools.py</div>
-        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed"><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span
+      <div class="rounded-xl overflow-hidden glass-card">
+        <div class="px-3 py-1.5 border-b border-white/[0.06] text-[11px] font-mono text-slate-400 glass-inner rounded-none">agent_tools.py</div>
+        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed overflow-x-auto text-[11px] sm:text-xs glass-inner rounded-none"><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span
 
 <span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-400">"financial_analyst_agent"</span>, span_type=<span class="text-emerald-400">"agent"</span>)
 <span class="text-purple-400">def</span> <span class="text-blue-400">run_financial_analysis</span>(ticker: str):
-    <span class="text-purple-400">with</span> span(<span class="text-emerald-400">"fetch_stock_prices"</span>, span_type=<span class="text-emerald-400">"tool"</span>, input={<span class="text-emerald-400">"ticker"</span>: ticker}):
+    <span class="text-purple-400">with</span> span(<span class="text-emerald-400">"fetch_stock_prices"</span>, span_type=<span class="text-emerald-400">"tool"</span>):
         prices = api.get_stock_history(ticker)
 
     <span class="text-purple-400">with</span> span(<span class="text-emerald-400">"compute_volatility"</span>, span_type=<span class="text-emerald-400">"tool"</span>):
@@ -141,27 +224,27 @@
     </div>
 
     <!-- Example 3: Google Gemini SDK Auto-Instrumentation -->
-    <div class="space-y-3 border-t border-[#1e2330] pt-8">
-      <div class="flex items-center justify-between">
-        <h2 class="text-base font-bold text-white font-mono flex items-center gap-2">
-          <span>✨</span> 3. Google Gemini Auto-Instrumentation
+    <div class="space-y-3 border-t border-white/[0.06] pt-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <h2 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+          <span>✨</span> <span>3. Google Gemini Auto-Instrumentation</span>
         </h2>
-        <span class="text-[11px] font-mono text-purple-400">span_type="llm"</span>
+        <span class="text-[11px] font-mono text-purple-400 shrink-0">span_type="llm"</span>
       </div>
       <p class="text-slate-300">
         Automatically captures prompt tokens, candidate tokens, finish reasons, latency, and costs using <code class="text-indigo-300">google-genai</code>:
       </p>
 
-      <div class="rounded-xl bg-[#090d16] border border-[#1e2330] overflow-hidden">
-        <div class="bg-[#0d111a] px-3 py-1.5 border-b border-[#1e2330] text-[11px] font-mono text-slate-400">gemini_tracing.py</div>
-        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed"><span class="text-purple-400">from</span> google <span class="text-purple-400">import</span> genai
+      <div class="rounded-xl overflow-hidden glass-card">
+        <div class="px-3 py-1.5 border-b border-white/[0.06] text-[11px] font-mono text-slate-400 glass-inner rounded-none">gemini_tracing.py</div>
+        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed overflow-x-auto text-[11px] sm:text-xs glass-inner rounded-none"><span class="text-purple-400">from</span> google <span class="text-purple-400">import</span> genai
 <span class="text-purple-400">from</span> feenion.integrations.gemini <span class="text-purple-400">import</span> instrument_gemini
 
-<span class="text-slate-500"># 1. Initialize client & instrument in-place:</span>
+<span class="text-slate-500"># 1. Initialize client &amp; instrument in-place:</span>
 client = genai.Client()
 instrument_gemini(client)
 
-<span class="text-slate-500"># 2. Call generate_content - trace and token metrics are automatically captured!</span>
+<span class="text-slate-500"># 2. Call generate_content — trace + token metrics auto-captured!</span>
 response = client.models.generate_content(
     model=<span class="text-emerald-400">"gemini-2.0-flash"</span>,
     contents=<span class="text-emerald-400">"Explain vector similarity search algorithms."</span>
@@ -170,42 +253,43 @@ response = client.models.generate_content(
     </div>
 
     <!-- Example 4: Zero-Key Comprehensive Mock AI Ecosystem -->
-    <div class="space-y-3 border-t border-[#1e2330] pt-8">
-      <div class="flex items-center justify-between">
-        <h2 class="text-base font-bold text-white font-mono flex items-center gap-2">
-          <span>🧪</span> 4. Zero-Key Comprehensive Mock AI Ecosystem (MCP, RAG & Multi-LLM)
+    <div class="space-y-3 border-t border-white/[0.06] pt-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <h2 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+          <span>🧪</span> <span>4. Zero-Key Mock AI Ecosystem (MCP, RAG &amp; Multi-LLM)</span>
         </h2>
-        <span class="text-[11px] font-mono text-emerald-400">Run Locally</span>
+        <span class="text-[11px] font-mono text-emerald-400 shrink-0">Run Locally</span>
       </div>
       <p class="text-slate-300">
-        Run the complete standalone example script that mocks real Google Gemini, OpenAI, Vector DB RAG retrieval, and Model Context Protocol (MCP) tools:
+        Run the complete standalone example script that mocks Google Gemini, OpenAI, Vector DB RAG retrieval, and Model Context Protocol (MCP) tools:
       </p>
 
-      <div class="rounded-xl bg-[#090d16] border border-[#1e2330] overflow-hidden">
-        <div class="bg-[#0d111a] px-3 py-1.5 border-b border-[#1e2330] text-[11px] font-mono text-slate-400 flex items-center justify-between">
-          <span>examples/comprehensive_mock_ecosystem.py</span>
-          <span class="text-emerald-400 text-[10px]">Zero External API Keys Needed</span>
+      <div class="rounded-xl overflow-hidden glass-card">
+        <div class="px-3 py-1.5 border-b border-white/[0.06] text-[11px] font-mono text-slate-400 flex flex-wrap items-center justify-between gap-2 glass-inner rounded-none">
+          <span class="truncate">examples/comprehensive_mock_ecosystem.py</span>
+          <span class="text-emerald-400 text-[10px] shrink-0">Zero API Keys Needed</span>
         </div>
-        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed"><span class="text-slate-500"># Run directly from terminal:</span>
+        <pre class="p-4 text-slate-200 font-mono select-all leading-relaxed overflow-x-auto text-[11px] sm:text-xs glass-inner rounded-none"><span class="text-slate-500"># Run directly from terminal:</span>
 $ python examples/comprehensive_mock_ecosystem.py
 
-<span class="text-slate-500"># Output: Full multi-span trace hierarchy printed with flamegraph latency,
+<span class="text-slate-500"># Output: Full multi-span trace hierarchy with flamegraph latency,
 # model token counts, tool execution parameters, and calculated costs!</span></pre>
       </div>
     </div>
 
   </main>
+  </div>
 
   <!-- Clean Footer with auto-fetching copyright and pulsating heart -->
-  <footer class="py-10 border-t border-[#1e2330] bg-[#080b11] text-xs text-slate-400 select-none relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center space-x-3">
+  <footer class="py-8 border-t border-[#1e2330] bg-[#080b11] text-xs text-slate-400 select-none relative z-10 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+      <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs">
         <span class="font-mono text-white font-bold">Feenion</span>
-        <span class="text-slate-600">&bull;</span>
-        <span>Open-source AI debugger released under the Apache 2.0 license.</span>
+        <span class="text-slate-600 hidden sm:inline">&bull;</span>
+        <span class="text-slate-400 text-[11px] sm:text-xs">Open-source AI debugger released under the Apache 2.0 license.</span>
       </div>
 
-      <div class="flex items-center space-x-6">
+      <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] sm:text-xs">
         <a href="index.html" class="hover:text-white transition-colors">Overview</a>
         <a href="docs.html" class="hover:text-white transition-colors">Documentation</a>
         <a href="architecture.html" class="hover:text-white transition-colors">Architecture</a>
@@ -222,13 +306,66 @@ $ python examples/comprehensive_mock_ecosystem.py
     </div>
   </footer>
 
-  <!-- Interactive 3D Glowing & Elastic Dot Matrix Canvas -->
-  <canvas id="dotCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <!-- Interactive 3D Glowing & Elastic Dot Matrix Canvas (Desktop Only) -->
+  <canvas id="dotCanvas" class="fixed inset-0 pointer-events-none hidden md:block" style="z-index:0"></canvas>
 
   <script>
     document.querySelectorAll('.currentYear').forEach(el => el.textContent = new Date().getFullYear());
 
+    // Mobile Navigation Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
+    const hamburgerOpenIcon = document.getElementById('hamburgerOpenIcon');
+    const hamburgerCloseIcon = document.getElementById('hamburgerCloseIcon');
+
+    function toggleMobileMenu() {
+      if (!mobileMenu) return;
+      const isHidden = mobileMenu.classList.contains('hidden');
+      if (isHidden) {
+        mobileMenu.classList.remove('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.remove('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.add('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.remove('hidden');
+      } else {
+        mobileMenu.classList.add('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.add('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.remove('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.add('hidden');
+      }
+    }
+
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    }
+    if (mobileMenuBackdrop) {
+      mobileMenuBackdrop.addEventListener('click', toggleMobileMenu);
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 768) {
+        if (mobileMenu) mobileMenu.classList.add('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.add('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.remove('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.add('hidden');
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!mobileMenu || mobileMenu.classList.contains('hidden')) return;
+      const header = document.querySelector('header');
+      if (header && !header.contains(e.target)) {
+        mobileMenu.classList.add('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.add('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.remove('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.add('hidden');
+      }
+    });
+
+    // Interactive 3D Glowing & Elastic Dot Matrix Canvas (Desktop Only)
     (function initDotMatrix() {
+      if (window.innerWidth < 768) return;
       const canvas = document.getElementById('dotCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -237,11 +374,16 @@ $ python examples/comprehensive_mock_ecosystem.py
       let height = (canvas.height = window.innerHeight);
 
       let mouse = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
-      const spacing = 26;
-      const glowRadius = 110;
-      const maxPull = 5.0;
+      const spacing = 24;
+      const glowRadius = 120;
+      const maxPull = 4.5;
 
       window.addEventListener('resize', () => {
+        if (window.innerWidth < 768) {
+          canvas.style.display = 'none';
+          return;
+        }
+        canvas.style.display = 'block';
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
       });
@@ -256,9 +398,10 @@ $ python examples/comprehensive_mock_ecosystem.py
         mouse.targetY = -1000;
       });
 
-      function render(time) {
-        mouse.x += (mouse.targetX - mouse.x) * 0.12;
-        mouse.y += (mouse.targetY - mouse.y) * 0.12;
+      function render() {
+        if (window.innerWidth < 768) return;
+        mouse.x += (mouse.targetX - mouse.x) * 0.14;
+        mouse.y += (mouse.targetY - mouse.y) * 0.14;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -270,9 +413,9 @@ $ python examples/comprehensive_mock_ecosystem.py
 
             let drawX = x;
             let drawY = y;
-            let dotRadius = 0.95;
+            let dotRadius = 0.9;
             let alpha = 0.14;
-            let fillStyle = 'rgba(71, 85, 105, ';
+            let fillStyle = 'rgba(148, 163, 184, '; // Clean subtle faded greyish base
 
             if (dist < glowRadius) {
               const q = 1 - dist / glowRadius;
@@ -283,17 +426,16 @@ $ python examples/comprehensive_mock_ecosystem.py
               drawX += Math.cos(angle) * pullFactor;
               drawY += Math.sin(angle) * pullFactor;
 
-              dotRadius = 0.95 + factor * 1.35;
-              alpha = 0.14 + factor * 0.76;
+              dotRadius = 0.9 + factor * 1.6;
+              alpha = 0.14 + factor * 0.78;
 
-              if (factor > 0.5) {
-                fillStyle = 'rgba(165, 180, 252, ';
-              } else {
+              if (factor > 0.6) {
+                fillStyle = 'rgba(167, 139, 250, ';
+              } else if (factor > 0.3) {
                 fillStyle = 'rgba(129, 140, 248, ';
+              } else {
+                fillStyle = 'rgba(56, 189, 248, ';
               }
-            } else {
-              const idleWave = Math.sin(time * 0.0018 + (x + y) * 0.03) * 0.03;
-              alpha = Math.max(0.08, alpha + idleWave);
             }
 
             ctx.beginPath();
@@ -308,7 +450,70 @@ $ python examples/comprehensive_mock_ecosystem.py
 
       requestAnimationFrame(render);
     })();
+
+    // ── Card border directional glow — mousemove + rAF throttle (efficient) ──
+    (function initCardGlow() {
+      document.querySelectorAll('.glass-card').forEach(card => {
+        card.addEventListener('pointermove', e => { const r = card.getBoundingClientRect(); card.style.setProperty('--drop-x', `${e.clientX - r.left}px`); card.style.setProperty('--drop-y', `${e.clientY - r.top}px`); card.style.setProperty('--drop-opacity', '1'); });
+        card.addEventListener('pointerleave', () => card.style.setProperty('--drop-opacity', '0'));
+      });
+      return;
+      // Cache card list once; re-query only on resize
+      let cards = Array.from(document.querySelectorAll('.glass-card'));
+      window.addEventListener('resize', () => { cards = Array.from(document.querySelectorAll('.glass-card')); });
+
+      let mx = -9999, my = -9999, rafId = null;
+
+      // Per-edge factor: cubic falloff over 110px reach
+      function ef(d) {
+        const v = 1 - Math.min(Math.max(d, 0), 110) / 110;
+        return v * v * v; // steep cubic — far edge fades hard
+      }
+
+      function applyGlow() {
+        rafId = null;
+        const vh = window.innerHeight;
+        cards.forEach(card => {
+          const r = card.getBoundingClientRect();
+          if (r.bottom < -80 || r.top > vh + 80) return;
+
+          // Per-edge proximity (0 = far/opposite, 1 = cursor on/past that edge)
+          const fL = ef(mx - r.left);    // left border
+          const fR = ef(r.right  - mx);  // right border
+          const fT = ef(my - r.top);     // top border
+          const fB = ef(r.bottom - my);  // bottom border
+
+          const peak = Math.max(fL, fR, fT, fB);
+          if (peak < 0.008) {
+            card.style.borderColor = '';
+            card.style.boxShadow   = '';
+            return;
+          }
+
+          // 4 directional outer-glow shadows — each only illuminates its own side
+          const sp = 12, bl = 18, mA = 0.60;
+          const sL = `${(-sp * fL).toFixed(1)}px 0 ${bl}px rgba(99,102,241,${(fL*mA).toFixed(2)})`;
+          const sR = `${( sp * fR).toFixed(1)}px 0 ${bl}px rgba(99,102,241,${(fR*mA).toFixed(2)})`;
+          const sT = `0 ${(-sp * fT).toFixed(1)}px ${bl}px rgba(99,102,241,${(fT*mA).toFixed(2)})`;
+          const sB = `0 ${ (sp * fB).toFixed(1)}px ${bl}px rgba(99,102,241,${(fB*mA).toFixed(2)})`;
+
+          card.style.borderColor = `rgba(99,102,241,${(peak * 0.65).toFixed(2)})`;
+          card.style.boxShadow   = `${sL},${sR},${sT},${sB},0 4px 20px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.07)`;
+        });
+      }
+
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        if (!rafId) rafId = requestAnimationFrame(applyGlow);
+      });
+
+      // Reset all on mouse leave
+      document.addEventListener('mouseleave', () => {
+        mx = -9999; my = -9999;
+        cards.forEach(c => { c.style.borderColor = ''; c.style.boxShadow = ''; });
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      });
+    })();
   </script>
 </body>
 </html>
-

@@ -31,10 +31,32 @@
       }
     }
   </script>
+  <!-- Google Fonts Preconnect & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #080b11; color: #e2e8f0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #080b11;
+      background-image: radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: #e2e8f0;
+    }
     code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-card { position: relative; overflow: hidden; background: rgba(15,23,42,0.50); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 12px 32px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.035); }
+    .glass-card::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: var(--drop-opacity, 0); background: radial-gradient(290px circle at var(--drop-x, -200px) var(--drop-y, -200px), rgba(167,139,250,0.20), rgba(129,140,248,0.105) 24%, rgba(56,189,248,0.04) 46%, transparent 70%); transition: opacity 160ms ease; }
+    .glass-card > * { position: relative; }
+
+    pre, code { max-width: 100%; }
+    pre { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: pre; }
+    .glass-inner { background: rgba(7,11,19,0.72); backdrop-filter: blur(16px) saturate(1.1); -webkit-backdrop-filter: blur(16px) saturate(1.1); border: 1px solid rgba(255,255,255,0.09); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+    body { isolation: isolate; }
+    body > :not(#dotCanvas) { position: relative; z-index: 1; }
+    body > header { isolation: isolate; z-index: 100 !important; }
+    #mobileMenuBackdrop { z-index: 100 !important; }
+    #mobileMenu { z-index: 101 !important; }
     .doc-link.active {
       color: #818cf8 !important;
       font-weight: 600 !important;
@@ -54,56 +76,133 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased bg-[#080b11] text-[#e2e8f0]">
 
-  <!-- Minimal Compact Navbar (h-12) -->
-  <header class="h-12 bg-[#080b11]/90 backdrop-blur-md border-b border-[#1e2330] sticky top-0 z-50 px-4 sm:px-6 transition-all">
+  <!-- Ultra-Modern Glassmorphic Navbar (h-14) -->
+  <header class="h-14 bg-[#080b11]/90 backdrop-blur-xl border-b border-white/[0.08] sticky top-0 z-50 px-4 sm:px-6 transition-all relative">
     <div class="max-w-7xl mx-auto h-full flex items-center justify-between">
-      <div class="flex items-center space-x-6">
-        <a href="index.html" class="flex items-center space-x-2 group">
-          <svg class="w-5 h-5 shrink-0 rounded group-hover:scale-105 transition-transform" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="32" height="32" rx="6" fill="#090D16" />
-            <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#1E2330" />
-            <path d="M8 7C8 6.44772 8.44772 6 9 6H12C12.5523 6 13 6.44772 13 7V25C13 25.5523 12.5523 26 12 26H9C8.44772 26 8 25.5523 8 25V7Z" fill="url(#nav-grad)" />
-            <path d="M12 6.5H22C22.8284 6.5 23.5 7.17157 23.5 8C23.5 8.82843 22.8284 9.5 22 9.5H12V6.5Z" fill="url(#nav-grad)" />
-            <path d="M12 14.5H18C18.8284 14.5 19.5 15.1716 19.5 16C19.5 16.8284 18.8284 17.5 18 17.5H12V14.5Z" fill="url(#nav-grad)" />
-            <circle cx="23.5" cy="8" r="2" fill="#C7D2FE" />
-            <circle cx="19.5" cy="16" r="1.8" fill="#A5B4FC" />
-            <circle cx="10.5" cy="24" r="1.5" fill="#818CF8" />
-            <defs>
-              <linearGradient id="nav-grad" x1="8" y1="6" x2="24" y2="26" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#818CF8" />
-                <stop offset="1" stop-color="#4F46E5" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <span class="text-xs font-bold font-mono text-white tracking-tight">Feenion</span>
+
+      <!-- Left: Logo & Desktop Navigation -->
+      <div class="flex items-center space-x-8">
+        <a href="index.html" class="flex items-center space-x-2.5 group">
+          <div class="p-1 rounded-lg bg-[#0d111a] border border-white/10 group-hover:border-indigo-500/50 transition-colors shadow-sm">
+            <svg class="w-5 h-5 shrink-0 rounded group-hover:scale-105 transition-transform" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="6" fill="#090D16" />
+              <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" stroke="#1E2330" />
+              <path d="M8 7C8 6.44772 8.44772 6 9 6H12C12.5523 6 13 6.44772 13 7V25C13 25.5523 12.5523 26 12 26H9C8.44772 26 8 25.5523 8 25V7Z" fill="url(#nav-grad)" />
+              <path d="M12 6.5H22C22.8284 6.5 23.5 7.17157 23.5 8C23.5 8.82843 22.8284 9.5 22 9.5H12V6.5Z" fill="url(#nav-grad)" />
+              <path d="M12 14.5H18C18.8284 14.5 19.5 15.1716 19.5 16C19.5 16.8284 18.8284 17.5 18 17.5H12V14.5Z" fill="url(#nav-grad)" />
+              <circle cx="23.5" cy="8" r="2" fill="#C7D2FE" />
+              <circle cx="19.5" cy="16" r="1.8" fill="#A5B4FC" />
+              <circle cx="10.5" cy="24" r="1.5" fill="#818CF8" />
+              <defs>
+                <linearGradient id="nav-grad" x1="8" y1="6" x2="24" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#818CF8" />
+                  <stop offset="1" stop-color="#4F46E5" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <span class="text-sm font-bold font-mono text-white tracking-tight">Feenion</span>
+          <span class="hidden sm:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">v0.1.0</span>
         </a>
 
         <!-- Desktop Navigation Links -->
-        <nav class="hidden md:flex items-center space-x-1 text-[12px]">
-          <a href="index.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Overview</a>
-          <a href="docs.html" class="px-2 py-0.5 rounded text-white font-medium bg-slate-800/80">Docs</a>
-          <a href="architecture.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Architecture</a>
-          <a href="examples.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Examples</a>
-          <a href="about.html" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">About</a>
-          <a href="community.html" class="px-2.5 py-0.5 rounded text-slate-400 hover:text-slate-200 transition-colors">Community</a>
+        <nav class="hidden md:flex items-center space-x-1 text-xs font-mono">
+          <a href="index.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Overview</a>
+          <a href="docs.html" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 font-bold border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all">Docs</a>
+          <a href="architecture.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Architecture</a>
+          <a href="examples.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Examples</a>
+          <a href="about.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">About</a>
+          <a href="community.html" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">Community</a>
         </nav>
       </div>
 
-      <!-- Right: GitHub -->
+      <!-- Right: Action Buttons & Hamburger -->
       <div class="flex items-center space-x-2.5 text-xs">
-        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="px-2.5 py-1 bg-slate-800/90 hover:bg-slate-700 text-slate-100 font-medium rounded border border-slate-700 transition-colors flex items-center space-x-1.5 shadow-sm text-[11px]">
-          <span>GitHub</span>
-          <span class="text-slate-400 text-[10px]">★</span>
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0d111a] hover:bg-slate-800 text-slate-200 border border-white/10 hover:border-slate-600 transition-all font-mono text-[11px]">
+          <svg class="w-3.5 h-3.5 text-amber-400 fill-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>Star</span>
+          <span class="text-slate-500">&bull;</span>
+          <span class="text-slate-400 font-bold">GitHub</span>
+        </a>
+
+        <a href="docs.html" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white font-semibold font-mono text-xs shadow-md shadow-indigo-500/20 transition-all">
+          <span>Get Started</span>
+          <span>&rarr;</span>
+        </a>
+
+        <!-- Mobile Hamburger Toggle Button -->
+        <button id="mobileMenuBtn" aria-label="Toggle Navigation" class="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent hover:border-slate-700 transition-all focus:outline-none">
+          <svg id="hamburgerOpenIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="hamburgerCloseIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobileMenuBackdrop" class="fixed inset-0 bg-black/75 z-40 hidden md:hidden transition-opacity"></div>
+
+    <!-- Mobile Dropdown Navigation Menu (Solid & Compact) -->
+    <div id="mobileMenu" class="hidden md:hidden border-b border-[#1e2330] bg-[#090d16] px-4 py-3 shadow-2xl relative z-50 text-xs font-mono">
+      <div class="grid grid-cols-2 gap-2 pb-2.5 border-b border-[#1e2330]">
+        <a href="index.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>⚡</span>
+          <span>Overview</span>
+        </a>
+        <a href="docs.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 font-bold transition-colors">
+          <span>📖</span>
+          <span>Docs</span>
+        </a>
+        <a href="architecture.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>🏗️</span>
+          <span>Architecture</span>
+        </a>
+        <a href="examples.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>🧪</span>
+          <span>Examples</span>
+        </a>
+        <a href="about.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>👤</span>
+          <span>About</span>
+        </a>
+        <a href="community.html" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <span>💬</span>
+          <span>Community</span>
+        </a>
+      </div>
+
+      <div class="pt-2.5 flex items-center gap-2">
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#0d111a] hover:bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-semibold transition-all">
+          <svg class="w-3.5 h-3.5 text-amber-400 fill-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>GitHub ★</span>
+        </a>
+        <a href="docs.html" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] transition-all">
+          <span>Get Started &rarr;</span>
         </a>
       </div>
     </div>
   </header>
 
   <!-- 3-Column Documentation Layout -->
-  <div class="flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row px-4 sm:px-6 py-8 gap-8">
-    
-    <!-- Left Interactive Sticky Navigation Sidebar (Hidden Scrollbar) -->
-    <aside id="docsSidebar" class="w-full md:w-64 shrink-0 select-none md:sticky md:top-20 md:h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar space-y-6 text-xs pr-2">
+  <div class="flex-1 max-w-7xl mx-auto w-full flex flex-col md:flex-row px-4 sm:px-6 py-6 md:py-8 gap-6 md:gap-8 relative z-10">
+
+    <!-- Mobile Table of Contents Toggle Pill -->
+    <div class="md:hidden flex items-center justify-between p-3 rounded-xl glass-card">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono font-bold text-slate-200">📖 Navigation Menu</span>
+      </div>
+      <button id="mobileTocBtn" class="px-3 py-1 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 text-xs font-mono font-semibold flex items-center gap-1.5 hover:bg-indigo-600/30 transition-colors">
+        <span>Chapters</span>
+        <svg id="mobileTocIcon" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+      </button>
+    </div>
+
+    <!-- Left Interactive Sticky Navigation Sidebar (Hidden on mobile unless toggled) -->
+    <aside id="docsSidebar" class="hidden md:block w-full md:w-64 shrink-0 select-none md:sticky md:top-20 md:h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar space-y-6 text-xs p-4 rounded-xl bg-[#090d16] border border-[#1e2330] shadow-xl">
+
       <!-- Search Input Filter -->
       <div class="relative mb-4">
         <input
@@ -199,8 +298,8 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 min-w-0 space-y-12 text-sm leading-relaxed">
-      
+    <main class="flex-1 min-w-0 space-y-10 text-sm leading-relaxed p-6 sm:p-10 rounded-2xl bg-[#090d16] border border-[#1e2330] shadow-2xl">
+
       <!-- Section 1: Getting Started -->
       <section id="what-is-feenion" class="space-y-4 pt-4 border-b border-slate-800/80 pb-10">
         <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
@@ -223,7 +322,7 @@
         <p class="text-slate-300">
           Spin up the complete Feenion server and React dashboard with embedded SQLite WAL storage in one command:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-indigo-300 overflow-x-auto"><code>git clone https://github.com/DarshanAguru/feenion.git
+        <pre class="p-4 rounded-xl font-mono text-xs text-indigo-300 overflow-x-auto whitespace-pre glass-inner"><code>git clone https://github.com/DarshanAguru/feenion.git
 cd feenion
 docker compose up -d</code></pre>
         <p class="text-slate-400 text-xs">
@@ -237,7 +336,7 @@ docker compose up -d</code></pre>
         <p class="text-slate-300">
           Install the official lightweight Python SDK in your application environment:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-indigo-300 overflow-x-auto"><code>pip install feenion</code></pre>
+        <pre class="p-4 rounded-xl font-mono text-xs text-indigo-300 overflow-x-auto whitespace-pre glass-inner"><code>pip install feenion</code></pre>
       </section>
 
       <!-- Section: First Trace -->
@@ -246,7 +345,7 @@ docker compose up -d</code></pre>
         <p class="text-slate-300">
           Configure the client and annotate your functions with <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">@trace</code> and <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">span()</code>:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span, configure
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre leading-relaxed glass-inner"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace, span, configure
 
 <span class="text-slate-500"># Point SDK to your local or self-hosted server</span>
 configure(server_url=<span class="text-emerald-300">"http://localhost:8000"</span>)
@@ -303,7 +402,7 @@ handle_query(<span class="text-emerald-300">"How do I reset my password?"</span>
         <p class="text-slate-300">
           Decorate any synchronous or asynchronous Python function to automatically track execution:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> async_trace
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> async_trace
 
 <span class="text-indigo-400">@async_trace</span>(name=<span class="text-emerald-300">"async_pipeline"</span>, span_type=<span class="text-emerald-300">"agent"</span>)
 <span class="text-purple-400">async def</span> <span class="text-blue-400">process_stream</span>(payload: <span class="text-amber-300">dict</span>):
@@ -317,7 +416,7 @@ handle_query(<span class="text-emerald-300">"How do I reset my password?"</span>
         <p class="text-slate-300">
           Use the <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">span()</code> context manager for sub-operations:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"db_lookup"</span>, span_type=<span class="text-emerald-300">"tool"</span>, input={<span class="text-emerald-300">"user_id"</span>: <span class="text-amber-300">42</span>}) <span class="text-purple-400">as</span> s:
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"db_lookup"</span>, span_type=<span class="text-emerald-300">"tool"</span>, input={<span class="text-emerald-300">"user_id"</span>: <span class="text-amber-300">42</span>}) <span class="text-purple-400">as</span> s:
     result = db.query(...)
     s.set_output(result)
     s.set_metric(<span class="text-emerald-300">"rows_returned"</span>, len(result))</code></pre>
@@ -329,7 +428,7 @@ handle_query(<span class="text-emerald-300">"How do I reset my password?"</span>
         <p class="text-slate-300">
           Feenion contains built-in pricing tables for standard models (e.g. GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro). You can also set custom token usage explicitly:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code>s.set_tokens(prompt_tokens=<span class="text-amber-300">512</span>, completion_tokens=<span class="text-amber-300">128</span>)
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code>s.set_tokens(prompt_tokens=<span class="text-amber-300">512</span>, completion_tokens=<span class="text-amber-300">128</span>)
 s.set_attribute(<span class="text-emerald-300">"model"</span>, <span class="text-emerald-300">"gpt-4o"</span>)</code></pre>
       </section>
 
@@ -339,7 +438,7 @@ s.set_attribute(<span class="text-emerald-300">"model"</span>, <span class="text
         <p class="text-slate-300">
           Mask sensitive fields in payload dicts before they leave application memory:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> feenion.redaction <span class="text-purple-400">import</span> Redactor
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">from</span> feenion.redaction <span class="text-purple-400">import</span> Redactor
 
 redactor = Redactor(sensitive_keys={<span class="text-emerald-300">"api_key"</span>, <span class="text-emerald-300">"password"</span>, <span class="text-emerald-300">"auth_token"</span>, <span class="text-emerald-300">"ssn"</span>})
 safe_payload = redactor.redact(raw_payload)</code></pre>
@@ -354,7 +453,7 @@ safe_payload = redactor.redact(raw_payload)</code></pre>
         <p class="text-slate-300">
           Wrap the official <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">OpenAI</code> client with one line:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> openai <span class="text-purple-400">import</span> OpenAI
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">from</span> openai <span class="text-purple-400">import</span> OpenAI
 <span class="text-purple-400">from</span> feenion.integrations.openai <span class="text-purple-400">import</span> instrument_openai
 
 client = OpenAI()
@@ -367,7 +466,7 @@ instrument_openai(client)</code></pre>
         <p class="text-slate-300">
           Wrap Google Gemini clients (<code class="text-indigo-300">google-genai</code> or <code class="text-indigo-300">google-generativeai</code>) in one line:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">from</span> google <span class="text-purple-400">import</span> genai
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre leading-relaxed glass-inner"><code><span class="text-purple-400">from</span> google <span class="text-purple-400">import</span> genai
 <span class="text-purple-400">from</span> feenion.integrations.gemini <span class="text-purple-400">import</span> instrument_gemini
 
 client = genai.Client()
@@ -382,7 +481,7 @@ response = client.models.generate_content(
       <!-- Section: Anthropic Claude -->
       <section id="instrument-anthropic" class="space-y-4 border-b border-slate-800/80 pb-10">
         <h2 class="text-xl font-bold font-mono text-white">Anthropic Claude Auto-Instrumentation</h2>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> anthropic <span class="text-purple-400">import</span> Anthropic
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">from</span> anthropic <span class="text-purple-400">import</span> Anthropic
 <span class="text-purple-400">from</span> feenion.integrations.anthropic <span class="text-purple-400">import</span> instrument_anthropic
 
 client = Anthropic()
@@ -392,7 +491,7 @@ instrument_anthropic(client)</code></pre>
       <!-- Section: LangChain Callbacks -->
       <section id="instrument-langchain" class="space-y-4 border-b border-slate-800/80 pb-10">
         <h2 class="text-xl font-bold font-mono text-white">LangChain & LangGraph Callbacks</h2>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">from</span> feenion.integrations.langchain <span class="text-purple-400">import</span> FeenionCallbackHandler
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">from</span> feenion.integrations.langchain <span class="text-purple-400">import</span> FeenionCallbackHandler
 
 handler = FeenionCallbackHandler()
 chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-emerald-300">"AI Debugging"</span>}, config={<span class="text-emerald-300">"callbacks"</span>: [handler]})</code></pre>
@@ -404,7 +503,7 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
         <p class="text-slate-300">
           Instrument retrieval spans to capture similarity scores, chunk IDs, and query text:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"chroma_kb_query"</span>, span_type=<span class="text-emerald-300">"retrieval"</span>, input={<span class="text-emerald-300">"query"</span>: q, <span class="text-emerald-300">"top_k"</span>: <span class="text-amber-300">5</span>}) <span class="text-purple-400">as</span> s:
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"chroma_kb_query"</span>, span_type=<span class="text-emerald-300">"retrieval"</span>, input={<span class="text-emerald-300">"query"</span>: q, <span class="text-emerald-300">"top_k"</span>: <span class="text-amber-300">5</span>}) <span class="text-purple-400">as</span> s:
     chunks = vector_store.similarity_search_with_score(q, k=<span class="text-amber-300">5</span>)
     s.set_output([{<span class="text-emerald-300">"text"</span>: doc.page_content, <span class="text-emerald-300">"score"</span>: score} <span class="text-purple-400">for</span> doc, score <span class="text-purple-400">in</span> chunks])</code></pre>
       </section>
@@ -415,7 +514,7 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
         <p class="text-slate-300">
           Track multi-turn reasoning loops, tool call arguments, execution outputs, and error recovery:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"sql_executor"</span>, span_type=<span class="text-emerald-300">"tool"</span>, input={<span class="text-emerald-300">"sql"</span>: query_str}) <span class="text-purple-400">as</span> s:
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">with</span> span(<span class="text-emerald-300">"sql_executor"</span>, span_type=<span class="text-emerald-300">"tool"</span>, input={<span class="text-emerald-300">"sql"</span>: query_str}) <span class="text-purple-400">as</span> s:
     s.set_attribute(<span class="text-emerald-300">"tool_name"</span>, <span class="text-emerald-300">"database_reader"</span>)
     res = db.execute(query_str)
     s.set_output(res)</code></pre>
@@ -465,7 +564,7 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
         <p class="text-slate-300">
           Deploy Feenion as a single all-in-one container using SQLite Write-Ahead Logging:
         </p>
-        <pre class="p-4 rounded-xl bg-[#0d111a] border border-[#1e2330] font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">version:</span> <span class="text-emerald-300">'3.8'</span>
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre leading-relaxed glass-inner"><code><span class="text-purple-400">version:</span> <span class="text-emerald-300">'3.8'</span>
 <span class="text-purple-400">services:</span>
   <span class="text-purple-400">feenion:</span>
     <span class="text-purple-400">image:</span> <span class="text-emerald-300">feenion/feenion:latest</span>
@@ -588,15 +687,15 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
   </div>
 
   <!-- Clean Footer -->
-  <footer class="py-10 border-t border-[#1e2330] bg-[#080b11] text-xs text-slate-400 select-none relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center space-x-3">
+  <footer class="py-8 border-t border-[#1e2330] bg-[#080b11] text-xs text-slate-400 select-none relative z-10 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+      <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs">
         <span class="font-mono text-white font-bold">Feenion</span>
-        <span class="text-slate-600">&bull;</span>
-        <span>Open-source AI debugger released under the Apache 2.0 license.</span>
+        <span class="text-slate-600 hidden sm:inline">&bull;</span>
+        <span class="text-slate-400 text-[11px] sm:text-xs">Open-source AI debugger released under the Apache 2.0 license.</span>
       </div>
 
-      <div class="flex items-center space-x-6">
+      <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] sm:text-xs">
         <a href="index.html" class="hover:text-white transition-colors">Overview</a>
         <a href="docs.html" class="hover:text-white transition-colors">Documentation</a>
         <a href="architecture.html" class="hover:text-white transition-colors">Architecture</a>
@@ -616,6 +715,70 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
   <!-- Dynamic Table of Contents Active Scroll Tracker & Search Script -->
   <script>
     document.querySelectorAll('.currentYear').forEach(el => el.textContent = new Date().getFullYear());
+
+    // Mobile Navigation Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
+    const hamburgerOpenIcon = document.getElementById('hamburgerOpenIcon');
+    const hamburgerCloseIcon = document.getElementById('hamburgerCloseIcon');
+
+    function toggleMobileMenu() {
+      if (!mobileMenu) return;
+      const isHidden = mobileMenu.classList.contains('hidden');
+      if (isHidden) {
+        mobileMenu.classList.remove('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.remove('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.add('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.remove('hidden');
+      } else {
+        mobileMenu.classList.add('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.add('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.remove('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.add('hidden');
+      }
+    }
+
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    }
+    if (mobileMenuBackdrop) {
+      mobileMenuBackdrop.addEventListener('click', toggleMobileMenu);
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 768) {
+        if (mobileMenu) mobileMenu.classList.add('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.add('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.remove('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.add('hidden');
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!mobileMenu || mobileMenu.classList.contains('hidden')) return;
+      const header = document.querySelector('header');
+      if (header && !header.contains(e.target)) {
+        mobileMenu.classList.add('hidden');
+        if (mobileMenuBackdrop) mobileMenuBackdrop.classList.add('hidden');
+        if (hamburgerOpenIcon) hamburgerOpenIcon.classList.remove('hidden');
+        if (hamburgerCloseIcon) hamburgerCloseIcon.classList.add('hidden');
+      }
+    });
+
+    // Mobile Table of Contents Sidebar Toggle
+    const mobileTocBtn = document.getElementById('mobileTocBtn');
+    const docsSidebar = document.getElementById('docsSidebar');
+    const mobileTocIcon = document.getElementById('mobileTocIcon');
+    if (mobileTocBtn && docsSidebar) {
+      mobileTocBtn.addEventListener('click', () => {
+        docsSidebar.classList.toggle('hidden');
+        if (mobileTocIcon) {
+          mobileTocIcon.classList.toggle('rotate-180');
+        }
+      });
+    }
 
     function filterDocs(query) {
       const q = query.toLowerCase().trim();
@@ -720,13 +883,17 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
         link.addEventListener('click', () => {
           isManualClick = true;
           activateLink(link);
+          if (window.innerWidth < 768 && docsSidebar) {
+            docsSidebar.classList.add('hidden');
+          }
           setTimeout(() => { isManualClick = false; }, 600);
         });
       });
     });
 
-    // Interactive 3D Glowing & Elastic Dot Matrix Canvas
+    // Interactive 3D Glowing & Elastic Dot Matrix Canvas (Desktop Only)
     (function initDotMatrix() {
+      if (window.innerWidth < 768) return;
       const canvas = document.getElementById('dotCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -735,11 +902,16 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
       let height = (canvas.height = window.innerHeight);
 
       let mouse = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
-      const spacing = 26;
-      const glowRadius = 110;
-      const maxPull = 5.0;
+      const spacing = 24;
+      const glowRadius = 120;
+      const maxPull = 4.5;
 
       window.addEventListener('resize', () => {
+        if (window.innerWidth < 768) {
+          canvas.style.display = 'none';
+          return;
+        }
+        canvas.style.display = 'block';
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
       });
@@ -754,9 +926,10 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
         mouse.targetY = -1000;
       });
 
-      function render(time) {
-        mouse.x += (mouse.targetX - mouse.x) * 0.12;
-        mouse.y += (mouse.targetY - mouse.y) * 0.12;
+      function render() {
+        if (window.innerWidth < 768) return;
+        mouse.x += (mouse.targetX - mouse.x) * 0.14;
+        mouse.y += (mouse.targetY - mouse.y) * 0.14;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -768,9 +941,9 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
 
             let drawX = x;
             let drawY = y;
-            let dotRadius = 0.95;
+            let dotRadius = 0.9;
             let alpha = 0.14;
-            let fillStyle = 'rgba(71, 85, 105, ';
+            let fillStyle = 'rgba(148, 163, 184, '; // Clean subtle faded greyish base
 
             if (dist < glowRadius) {
               const q = 1 - dist / glowRadius;
@@ -781,17 +954,16 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
               drawX += Math.cos(angle) * pullFactor;
               drawY += Math.sin(angle) * pullFactor;
 
-              dotRadius = 0.95 + factor * 1.35;
-              alpha = 0.14 + factor * 0.76;
+              dotRadius = 0.9 + factor * 1.6;
+              alpha = 0.14 + factor * 0.78;
 
-              if (factor > 0.5) {
-                fillStyle = 'rgba(165, 180, 252, ';
-              } else {
+              if (factor > 0.6) {
+                fillStyle = 'rgba(167, 139, 250, ';
+              } else if (factor > 0.3) {
                 fillStyle = 'rgba(129, 140, 248, ';
+              } else {
+                fillStyle = 'rgba(56, 189, 248, ';
               }
-            } else {
-              const idleWave = Math.sin(time * 0.0018 + (x + y) * 0.03) * 0.03;
-              alpha = Math.max(0.08, alpha + idleWave);
             }
 
             ctx.beginPath();
@@ -806,9 +978,73 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
 
       requestAnimationFrame(render);
     })();
+
+    // ── Card border directional glow — mousemove + rAF throttle (efficient) ──
+    (function initCardGlow() {
+      document.querySelectorAll('.glass-card').forEach(card => {
+        card.addEventListener('pointermove', e => { const r = card.getBoundingClientRect(); card.style.setProperty('--drop-x', `${e.clientX - r.left}px`); card.style.setProperty('--drop-y', `${e.clientY - r.top}px`); card.style.setProperty('--drop-opacity', '1'); });
+        card.addEventListener('pointerleave', () => card.style.setProperty('--drop-opacity', '0'));
+      });
+      return;
+      // Cache card list once; re-query only on resize
+      let cards = Array.from(document.querySelectorAll('.glass-card'));
+      window.addEventListener('resize', () => { cards = Array.from(document.querySelectorAll('.glass-card')); });
+
+      let mx = -9999, my = -9999, rafId = null;
+
+      // Per-edge factor: cubic falloff over 110px reach
+      function ef(d) {
+        const v = 1 - Math.min(Math.max(d, 0), 110) / 110;
+        return v * v * v; // steep cubic — far edge fades hard
+      }
+
+      function applyGlow() {
+        rafId = null;
+        const vh = window.innerHeight;
+        cards.forEach(card => {
+          const r = card.getBoundingClientRect();
+          if (r.bottom < -80 || r.top > vh + 80) return;
+
+          // Per-edge proximity (0 = far/opposite, 1 = cursor on/past that edge)
+          const fL = ef(mx - r.left);    // left border
+          const fR = ef(r.right  - mx);  // right border
+          const fT = ef(my - r.top);     // top border
+          const fB = ef(r.bottom - my);  // bottom border
+
+          const peak = Math.max(fL, fR, fT, fB);
+          if (peak < 0.008) {
+            card.style.borderColor = '';
+            card.style.boxShadow   = '';
+            return;
+          }
+
+          // 4 directional outer-glow shadows — each only illuminates its own side
+          const sp = 12, bl = 18, mA = 0.60;
+          const sL = `${(-sp * fL).toFixed(1)}px 0 ${bl}px rgba(99,102,241,${(fL*mA).toFixed(2)})`;
+          const sR = `${( sp * fR).toFixed(1)}px 0 ${bl}px rgba(99,102,241,${(fR*mA).toFixed(2)})`;
+          const sT = `0 ${(-sp * fT).toFixed(1)}px ${bl}px rgba(99,102,241,${(fT*mA).toFixed(2)})`;
+          const sB = `0 ${ (sp * fB).toFixed(1)}px ${bl}px rgba(99,102,241,${(fB*mA).toFixed(2)})`;
+
+          card.style.borderColor = `rgba(99,102,241,${(peak * 0.65).toFixed(2)})`;
+          card.style.boxShadow   = `${sL},${sR},${sT},${sB},0 4px 20px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.07)`;
+        });
+      }
+
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        if (!rafId) rafId = requestAnimationFrame(applyGlow);
+      });
+
+      // Reset all on mouse leave
+      document.addEventListener('mouseleave', () => {
+        mx = -9999; my = -9999;
+        cards.forEach(c => { c.style.borderColor = ''; c.style.boxShadow = ''; });
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      });
+    })();
   </script>
 
-  <!-- Interactive 3D Glowing & Elastic Dot Matrix Canvas Background -->
-  <canvas id="dotCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <!-- Interactive 3D Glowing & Elastic Dot Matrix Canvas Background (Desktop Only) -->
+  <canvas id="dotCanvas" class="fixed inset-0 pointer-events-none hidden md:block" style="z-index:0"></canvas>
 </body>
 </html>
