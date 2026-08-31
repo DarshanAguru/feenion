@@ -77,6 +77,54 @@ def create_project(
         "api_key": raw_key,
     }
 
+@router.delete("/projects/{project_id}")
+def delete_project(project_id: str, db: Session = Depends(get_db)):
+    proj = db.query(Project).filter(Project.id == project_id).first()
+    if not proj:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    total_projects = db.query(Project).count()
+    if total_projects <= 1:
+        raise HTTPException(status_code=400, detail="Cannot delete the only remaining workspace.")
+
+    # Cascade delete all API keys for this project
+    db.query(APIKey).filter(APIKey.project_id == project_id).delete(synchronize_session=False)
+
+    # Find all traces for this project
+    traces = db.query(TraceModel).filter(TraceModel.project_id == project_id).all()
+    trace_ids = [str(t.id) for t in traces]
+
+    if trace_ids:
+        # Find all spans for these traces
+        spans = db.query(SpanModel).filter(SpanModel.trace_id.in_(trace_ids)).all()
+        span_ids = [str(s.id) for s in spans]
+        if span_ids:
+            db.query(EventModel).filter(EventModel.span_id.in_(span_ids)).delete(synchronize_session=False)
+        db.query(SpanModel).filter(SpanModel.trace_id.in_(trace_ids)).delete(synchronize_session=False)
+        db.query(TraceModel).filter(TraceModel.project_id == project_id).delete(synchronize_session=False)
+
+    db.delete(proj)
+    db.commit()
+
+    # Clear in-memory traces
+    try:
+        from ..main import trace_store
+        with trace_store._lock:
+            for tid in trace_ids:
+                try:
+                    uid = UUID(tid)
+                    trace_store._in_memory_traces.pop(uid, None)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    return {
+        "status": "deleted",
+        "project_id": project_id,
+        "deleted_traces_count": len(trace_ids),
+    }
+
 @router.get("/traces")
 def list_traces(
     start_time: Optional[datetime] = None,
@@ -286,46 +334,122 @@ def list_traces(
 @router.get("/traces/{trace_id}")
 def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
     t = db.query(TraceModel).filter(TraceModel.id == str(trace_id)).first()
-    if not t:
+    if t:
+        spans = db.query(SpanModel).filter(SpanModel.trace_id == str(trace_id)).order_by(SpanModel.start_time.asc()).all()
+        spans_list = []
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        total_tokens = 0
+        total_cost = 0.0
+        models_set = set()
+
+        for s in spans:
+            m = s.metrics_json or {}
+            attr = s.attributes_json or {}
+            tokens = m.get("tokens") or attr.get("tokens") or {}
+            p_tok = int(tokens.get("prompt") or attr.get("prompt_tokens") or 0)
+            c_tok = int(tokens.get("completion") or attr.get("completion_tokens") or 0)
+            tot_tok = int(tokens.get("total") or attr.get("total_tokens") or (p_tok + c_tok))
+            cost_val = float(m.get("cost") or attr.get("cost") or 0.0)
+
+            total_prompt_tokens += p_tok
+            total_completion_tokens += c_tok
+            total_tokens += tot_tok
+            total_cost += cost_val
+
+            model_name = attr.get("model") or m.get("model")
+            if model_name:
+                models_set.add(str(model_name))
+
+            events_list = [
+                {
+                    "event_id": str(e.id),
+                    "event_type": e.event_type,
+                    "timestamp": to_iso_utc(e.timestamp),
+                    "trace_id": str(e.trace_id),
+                    "span_id": str(e.span_id),
+                    "payload": e.payload_json or {},
+                }
+                for e in s.events
+            ]
+
+            spans_list.append({
+                "span_id": str(s.id),
+                "trace_id": str(s.trace_id),
+                "parent_span_id": str(s.parent_span_id) if s.parent_span_id else None,
+                "name": s.name,
+                "span_type": s.span_type,
+                "status": s.status,
+                "start_time": to_iso_utc(s.start_time),
+                "end_time": to_iso_utc(s.end_time),
+                "duration_ms": s.duration_ms or 0.0,
+                "attributes": s.attributes_json or {},
+                "input": s.input_json,
+                "output": s.output_json,
+                "error": s.error_json,
+                "metrics": s.metrics_json or {},
+                "events": events_list,
+            })
+
+        meta = t.metadata_json or {}
+        env = meta.get("environment") or meta.get("env") or "production"
+
+        return {
+            "trace_id": str(t.id),
+            "name": t.name,
+            "status": t.status,
+            "start_time": to_iso_utc(t.start_time),
+            "end_time": to_iso_utc(t.end_time),
+            "duration_ms": t.duration_ms or 0.0,
+            "environment": env,
+            "metadata": meta,
+            "span_count": len(spans_list),
+            "error_count": sum(1 for s in spans_list if s["status"] == "error"),
+            "models": list(models_set),
+            "tokens": {
+                "prompt": total_prompt_tokens,
+                "completion": total_completion_tokens,
+                "total": total_tokens if total_tokens > 0 else (total_prompt_tokens + total_completion_tokens),
+            },
+            "estimated_cost": total_cost,
+            "spans": spans_list,
+        }
+
+    # Fallback to in-memory trace store if not yet flushed to SQLite
+    from ..main import trace_store
+    with trace_store._lock:
+        mem_trace = trace_store._in_memory_traces.get(trace_id)
+
+    if not mem_trace:
         raise HTTPException(status_code=404, detail="Trace not found")
 
-    spans = db.query(SpanModel).filter(SpanModel.trace_id == str(trace_id)).order_by(SpanModel.start_time.asc()).all()
     spans_list = []
     total_prompt_tokens = 0
     total_completion_tokens = 0
+    total_tokens = 0
     total_cost = 0.0
     models_set = set()
 
-    for s in spans:
-        m = s.metrics_json or {}
-        attr = s.attributes_json or {}
+    for s in mem_trace.spans:
+        m = s.metrics or {}
+        attr = s.attributes or {}
         tokens = m.get("tokens") or attr.get("tokens") or {}
-        p_tok = tokens.get("prompt") or attr.get("prompt_tokens", 0)
-        c_tok = tokens.get("completion") or attr.get("completion_tokens", 0)
-        cost_val = m.get("cost") or attr.get("cost", 0.0)
+        p_tok = int(tokens.get("prompt") or attr.get("prompt_tokens") or 0)
+        c_tok = int(tokens.get("completion") or attr.get("completion_tokens") or 0)
+        tot_tok = int(tokens.get("total") or attr.get("total_tokens") or (p_tok + c_tok))
+        cost_val = float(m.get("cost") or attr.get("cost") or 0.0)
 
-        total_prompt_tokens += int(p_tok)
-        total_completion_tokens += int(c_tok)
-        total_cost += float(cost_val)
+        total_prompt_tokens += p_tok
+        total_completion_tokens += c_tok
+        total_tokens += tot_tok
+        total_cost += cost_val
 
         model_name = attr.get("model") or m.get("model")
         if model_name:
             models_set.add(str(model_name))
 
-        events_list = [
-            {
-                "event_id": str(e.id),
-                "event_type": e.event_type,
-                "timestamp": to_iso_utc(e.timestamp),
-                "trace_id": str(e.trace_id),
-                "span_id": str(e.span_id),
-                "payload": e.payload_json or {},
-            }
-            for e in s.events
-        ]
-
         spans_list.append({
-            "span_id": str(s.id),
+            "span_id": str(s.span_id),
             "trace_id": str(s.trace_id),
             "parent_span_id": str(s.parent_span_id) if s.parent_span_id else None,
             "name": s.name,
@@ -334,24 +458,34 @@ def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
             "start_time": to_iso_utc(s.start_time),
             "end_time": to_iso_utc(s.end_time),
             "duration_ms": s.duration_ms or 0.0,
-            "attributes": s.attributes_json or {},
-            "input": s.input_json,
-            "output": s.output_json,
-            "error": s.error_json,
-            "metrics": s.metrics_json or {},
-            "events": events_list,
+            "attributes": s.attributes or {},
+            "input": s.input,
+            "output": s.output,
+            "error": s.error,
+            "metrics": s.metrics or {},
+            "events": [
+                {
+                    "event_id": str(e.event_id),
+                    "event_type": e.event_type,
+                    "timestamp": to_iso_utc(e.timestamp),
+                    "trace_id": str(e.trace_id),
+                    "span_id": str(e.span_id),
+                    "payload": e.payload or {},
+                }
+                for e in s.events
+            ],
         })
 
-    meta = t.metadata_json or {}
+    meta = mem_trace.metadata or {}
     env = meta.get("environment") or meta.get("env") or "production"
 
     return {
-        "trace_id": str(t.id),
-        "name": t.name,
-        "status": t.status,
-        "start_time": to_iso_utc(t.start_time),
-        "end_time": to_iso_utc(t.end_time),
-        "duration_ms": t.duration_ms or 0.0,
+        "trace_id": str(mem_trace.trace_id),
+        "name": mem_trace.name,
+        "status": mem_trace.status,
+        "start_time": to_iso_utc(mem_trace.start_time),
+        "end_time": to_iso_utc(mem_trace.end_time),
+        "duration_ms": mem_trace.duration_ms or 0.0,
         "environment": env,
         "metadata": meta,
         "span_count": len(spans_list),
@@ -360,7 +494,7 @@ def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
         "tokens": {
             "prompt": total_prompt_tokens,
             "completion": total_completion_tokens,
-            "total": total_prompt_tokens + total_completion_tokens,
+            "total": total_tokens if total_tokens > 0 else (total_prompt_tokens + total_completion_tokens),
         },
         "estimated_cost": total_cost,
         "spans": spans_list,

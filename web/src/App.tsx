@@ -95,6 +95,24 @@ export const App: React.FC = () => {
     }
   };
 
+  // Handle Deleting a Workspace
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await apiClient.deleteProject(projectId);
+      const remaining = projects.filter(p => p.id !== projectId);
+      setProjects(remaining);
+      if (selectedProject === projectId && remaining.length > 0) {
+        setSelectedProject(remaining[0].id);
+        apiClient.setProject(remaining[0].id);
+      }
+      fetchData();
+    } catch (err: any) {
+      console.error('Project deletion failed:', err);
+      alert(err.message || 'Failed to delete workspace');
+    }
+  };
+
+
   // Fetch Telemetry Data
   const fetchData = useCallback(async () => {
     try {
@@ -329,6 +347,7 @@ export const App: React.FC = () => {
               selectedProject={selectedProject}
               onSelectProject={handleSelectProject}
               onCreateProject={handleCreateProject}
+              onDeleteProject={handleDeleteProject}
               onRefreshData={fetchData}
             />
           )}

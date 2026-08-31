@@ -262,16 +262,24 @@ Please review our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduc
 ## 🗺️ Project Roadmap
 
 - [x] Python SDK with non-blocking async batch exporter
-- [x] OpenAI, Anthropic, and LangChain auto-instrumentation
+- [x] Google Gemini, OpenAI, Anthropic, and LangChain auto-instrumentation
+- [x] Zero-key interactive CLI debugging simulator (`examples/comprehensive_mock_ecosystem.py`)
 - [x] Waterfall distributed timeline & D3 latency mind map
 - [x] Semantic error grouping & stack trace viewer
 - [x] Model economics & prompt inflation analytics
+- [x] Workspace & project lifecycle management with cascade deletion
 - [ ] TypeScript / Node.js SDK
 - [ ] OpenTelemetry (OTel) Collector receiver
 - [ ] Automated RAG context evaluation metrics (Faithfulness & Relevance)
 
 ---
 
-## 📄 License
+## 📄 License & Credits
 
 Feenion is open-source software licensed under the **[Apache License 2.0](LICENSE)**.
+
+<p align="center">
+  <sub>copyright &copy; 2026 feenion &bull; made with ❤️ by <a href="https://thisdarshiii.in"><strong>A.Darshan</strong></a></sub>
+</p>
+
+

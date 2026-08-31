@@ -124,12 +124,38 @@ pytest</pre>
 
   </main>
 
+  <!-- Clean Footer with auto-fetching copyright and pulsating heart -->
+  <footer class="py-10 border-t border-[#1e2330] bg-[#080b11] text-xs text-slate-400 select-none relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="font-mono text-white font-bold">Feenion</span>
+        <span class="text-slate-600">&bull;</span>
+        <span>Open-source AI debugger released under the Apache 2.0 license.</span>
+      </div>
+
+      <div class="flex items-center space-x-6">
+        <a href="index.html" class="hover:text-white transition-colors">Overview</a>
+        <a href="docs.html" class="hover:text-white transition-colors">Documentation</a>
+        <a href="architecture.html" class="hover:text-white transition-colors">Architecture</a>
+        <a href="examples.html" class="hover:text-white transition-colors">Examples</a>
+        <a href="about.html" class="hover:text-white transition-colors">About</a>
+        <a href="community.html" class="hover:text-white transition-colors">Community</a>
+        <a href="https://github.com/DarshanAguru/feenion.git" target="_blank" rel="noopener" class="hover:text-white transition-colors">GitHub ↗</a>
+      </div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-4 mt-4 border-t border-slate-800/60 text-center text-slate-500 font-mono text-[11px] flex items-center justify-center gap-1.5 flex-wrap">
+      <span>copyright &copy; <span class="currentYear"></span> feenion</span>
+      <span>|</span>
+      <span>made with <span class="inline-block text-rose-500 animate-pulse font-sans">❤️</span> by <a href="https://thisdarshiii.in" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 transition-colors">A.Darshan</a></span>
+    </div>
   </footer>
 
   <!-- Interactive 3D Glowing & Elastic Dot Matrix Canvas -->
   <canvas id="dotCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
 
   <script>
+    document.querySelectorAll('.currentYear').forEach(el => el.textContent = new Date().getFullYear());
+
     (function initDotMatrix() {
       const canvas = document.getElementById('dotCanvas');
       if (!canvas) return;

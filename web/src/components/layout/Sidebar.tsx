@@ -201,6 +201,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </div>
+
+      {/* Footer Attribution */}
+      {!isCollapsed && (
+        <div className="px-3 py-2 border-t border-slate-800/40 text-[10px] text-slate-500 font-mono text-center">
+          <div>copyright &copy; {new Date().getFullYear()} feenion</div>
+          <div className="mt-0.5">
+            made with <span className="inline-block text-rose-500 animate-pulse">❤️</span> by{' '}
+            <a
+              href="https://thisdarshiii.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-2 transition-colors"
+            >
+              A.Darshan
+            </a>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

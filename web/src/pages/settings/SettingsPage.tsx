@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { ProjectInfo } from '../../types';
 import { apiClient } from '../../api/client';
-import { Settings, Shield, Trash2, Key, Database, RefreshCw, Check, Copy, AlertTriangle } from 'lucide-react';
+import { Settings, Shield, Trash2, Key, Database, RefreshCw, Check, Copy, AlertTriangle, X } from 'lucide-react';
 
 interface SettingsPageProps {
   projects: ProjectInfo[];
   selectedProject: string;
   onSelectProject: (projectId: string) => void;
   onCreateProject: (name: string) => void;
+  onDeleteProject: (projectId: string) => Promise<void>;
   onRefreshData: () => void;
 }
 
@@ -16,11 +17,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   selectedProject,
   onSelectProject,
   onCreateProject,
+  onDeleteProject,
   onRefreshData,
 }) => {
   const [newProjectName, setNewProjectName] = useState('');
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
+
+  // Project Delete Modal State
+  const [projectToDelete, setProjectToDelete] = useState<ProjectInfo | null>(null);
+  const [projectDeleteConfirmText, setProjectDeleteConfirmText] = useState('');
+  const [projectDeleteStatus, setProjectDeleteStatus] = useState<string | null>(null);
 
   // Purge Modal State
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
@@ -40,11 +47,28 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
+  const handleConfirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+    if (projectDeleteConfirmText.trim().toLowerCase() !== 'delete workspace') return;
+    try {
+      setProjectDeleteStatus(`Deleting workspace '${projectToDelete.name}' and all its traces...`);
+      await onDeleteProject(projectToDelete.id);
+      setProjectDeleteStatus('Workspace deleted.');
+      setTimeout(() => {
+        setProjectToDelete(null);
+        setProjectDeleteConfirmText('');
+        setProjectDeleteStatus(null);
+      }, 500);
+    } catch (err: any) {
+      setProjectDeleteStatus(`Error: ${err.message || 'Failed to delete workspace'}`);
+    }
+  };
+
   const handlePurge = async () => {
     if (purgeConfirmText.trim().toLowerCase() !== 'delete everything') return;
     try {
       setPurgeStatus('Purging all telemetry data...');
-      const res = await apiClient.clearTelemetry(purgeConfirmText.trim());
+      await apiClient.clearTelemetry(purgeConfirmText.trim());
       setPurgeStatus('All telemetry successfully purged.');
       setTimeout(() => {
         setIsPurgeModalOpen(false);
@@ -65,7 +89,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           Settings & Project Administration
         </h2>
         <p className="text-xs text-slate-400 mt-0.5">
-          Manage workspaces, generate API ingestion keys, review server status, and configure telemetry retention.
+          Manage workspaces, generate API ingestion keys, delete projects, review server status, and configure telemetry retention.
         </p>
       </div>
 
@@ -73,13 +97,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-4">
         <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
           <Key className="w-4 h-4 text-indigo-400" />
-          <span>Projects & Authentication</span>
+          <span>Workspaces & API Keys</span>
         </div>
 
         <form onSubmit={handleCreate} className="flex gap-2">
           <input
             type="text"
-            placeholder="New Project Name..."
+            placeholder="New Workspace Name..."
             value={newProjectName}
             onChange={(e) => setNewProjectName(e.target.value)}
             className="flex-1 bg-[#080b11] border border-slate-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
@@ -88,14 +112,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             type="submit"
             className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors"
           >
-            Create Project
+            Create Workspace
           </button>
         </form>
 
         {createdApiKey && (
           <div className="p-3 rounded-lg bg-indigo-950/40 border border-indigo-800/80 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-indigo-300 font-bold">Project Created! API Key:</span>
+              <span className="text-xs font-mono text-indigo-300 font-bold">Workspace Created! Ingestion API Key:</span>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(createdApiKey);
@@ -115,7 +139,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         )}
 
         <div className="space-y-1.5 pt-2">
-          <span className="text-[11px] font-mono uppercase text-slate-400 block mb-1">Existing Projects</span>
+          <span className="text-[11px] font-mono uppercase text-slate-400 block mb-1">Existing Workspaces</span>
           {projects.map(p => (
             <div
               key={p.id}
@@ -126,8 +150,37 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   : 'bg-[#080b11] border-[#1e2330] text-slate-300 hover:bg-slate-800/40'
               }`}
             >
-              <span className="font-bold">{p.name}</span>
-              <span className="text-[10px] text-slate-400">ID: {p.id.slice(0, 8)}...</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-bold truncate">{p.name}</span>
+                {selectedProject === p.id && (
+                  <span className="px-1.5 py-0.2 rounded bg-indigo-600 text-white text-[9px] font-bold">
+                    Active
+                  </span>
+                )}
+                <span className="text-[10px] text-slate-500">ID: {p.id.slice(0, 8)}...</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={projects.length <= 1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setProjectToDelete(p);
+                    setProjectDeleteConfirmText('');
+                    setProjectDeleteStatus(null);
+                  }}
+                  className={`p-1.5 rounded-md text-xs transition-colors flex items-center gap-1 ${
+                    projects.length <= 1
+                      ? 'opacity-30 text-slate-600 cursor-not-allowed'
+                      : 'text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 border border-transparent hover:border-rose-800/60'
+                  }`}
+                  title={projects.length <= 1 ? "Cannot delete the only remaining workspace" : `Delete workspace '${p.name}'`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="text-[10px] hidden sm:inline">Delete</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -166,7 +219,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         <p className="text-xs text-rose-300/80">
-          Permanently deletes all traces, spans, and execution logs from your database.
+          Permanently deletes all traces, spans, and execution logs from your database across all workspaces.
         </p>
 
         <button
@@ -183,17 +236,77 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </button>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Project / Workspace Delete Confirmation Modal */}
+      {projectToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0d111a] border border-rose-900/80 rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4 animate-in fade-in duration-150">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-rose-300 font-mono font-bold text-sm">
+                <AlertTriangle className="w-5 h-5 text-rose-400" />
+                <span>Delete Workspace: {projectToDelete.name}</span>
+              </div>
+              <button
+                onClick={() => setProjectToDelete(null)}
+                className="p-1 rounded text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Are you sure you want to delete workspace <strong className="text-white font-bold">{projectToDelete.name}</strong>?
+              This will permanently delete all associated <strong className="text-rose-300">API keys, traces, spans, and metrics</strong> for this workspace.
+            </p>
+
+            <p className="text-xs text-slate-400">
+              To confirm, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete workspace</strong> below:
+            </p>
+
+            <input
+              type="text"
+              placeholder="Type 'delete workspace' to confirm"
+              value={projectDeleteConfirmText}
+              onChange={(e) => setProjectDeleteConfirmText(e.target.value)}
+              className="w-full bg-[#080b11] border border-rose-900 focus:border-rose-500 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:outline-none placeholder-slate-500"
+              autoFocus
+            />
+
+            {projectDeleteStatus && (
+              <p className="text-xs font-mono text-rose-400">{projectDeleteStatus}</p>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setProjectToDelete(null)}
+                className="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={projectDeleteConfirmText.trim().toLowerCase() !== 'delete workspace'}
+                onClick={handleConfirmDeleteProject}
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs transition-colors"
+              >
+                Delete Workspace
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purge All Telemetry Modal */}
       {isPurgeModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0d111a] border border-rose-900/80 rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4">
+          <div className="bg-[#0d111a] border border-rose-900/80 rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4 animate-in fade-in duration-150">
             <div className="flex items-center gap-2.5 text-rose-300 font-mono font-bold text-sm">
               <AlertTriangle className="w-5 h-5 text-rose-400" />
               <span>Confirm Purge All Telemetry</span>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              This action is permanent and cannot be undone. To delete all traces and spans, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete everything</strong> below:
+              This action is permanent and cannot be undone. To delete all traces and spans across all workspaces, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete everything</strong> below:
             </p>
 
             <div className="space-y-2">

@@ -51,6 +51,19 @@ export const apiClient = {
     return res.json();
   },
 
+  async deleteProject(projectId: string): Promise<{ status: string; project_id: string }> {
+    const res = await fetch(`/api/v1/projects/${projectId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to delete project' }));
+      throw new Error(err.detail || 'Failed to delete project');
+    }
+    return res.json();
+  },
+
+
   async getTraces(params: {
     status?: string;
     environment?: string;

@@ -57,10 +57,3 @@ async def ingest_traces(request: Request, store: TraceStore = Depends(get_store)
         "accepted": len(batch.traces),
         "schema_version": batch.schema_version,
     }
-
-@router.get("/traces/{trace_id}")
-def get_trace(trace_id: UUID, store: TraceStore = Depends(get_store)):
-    trace = store.get(trace_id)
-    if trace is None:
-        raise HTTPException(status_code=404, detail="Trace not found")
-    return trace

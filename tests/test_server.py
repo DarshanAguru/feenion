@@ -72,3 +72,12 @@ def test_project_lifecycle_and_filters():
         )
         assert traces_res.status_code == 200
         assert "traces" in traces_res.json()
+
+        # Delete project
+        del_res = client.delete(f"/api/v1/projects/{proj_id}")
+        assert del_res.status_code == 200
+        assert del_res.json()["status"] == "deleted"
+
+        # Verify project is gone
+        list_after = client.get("/api/v1/projects")
+        assert not any(p["id"] == proj_id for p in list_after.json())
