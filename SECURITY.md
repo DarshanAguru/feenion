@@ -12,7 +12,7 @@ We take the security and privacy of Feenion very seriously. Because Feenion hand
 
 If you discover a security vulnerability, please **DO NOT** open a public issue. Instead, submit your report responsibly:
 
-1. **Email Maintainers**: Send details to `security@feenion.fun` (or use GitHub Private Vulnerability Reporting).
+1. **Email Maintainers**: Send details to `agurudf@gmail.com` (or use GitHub Private Vulnerability Reporting).
 2. **Include Details**:
    - Description of the vulnerability.
    - Steps or proof-of-concept to reproduce the issue.
