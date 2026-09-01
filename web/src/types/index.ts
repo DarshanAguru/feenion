@@ -11,7 +11,7 @@ export interface SpanPayload {
   span_id: string;
   trace_id: string;
   name: string;
-  span_type: 'custom' | 'trace' | 'llm' | 'retrieval' | 'tool' | 'agent';
+  span_type: 'custom' | 'trace' | 'llm' | 'retrieval' | 'tool' | 'agent' | 'chain' | string;
   parent_span_id: string | null;
   start_time: string;
   end_time: string | null;

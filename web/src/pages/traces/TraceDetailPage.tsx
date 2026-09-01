@@ -232,16 +232,23 @@ export const TraceDetailPage: React.FC<TraceDetailPageProps> = ({
             </>
           )}
 
-          {trace.estimated_cost !== undefined && trace.estimated_cost > 0 && (
-            <>
-              <span className="text-slate-600">&bull;</span>
-              <div className="flex items-center gap-1.5 text-slate-300">
-                <Coins className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Spend:</span>
-                <strong className="text-emerald-400 font-bold">{formatCost(trace.estimated_cost)}</strong>
-              </div>
-            </>
-          )}
+          <span className="text-slate-600">&bull;</span>
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <Coins className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Spend:</span>
+            <strong className="text-emerald-400 font-bold">
+              {formatCost(
+                (trace.estimated_cost !== undefined && trace.estimated_cost > 0)
+                  ? trace.estimated_cost
+                  : (trace.spans?.reduce((acc, s) => {
+                      const m = s.metrics || {};
+                      const attr = s.attributes || {};
+                      const c = m.cost ?? attr.cost ?? 0;
+                      return acc + (typeof c === 'number' ? c : 0);
+                    }, 0) || 0)
+              )}
+            </strong>
+          </div>
 
           {trace.models && trace.models.length > 0 && (
             <div className="flex items-center gap-1 ml-2">
@@ -361,7 +368,7 @@ export const TraceDetailPage: React.FC<TraceDetailPageProps> = ({
           style={{ width: `calc(${100 - splitPercent}% - 6px)` }}
           className="w-full md:w-auto flex-1 shrink-0 h-full overflow-hidden pl-1"
         >
-          <SpanInspector span={selectedSpan} />
+          <SpanInspector span={selectedSpan} allSpans={trace.spans} />
         </div>
       </div>
     </div>

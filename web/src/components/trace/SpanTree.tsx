@@ -1,6 +1,6 @@
 import React from 'react';
 import { SpanPayload } from '../../types';
-import { formatDuration } from '../../utils/formatters';
+import { formatDuration, formatCost, formatNumber } from '../../utils/formatters';
 import { Sparkles, Search, Wrench, Bot, Activity, AlertCircle } from 'lucide-react';
 
 interface SpanTreeProps {
@@ -28,6 +28,29 @@ export const SpanTree: React.FC<SpanTreeProps> = ({
 
   const rootIds = spans.filter(s => !s.parent_span_id || !spanMap.has(s.parent_span_id)).map(s => s.span_id);
 
+  // Helper to compute subtree tokens & costs
+  const getSubtreeMetrics = (spanId: string): { tokens: number; cost: number } => {
+    const s = spanMap.get(spanId);
+    if (!s) return { tokens: 0, cost: 0 };
+    const m = s.metrics || {};
+    const attr = s.attributes || {};
+    const tok = m.tokens || attr.tokens || {};
+    let t = Number(tok.total || attr.total_tokens || (Number(tok.prompt || attr.prompt_tokens || 0) + Number(tok.completion || attr.completion_tokens || 0)));
+    let c = Number(m.cost ?? attr.cost ?? 0);
+
+    const children = childrenMap.get(spanId) || [];
+    for (const childId of children) {
+      const childRes = getSubtreeMetrics(childId);
+      if (t === 0 || s.span_type === 'agent' || s.span_type === 'chain') {
+        t += childRes.tokens;
+      }
+      if (c === 0 || s.span_type === 'agent' || s.span_type === 'chain') {
+        c += childRes.cost;
+      }
+    }
+    return { tokens: t, cost: c };
+  };
+
   const getSpanIcon = (type: string) => {
     switch (type) {
       case 'llm':
@@ -50,6 +73,7 @@ export const SpanTree: React.FC<SpanTreeProps> = ({
     const isSelected = selectedSpanId === s.span_id;
     const isError = s.status === 'error';
     const children = childrenMap.get(spanId) || [];
+    const subtree = getSubtreeMetrics(spanId);
 
     return (
       <div key={s.span_id} className="flex flex-col">
@@ -68,9 +92,21 @@ export const SpanTree: React.FC<SpanTreeProps> = ({
             {isError && <AlertCircle className="w-3 h-3 text-rose-400 shrink-0" />}
           </div>
 
-          <span className="font-mono text-[10px] text-slate-400 shrink-0 ml-2">
-            {formatDuration(s.duration_ms)}
-          </span>
+          <div className="flex items-center gap-2 font-mono text-[10px] shrink-0 ml-2">
+            {subtree.tokens > 0 && (
+              <span className="text-purple-300">
+                {formatNumber(subtree.tokens)} tok
+              </span>
+            )}
+            {subtree.cost > 0 && (
+              <span className="text-emerald-400 font-semibold">
+                {formatCost(subtree.cost)}
+              </span>
+            )}
+            <span className="text-slate-400">
+              {formatDuration(s.duration_ms)}
+            </span>
+          </div>
         </div>
 
         {children.length > 0 && (

@@ -61,6 +61,14 @@ export const App: React.FC = () => {
   const [errors, setErrors] = useState<ErrorGroup[]>([]);
   const [analyticsOverview, setAnalyticsOverview] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currencyVersion, setCurrencyVersion] = useState(0);
+
+  // Global Currency Change Listener
+  useEffect(() => {
+    const handleCurrencyChange = () => setCurrencyVersion(v => v + 1);
+    window.addEventListener('feenion_currency_changed', handleCurrencyChange);
+    return () => window.removeEventListener('feenion_currency_changed', handleCurrencyChange);
+  }, []);
 
   // Fetch Projects List
   const fetchProjects = useCallback(async () => {

@@ -25,6 +25,7 @@ def configure(
     *,
     server_url: str | None = None,
     api_key: str | None = None,
+    project_id: str | None = None,
     exporter = None,
     model_pricing: dict | None = None,
     fetch_live_pricing: bool = False,
@@ -35,6 +36,7 @@ def configure(
     Args:
         server_url: URL of Feenion telemetry server (e.g. 'http://localhost:8000')
         api_key: Optional API key for authenticating with Feenion server
+        project_id: Optional workspace or project identifier (e.g. 'prod-compliance')
         exporter: Custom Exporter instance (HTTPExporter, AsyncExporter, ConsoleExporter, CompositeExporter)
         model_pricing: Custom dictionary mapping model names to (prompt_per_1m, completion_per_1m) prices
         fetch_live_pricing: If True, attempts to fetch latest live model rates on startup
@@ -44,7 +46,7 @@ def configure(
     if exporter is not None:
         tracer.exporter = exporter
     elif server_url is not None:
-        tracer.exporter = AsyncExporter(HTTPExporter(endpoint=server_url, api_key=api_key))
+        tracer.exporter = AsyncExporter(HTTPExporter(endpoint=server_url, api_key=api_key, project_id=project_id))
 
     if model_pricing:
         pricing_registry.register_many(model_pricing)

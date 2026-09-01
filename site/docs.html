@@ -45,13 +45,13 @@
       color: #e2e8f0;
     }
     code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
-    .glass-card { position: relative; overflow: hidden; background: rgba(15,23,42,0.50); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 12px 32px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.035); }
+    .glass-card { position: relative; overflow: hidden; background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 12px 32px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.035); }
     .glass-card::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: var(--drop-opacity, 0); background: radial-gradient(290px circle at var(--drop-x, -200px) var(--drop-y, -200px), rgba(167,139,250,0.20), rgba(129,140,248,0.105) 24%, rgba(56,189,248,0.04) 46%, transparent 70%); transition: opacity 160ms ease; }
     .glass-card > * { position: relative; }
 
     pre, code { max-width: 100%; }
     pre { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: pre; }
-    .glass-inner { background: rgba(7,11,19,0.72); backdrop-filter: blur(16px) saturate(1.1); -webkit-backdrop-filter: blur(16px) saturate(1.1); border: 1px solid rgba(255,255,255,0.09); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+    .glass-inner { background: rgba(7, 11, 19, 0.55); backdrop-filter: blur(16px) saturate(1.1); -webkit-backdrop-filter: blur(16px) saturate(1.1); border: 1px solid rgba(255,255,255,0.09); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
     body { isolation: isolate; }
     body > :not(#dotCanvas) { position: relative; z-index: 1; }
     body > header { isolation: isolate; z-index: 100 !important; }
@@ -201,7 +201,7 @@
     </div>
 
     <!-- Left Interactive Sticky Navigation Sidebar (Hidden on mobile unless toggled) -->
-    <aside id="docsSidebar" class="hidden md:block w-full md:w-64 shrink-0 select-none md:sticky md:top-20 md:h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar space-y-6 text-xs p-4 rounded-xl bg-[#090d16] border border-[#1e2330] shadow-xl">
+    <aside id="docsSidebar" class="hidden md:block w-full md:w-64 shrink-0 select-none md:sticky md:top-20 md:h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar space-y-6 text-xs p-4 rounded-xl glass-card shadow-xl">
 
       <!-- Search Input Filter -->
       <div class="relative mb-4">
@@ -290,15 +290,16 @@
           <div class="space-y-0.5 border-l-2 border-slate-800">
             <a href="#deploy-docker" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Production Docker</a>
             <a href="#deploy-env" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Environment Variables</a>
-            <a href="#api-reference" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">REST & WebSocket API</a>
-            <a href="#faq" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Troubleshooting & FAQ</a>
+            <a href="#workspaces" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Workspaces &amp; Isolation</a>
+            <a href="#api-reference" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">REST &amp; WebSocket API</a>
+            <a href="#faq" class="doc-link block pl-3 py-1 text-slate-400 hover:text-white border-l-2 border-transparent -ml-[2px] transition-colors">Troubleshooting &amp; FAQ</a>
           </div>
         </div>
       </div>
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 min-w-0 space-y-10 text-sm leading-relaxed p-6 sm:p-10 rounded-2xl bg-[#090d16] border border-[#1e2330] shadow-2xl">
+    <main class="flex-1 min-w-0 space-y-10 text-sm leading-relaxed p-6 sm:p-10 rounded-2xl glass-card shadow-2xl">
 
       <!-- Section 1: Getting Started -->
       <section id="what-is-feenion" class="space-y-4 pt-4 border-b border-slate-800/80 pb-10">
@@ -424,12 +425,22 @@ handle_query(<span class="text-emerald-300">"How do I reset my password?"</span>
 
       <!-- Section: Token & Cost Tracking -->
       <section id="sdk-tokens-cost" class="space-y-4 border-b border-slate-800/80 pb-10">
-        <h2 class="text-xl font-bold font-mono text-white">Token & Cost Tracking</h2>
+        <h2 class="text-xl font-bold font-mono text-white">Token &amp; Cost Tracking &bull; Multi-Currency Support</h2>
         <p class="text-slate-300">
-          Feenion contains built-in pricing tables for standard models (e.g. GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro). You can also set custom token usage explicitly:
+          Feenion contains built-in pricing tables for standard models (e.g. GPT-4o, Claude 3.5 Sonnet, Gemini 2.0 Flash, DeepSeek). You can also set custom token usage and model overrides in code or via the Web Dashboard:
         </p>
         <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code>s.set_tokens(prompt_tokens=<span class="text-amber-300">512</span>, completion_tokens=<span class="text-amber-300">128</span>)
-s.set_attribute(<span class="text-emerald-300">"model"</span>, <span class="text-emerald-300">"gpt-4o"</span>)</code></pre>
+s.set_attribute(<span class="text-emerald-300">"model"</span>, <span class="text-emerald-300">"gpt-4o"</span>)
+
+<span class="text-slate-500"># Override pricing directly in code (per 1M tokens):</span>
+<span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> set_model_pricing
+set_model_pricing(<span class="text-emerald-300">"my-fine-tuned-model"</span>, prompt_per_1m=<span class="text-amber-300">1.20</span>, completion_per_1m=<span class="text-amber-300">3.80</span>)</code></pre>
+        <div class="p-3.5 rounded-xl glass-inner space-y-1.5 text-xs font-mono">
+          <span class="text-amber-300 font-bold">💱 Dashboard Currency &amp; Pricing Editor</span>
+          <p class="text-slate-400 font-sans text-xs leading-relaxed">
+            In the Web Dashboard under <strong>Settings &rarr; Currency &amp; FX Display Preferences</strong>, you can switch between <strong>USD ($)</strong>, <strong>INR (₹)</strong>, <strong>EUR (€)</strong>, <strong>GBP (£)</strong>, <strong>CNY (¥)</strong>, and <strong>JPY (¥)</strong> with customizable exchange rates, and edit token rates for any model with a live simulation calculator.
+          </p>
+        </div>
       </section>
 
       <!-- Section: PII Redaction -->
@@ -616,52 +627,398 @@ chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-e
         </div>
       </section>
 
-      <!-- Section: REST & WebSocket API -->
-      <section id="api-reference" class="space-y-4 border-b border-slate-800/80 pb-10">
-        <h2 class="text-xl font-bold font-mono text-white">REST & WebSocket API Reference</h2>
-        <div class="space-y-3 font-mono text-xs">
-          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
-            <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 mr-2 font-bold">POST</span>
-            <strong class="text-white">/api/v1/traces</strong>
-            <p class="text-slate-400 mt-1 font-sans text-xs">Ingests an array of execution traces and child spans with async background persistence.</p>
+      <!-- Section: Workspaces & Isolation -->
+      <section id="workspaces" class="space-y-6 border-b border-slate-800/80 pb-12">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold mb-2">
+            Chapter 6 &bull; Multi-Tenancy &amp; Workspaces
           </div>
+          <h2 class="text-2xl font-bold font-mono text-white tracking-tight">Workspaces &amp; Isolation Architecture</h2>
+          <p class="text-slate-400 text-xs mt-1">
+            Feenion provides built-in multi-tenant workspace isolation, allowing teams to separate telemetry data across environments (e.g. Production, Staging, Dev) or distinct AI microservices under a single self-hosted server.
+          </p>
+        </div>
 
-          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
-            <span class="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 mr-2 font-bold">GET</span>
-            <strong class="text-white">/api/v1/traces</strong>
-            <p class="text-slate-400 mt-1 font-sans text-xs">Query traces with multi-dimensional filters (status, time_window, environment, search, model, span_type, sort_by).</p>
-          </div>
+        <!-- Flow diagram -->
+        <div class="p-5 rounded-2xl glass-inner space-y-4">
+          <h3 class="text-xs font-mono font-bold text-indigo-300 uppercase tracking-wider">The Workspace Lifecycle Flow</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs font-mono">
+            <div class="p-3 rounded-xl bg-[#080b11]/80 border border-white/10 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-indigo-400 font-bold">
+                <span class="w-5 h-5 rounded-full bg-indigo-900/60 flex items-center justify-center text-[11px]">1</span>
+                <span>Create Workspace</span>
+              </div>
+              <p class="text-slate-400 font-sans text-[11px] leading-relaxed">
+                Create a workspace (e.g. <code>prod-agent-service</code>) via the Web Dashboard Settings or <code>POST /api/v1/projects</code>.
+              </p>
+            </div>
 
-          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
-            <span class="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 mr-2 font-bold">GET</span>
-            <strong class="text-white">/api/v1/traces/{trace_id}</strong>
-            <p class="text-slate-400 mt-1 font-sans text-xs">Retrieves complete trace detail including causality tree, aggregated tokens, and dollar costs.</p>
-          </div>
+            <div class="p-3 rounded-xl bg-[#080b11]/80 border border-white/10 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-emerald-400 font-bold">
+                <span class="w-5 h-5 rounded-full bg-emerald-900/60 flex items-center justify-center text-[11px]">2</span>
+                <span>Generate API Key</span>
+              </div>
+              <p class="text-slate-400 font-sans text-[11px] leading-relaxed">
+                The server generates a unique cryptographic ingestion API key (<code>fn_...</code>) stored as a SHA-256 hash.
+              </p>
+            </div>
 
-          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
-            <span class="px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 mr-2 font-bold">DELETE</span>
-            <strong class="text-white">/api/v1/projects/{project_id}</strong>
-            <p class="text-slate-400 mt-1 font-sans text-xs">Deletes a workspace and cascade-deletes all its API keys, traces, spans, and telemetry logs.</p>
-          </div>
+            <div class="p-3 rounded-xl bg-[#080b11]/80 border border-white/10 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-purple-400 font-bold">
+                <span class="w-5 h-5 rounded-full bg-purple-900/60 flex items-center justify-center text-[11px]">3</span>
+                <span>Instrument App</span>
+              </div>
+              <p class="text-slate-400 font-sans text-[11px] leading-relaxed">
+                Pass the API key to <code>configure(api_key="fn_...")</code> in your Python backend or HTTP exporter.
+              </p>
+            </div>
 
-          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
-            <span class="px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 mr-2 font-bold">GET</span>
-            <strong class="text-white">/api/v1/analytics/overview</strong>
-            <p class="text-slate-400 mt-1 font-sans text-xs">Calculates system health KPIs, p95 latency, error rates, token counts, and spend insights.</p>
-          </div>
-
-          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
-            <span class="px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 mr-2 font-bold">POST</span>
-            <strong class="text-white">/api/v1/admin/clear-telemetry</strong>
-            <p class="text-slate-400 mt-1 font-sans text-xs">Permanently purges all telemetry when provided with confirmation payload {"confirm_text": "delete everything"}.</p>
-          </div>
-
-          <div class="p-3 rounded-lg bg-[#0d111a] border border-[#1e2330]">
-            <span class="px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 mr-2 font-bold">WS</span>
-            <strong class="text-white">/api/v1/ws/telemetry</strong>
-            <p class="text-slate-400 mt-1 font-sans text-xs">Real-time WebSocket stream for instant live trace broadcasts.</p>
+            <div class="p-3 rounded-xl bg-[#080b11]/80 border border-white/10 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-cyan-400 font-bold">
+                <span class="w-5 h-5 rounded-full bg-cyan-900/60 flex items-center justify-center text-[11px]">4</span>
+                <span>Isolated Queries</span>
+              </div>
+              <p class="text-slate-400 font-sans text-[11px] leading-relaxed">
+                Switch workspaces instantly in the dashboard top navigation bar to view isolated traces, analytics, and costs.
+              </p>
+            </div>
           </div>
         </div>
+
+        <!-- SDK code example -->
+        <div class="space-y-2">
+          <h3 class="text-xs font-mono font-bold text-slate-300">Configuring Python SDK with Workspace Key</h3>
+          <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 glass-inner overflow-x-auto"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> configure, trace, span
+
+<span class="text-slate-500"># Bind all telemetry from this process to your dedicated workspace:</span>
+configure(
+    server_url=<span class="text-emerald-300">"http://localhost:8000"</span>,
+    api_key=<span class="text-emerald-300">"fn_abc123yourSecretKeyHere..."</span>,
+)
+
+<span class="text-indigo-400">@trace</span>(name=<span class="text-emerald-300">"customer_support_pipeline"</span>, span_type=<span class="text-emerald-300">"agent"</span>)
+<span class="text-purple-400">def</span> <span class="text-blue-400">run_task</span>(query: str):
+    <span class="text-purple-400">with</span> span(<span class="text-emerald-300">"kb_lookup"</span>, span_type=<span class="text-emerald-300">"retrieval"</span>):
+        <span class="text-purple-400">pass</span></code></pre>
+        </div>
+
+        <!-- Safety features -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+          <div class="p-3.5 rounded-xl glass-inner space-y-1">
+            <h4 class="text-indigo-300 font-bold flex items-center gap-1.5">
+              <span>🔒</span> Zero Data Bleed
+            </h4>
+            <p class="text-slate-400 font-sans text-[11px] leading-relaxed">
+              Traces, span error stacks, token costs, and LLM prompts are partitioned by workspace ID at the database layer. One workspace cannot access telemetry from another.
+            </p>
+          </div>
+
+          <div class="p-3.5 rounded-xl glass-inner space-y-1">
+            <h4 class="text-rose-300 font-bold flex items-center gap-1.5">
+              <span>🗑️</span> Protected Cascade Deletion
+            </h4>
+            <p class="text-slate-400 font-sans text-[11px] leading-relaxed">
+              Deleting a workspace requires entering the exact confirmation text <code>delete workspace</code> and cascades through all associated spans, events, and API keys. The system prevents deleting the last remaining workspace.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: REST & WebSocket API -->
+      <section id="api-reference" class="space-y-6 border-b border-slate-800/80 pb-12">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold mb-2">
+            Server API &bull; Complete Reference
+          </div>
+          <h2 class="text-2xl font-bold font-mono text-white tracking-tight">REST & WebSocket API Reference</h2>
+          <p class="text-slate-400 text-xs mt-1">
+            The Feenion server exposes high-performance asynchronous endpoints for ingestion, query filtering, deep analytics, project isolation, and live WebSocket telemetry push.
+          </p>
+        </div>
+
+        <!-- 1. Ingestion & Realtime Streaming -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-mono font-bold text-indigo-300 flex items-center gap-2">
+            <span>📥</span> 1. Ingestion &amp; Live Streaming
+          </h3>
+          <div class="space-y-3 font-mono text-xs">
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/50 font-bold">POST</span>
+                  <strong class="text-white text-sm">/api/v1/traces</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Batch Ingestion</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Ingests an array of execution traces, child spans, token metrics, and execution events with asynchronous persistence. Supports Gzip compression via <code>Content-Encoding: gzip</code>.</p>
+              <div class="p-2.5 rounded bg-[#080b11]/80 border border-white/5 text-[11px] text-slate-400 overflow-x-auto">
+                <span class="text-indigo-400">Headers:</span> <code>Content-Type: application/json</code> &bull; <code>Content-Encoding: gzip</code> (optional) &bull; <code>X-Feenion-Api-Key: &lt;key&gt;</code> (optional)<br/>
+                <span class="text-emerald-400">Response (200):</span> <code>{"accepted": 10, "schema_version": "1.0"}</code>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800/50 font-bold">WS</span>
+                  <strong class="text-white text-sm">/api/v1/ws/telemetry</strong>
+                </div>
+                <span class="text-[10px] text-purple-400 font-sans">Real-time Stream</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Bi-directional WebSocket connection for live telemetry streaming. The server broadcasts events (<code>trace_ingested</code>, <code>trace_deleted</code>, <code>data_cleared</code>) directly to connected dashboard sessions.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Trace & Span Queries -->
+        <div class="space-y-3 pt-2">
+          <h3 class="text-sm font-mono font-bold text-indigo-300 flex items-center gap-2">
+            <span>🔍</span> 2. Traces &amp; Spans Exploration
+          </h3>
+          <div class="space-y-3 font-mono text-xs">
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/traces</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Filter &amp; Paginate</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">List and search traces with multi-dimensional filtering, free-text prompt search, and sorting.</p>
+              <div class="p-2.5 rounded bg-[#080b11]/80 border border-white/5 text-[11px] text-slate-400 space-y-1">
+                <div><span class="text-amber-300">Query Parameters:</span></div>
+                <ul class="list-disc list-inside space-y-0.5 text-slate-300 pl-1 font-sans text-xs">
+                  <li><code>time_window</code>: <code>15m</code>, <code>1h</code>, <code>6h</code>, <code>24h</code>, <code>7d</code>, <code>30d</code>, <code>all</code></li>
+                  <li><code>status</code>: <code>all</code>, <code>ok</code>, <code>error</code></li>
+                  <li><code>environment</code>: <code>all</code>, <code>production</code>, <code>staging</code>, <code>development</code></li>
+                  <li><code>span_type</code>: <code>all</code>, <code>llm</code>, <code>retrieval</code>, <code>tool</code>, <code>agent</code></li>
+                  <li><code>model</code>: Filter by LLM model name (e.g. <code>gemini-2.0-flash</code>, <code>gpt-4o</code>)</li>
+                  <li><code>search</code>: Full-text substring search across trace names, prompt inputs, model names, and IDs</li>
+                  <li><code>min_duration_ms</code> / <code>max_duration_ms</code>: Filter by execution latency</li>
+                  <li><code>sort_by</code>: <code>newest</code>, <code>oldest</code>, <code>slowest</code>, <code>fastest</code>, <code>most_tokens</code>, <code>most_cost</code>, <code>most_spans</code>, <code>error</code></li>
+                  <li><code>limit</code> (1-500, default 100) &bull; <code>offset</code> (default 0)</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/traces/{trace_id}</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Full Trace Details</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Retrieves the complete causality tree for a single trace, including child spans, prompt inputs, completions, error stack traces, token breakdowns, and calculated dollar costs.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/traces/{trace_id}/spans</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Span Waterfall</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Returns the ordered flat list of child spans with start timestamps, latencies, and parent IDs for timeline and flamegraph visualization.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/count/traces</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Counter</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Returns fast count of total ingested traces: <code>{"count": 1420}</code>.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Observability & Analytics Engine -->
+        <div class="space-y-3 pt-2">
+          <h3 class="text-sm font-mono font-bold text-indigo-300 flex items-center gap-2">
+            <span>📊</span> 3. Observability &amp; Deep Analytics
+          </h3>
+          <div class="space-y-3 font-mono text-xs">
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/analytics/overview</strong>
+                </div>
+                <span class="text-[10px] text-emerald-400 font-sans">Health &amp; Regression</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Returns system health score (0-100), latency percentiles (p50, p75, p90, p95, p99), KPI deltas vs previous window, time breakdown (LLM vs Retrieval vs Tools vs Other), and automated "What Changed?" regression analysis.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/analytics/models</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Model Breakdown</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Aggregates performance across LLM providers and models: requests, prompt &amp; completion tokens, total spend, p50/p95 latency, error rates, and average cost per query.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/analytics/tools</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">MCP &amp; Tool Calling</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Monitors tool invocations, execution failures, p50/p95 latency per tool, and latest invocation timestamps.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/analytics/retrieval</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Vector RAG Metrics</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Analyzes vector search and retrieval pipelines: average document chunks retrieved, average cosine/relevance scores, slow retrievals (>1s), and empty result alerts.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/analytics/agents</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">Multi-Step Agent Loops</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Evaluates autonomous agent execution runs: average step count, loop candidate detection (repeated tool calling &gt;3 times), total tokens, and goal completion rates.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/errors</strong>
+                </div>
+                <span class="text-[10px] text-rose-400 font-sans">Error Fingerprinting</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Groups exceptions into unique semantic fingerprints with stack traces, first seen / latest occurrence, occurrence counts, and list of affected model names and trace IDs.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Workspaces & API Keys -->
+        <div class="space-y-3 pt-2">
+          <h3 class="text-sm font-mono font-bold text-indigo-300 flex items-center gap-2">
+            <span>🏢</span> 4. Multi-Tenant Workspaces &amp; API Keys
+          </h3>
+          <div class="space-y-3 font-mono text-xs">
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-bold">GET</span>
+                  <strong class="text-white text-sm">/api/v1/projects</strong>
+                </div>
+                <span class="text-[10px] text-slate-500 font-sans">List Projects</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Lists all active workspaces and their creation dates.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/50 font-bold">POST</span>
+                  <strong class="text-white text-sm">/api/v1/projects</strong>
+                </div>
+                <span class="text-[10px] text-emerald-400 font-sans">Create Project &amp; Key</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Creates a new workspace and generates a raw API key (<code>feenion_live_...</code>) for SDK telemetry ingestion.</p>
+              <div class="p-2 rounded bg-[#080b11]/80 border border-white/5 text-[11px] text-slate-400">
+                <code>Payload: {"name": "production-llm-service"}</code>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/50 font-bold">DELETE</span>
+                  <strong class="text-white text-sm">/api/v1/projects/{project_id}</strong>
+                </div>
+                <span class="text-[10px] text-rose-400 font-sans">Cascade Delete</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Deletes a workspace and cascade-deletes all its API keys, traces, spans, and telemetry logs. (Safety rule: cannot delete the only remaining workspace).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Admin & Maintenance Operations -->
+        <div class="space-y-3 pt-2">
+          <h3 class="text-sm font-mono font-bold text-indigo-300 flex items-center gap-2">
+            <span>🛡️</span> 5. Admin &amp; Data Maintenance
+          </h3>
+          <div class="space-y-3 font-mono text-xs">
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/50 font-bold">DELETE / POST</span>
+                  <strong class="text-white text-sm">/api/v1/admin/traces &bull; /api/v1/admin/traces/purge</strong>
+                </div>
+                <span class="text-[10px] text-rose-400 font-sans">Full Purge</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Permanently purges all database and in-memory telemetry data. Requires explicit confirmation payload <code>{"confirmation": "delete everything"}</code>.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/50 font-bold">POST</span>
+                  <strong class="text-white text-sm">/api/v1/admin/traces/batch-delete</strong>
+                </div>
+                <span class="text-[10px] text-rose-400 font-sans">Batch Delete</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Deletes multiple selected traces by IDs with <code>{"trace_ids": ["..."], "confirmation": "delete selected"}</code>.</p>
+            </div>
+
+            <div class="p-4 rounded-xl glass-inner space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/50 font-bold">DELETE</span>
+                  <strong class="text-white text-sm">/api/v1/admin/traces/{trace_id}</strong>
+                </div>
+                <span class="text-[10px] text-rose-400 font-sans">Single Delete</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">Deletes a specific trace and its child spans and events, broadcasting a <code>trace_deleted</code> event over WebSocket.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. System Probes & Health -->
+        <div class="space-y-3 pt-2">
+          <h3 class="text-sm font-mono font-bold text-indigo-300 flex items-center gap-2">
+            <span>⚙️</span> 6. System Probes &amp; Health
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+            <div class="p-3 rounded-xl glass-inner space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold text-[10px]">GET</span>
+                <strong class="text-white">/health</strong>
+              </div>
+              <p class="text-slate-400 font-sans text-[11px]">Liveness probe for load balancers and container orchestrators: <code>{"status": "ok"}</code>.</p>
+            </div>
+
+            <div class="p-3 rounded-xl glass-inner space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold text-[10px]">GET</span>
+                <strong class="text-white">/ready</strong>
+              </div>
+              <p class="text-slate-400 font-sans text-[11px]">Readiness check verifying database connection and background worker thread status.</p>
+            </div>
+          </div>
+        </div>
+
       </section>
 
       <!-- Section: FAQ -->

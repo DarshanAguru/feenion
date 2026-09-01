@@ -20,9 +20,10 @@ import {
 
 interface SpanInspectorProps {
   span: SpanPayload | null;
+  allSpans?: SpanPayload[];
 }
 
-export const SpanInspector: React.FC<SpanInspectorProps> = ({ span }) => {
+export const SpanInspector: React.FC<SpanInspectorProps> = ({ span, allSpans }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'input' | 'output' | 'attributes' | 'events' | 'error'>('overview');
   const [copiedId, setCopiedId] = useState(false);
 
@@ -43,11 +44,54 @@ export const SpanInspector: React.FC<SpanInspectorProps> = ({ span }) => {
   const attributes = span.attributes || {};
   const metrics = span.metrics || {};
   const tokens = metrics.tokens || attributes.tokens || {};
-  const promptTokens = tokens.prompt || attributes.prompt_tokens || 0;
-  const completionTokens = tokens.completion || attributes.completion_tokens || 0;
-  const totalTokens = promptTokens + completionTokens;
-  const cost = metrics.cost || attributes.cost || 0.0;
+  const promptTokens = Number(tokens.prompt || attributes.prompt_tokens || 0);
+  const completionTokens = Number(tokens.completion || attributes.completion_tokens || 0);
+  const directTotalTokens = Number(tokens.total || attributes.total_tokens || (promptTokens + completionTokens));
+  const directCost = Number(metrics.cost ?? attributes.cost ?? 0.0);
   const modelName = attributes.model || metrics.model;
+
+  // Compute descendant subtree rollup tokens and costs
+  let aggregatedTokens = 0;
+  let aggregatedPromptTokens = 0;
+  let aggregatedCompletionTokens = 0;
+  let aggregatedCost = 0;
+  const aggregatedModels = new Set<string>();
+
+  if (allSpans && allSpans.length > 0) {
+    const queue = [span.span_id];
+    const visited = new Set<string>(queue);
+
+    while (queue.length > 0) {
+      const parentId = queue.shift()!;
+      for (const candidate of allSpans) {
+        if (candidate.parent_span_id === parentId && !visited.has(candidate.span_id)) {
+          visited.add(candidate.span_id);
+          queue.push(candidate.span_id);
+
+          const dm = candidate.metrics || {};
+          const da = candidate.attributes || {};
+          const dtok = dm.tokens || da.tokens || {};
+          const dp = Number(dtok.prompt || da.prompt_tokens || 0);
+          const dc = Number(dtok.completion || da.completion_tokens || 0);
+          const dt = Number(dtok.total || da.total_tokens || (dp + dc));
+          const dcost = Number(dm.cost ?? da.cost ?? 0.0);
+          const dmod = da.model || dm.model;
+
+          aggregatedPromptTokens += dp;
+          aggregatedCompletionTokens += dc;
+          aggregatedTokens += dt;
+          aggregatedCost += dcost;
+          if (dmod) aggregatedModels.add(String(dmod));
+        }
+      }
+    }
+  }
+
+  const isRollup = (directTotalTokens === 0 && aggregatedTokens > 0) || (span.span_type === 'agent' || span.span_type === 'chain');
+  const displayTotalTokens = (directTotalTokens > 0) ? directTotalTokens : aggregatedTokens;
+  const displayPromptTokens = (promptTokens > 0) ? promptTokens : aggregatedPromptTokens;
+  const displayCompletionTokens = (completionTokens > 0) ? completionTokens : aggregatedCompletionTokens;
+  const displayCost = (directCost > 0) ? directCost : aggregatedCost;
 
   return (
     <div className="flex flex-col h-full bg-[#080b11] border border-[#1e2330] rounded-lg overflow-hidden">
@@ -152,18 +196,56 @@ export const SpanInspector: React.FC<SpanInspectorProps> = ({ span }) => {
                 <span className="text-sm font-bold font-mono text-slate-100">{formatDuration(span.duration_ms)}</span>
               </div>
               <div className="p-2.5 rounded bg-[#0d111a] border border-[#1e2330]">
-                <span className="text-[10px] uppercase font-mono text-slate-400 block mb-1">Total Tokens</span>
-                <span className="text-sm font-bold font-mono text-slate-100">{totalTokens > 0 ? formatNumber(totalTokens) : '--'}</span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] uppercase font-mono text-slate-400">Total Tokens</span>
+                  {isRollup && (
+                    <span className="text-[9px] font-mono text-indigo-400 bg-indigo-950 px-1 py-0.2 rounded border border-indigo-800">
+                      Rollup
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm font-bold font-mono text-slate-100">
+                  {displayTotalTokens > 0 ? formatNumber(displayTotalTokens) : '--'}
+                </span>
+                {displayTotalTokens > 0 && (
+                  <span className="text-[10px] text-slate-400 block font-mono">
+                    {formatNumber(displayPromptTokens)} in / {formatNumber(displayCompletionTokens)} out
+                  </span>
+                )}
               </div>
               <div className="p-2.5 rounded bg-[#0d111a] border border-[#1e2330]">
-                <span className="text-[10px] uppercase font-mono text-slate-400 block mb-1">Estimated Cost</span>
-                <span className="text-sm font-bold font-mono text-slate-100">{cost > 0 ? formatCost(cost) : '$0.00'}</span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] uppercase font-mono text-slate-400">Estimated Cost</span>
+                  {isRollup && (
+                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950 px-1 py-0.2 rounded border border-emerald-800">
+                      Rollup
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm font-bold font-mono text-emerald-400">{formatCost(displayCost)}</span>
               </div>
               <div className="p-2.5 rounded bg-[#0d111a] border border-[#1e2330]">
                 <span className="text-[10px] uppercase font-mono text-slate-400 block mb-1">Start Time</span>
                 <span className="text-xs font-mono text-slate-300">{formatTimestamp(span.start_time)}</span>
               </div>
             </div>
+
+            {/* Aggregated Multi-Model Subtree Rollup Notice */}
+            {isRollup && aggregatedModels.size > 0 && (
+              <div className="p-2.5 rounded-lg bg-indigo-950/30 border border-indigo-800/60 flex items-center justify-between text-xs font-mono">
+                <span className="text-indigo-300 font-semibold flex items-center gap-1.5">
+                  <Bot className="w-3.5 h-3.5 text-indigo-400" />
+                  Orchestrated Models ({aggregatedModels.size}):
+                </span>
+                <div className="flex items-center gap-1">
+                  {Array.from(aggregatedModels).map(m => (
+                    <span key={m} className="px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 text-[10px] border border-purple-800">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Specialized LLM View */}
             {span.span_type === 'llm' && (
@@ -179,8 +261,8 @@ export const SpanInspector: React.FC<SpanInspectorProps> = ({ span }) => {
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono text-slate-300 pt-1">
-                  <div>Prompt Tokens: <span className="text-white font-semibold">{formatNumber(promptTokens)}</span></div>
-                  <div>Completion Tokens: <span className="text-white font-semibold">{formatNumber(completionTokens)}</span></div>
+                  <div>Prompt Tokens: <span className="text-white font-semibold">{formatNumber(displayPromptTokens)}</span></div>
+                  <div>Completion Tokens: <span className="text-white font-semibold">{formatNumber(displayCompletionTokens)}</span></div>
                   {attributes.temperature !== undefined && (
                     <div>Temperature: <span className="text-white font-semibold">{attributes.temperature}</span></div>
                   )}

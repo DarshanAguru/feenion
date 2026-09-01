@@ -16,17 +16,164 @@ export function formatDuration(ms: number | null | undefined): string {
   return `${mins}m ${secs}s`;
 }
 
+export interface CurrencyConfig {
+  code: string;
+  name: string;
+  symbol: string;
+  rate: number; // 1 USD = X Currency
+  flag: string;
+}
+
+export const SUPPORTED_CURRENCIES: Record<string, CurrencyConfig> = {
+  USD: { code: 'USD', name: 'US Dollar', symbol: '$', rate: 1.0, flag: '🇺🇸' },
+  INR: { code: 'INR', name: 'Indian Rupee', symbol: '₹', rate: 87.2, flag: '🇮🇳' },
+  EUR: { code: 'EUR', name: 'Euro', symbol: '€', rate: 0.92, flag: '🇪🇺' },
+  GBP: { code: 'GBP', name: 'British Pound', symbol: '£', rate: 0.78, flag: '🇬🇧' },
+  CNY: { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', rate: 7.24, flag: '🇨🇳' },
+  JPY: { code: 'JPY', name: 'Japanese Yen', symbol: '¥', rate: 153.5, flag: '🇯🇵' },
+};
+
+export function getActiveCurrency(): CurrencyConfig {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('feenion_currency');
+      if (saved && SUPPORTED_CURRENCIES[saved]) {
+        const cfg = { ...SUPPORTED_CURRENCIES[saved] };
+        
+        // 1. Check user custom manual override
+        const customRate = localStorage.getItem(`feenion_fx_${saved}`);
+        if (customRate && !isNaN(Number(customRate)) && Number(customRate) > 0) {
+          cfg.rate = Number(customRate);
+          return cfg;
+        }
+
+        // 2. Check cached live open-source FX rate
+        const liveRatesStr = localStorage.getItem('feenion_live_fx_rates');
+        if (liveRatesStr) {
+          const liveRates = JSON.parse(liveRatesStr);
+          if (liveRates && liveRates[saved] && typeof liveRates[saved] === 'number') {
+            cfg.rate = liveRates[saved];
+            return cfg;
+          }
+        }
+
+        return cfg;
+      }
+    }
+  } catch (e) {}
+  return SUPPORTED_CURRENCIES.USD;
+}
+
+export function setActiveCurrency(code: string, customRate?: number): void {
+  if (typeof window !== 'undefined' && window.localStorage && SUPPORTED_CURRENCIES[code]) {
+    localStorage.setItem('feenion_currency', code);
+    if (customRate !== undefined && customRate > 0) {
+      localStorage.setItem(`feenion_fx_${code}`, String(customRate));
+    }
+    window.dispatchEvent(new Event('feenion_currency_changed'));
+  }
+}
+
+export async function fetchLiveExchangeRates(): Promise<{
+  success: boolean;
+  source: string;
+  rates: Record<string, number>;
+  lastUpdated: string;
+}> {
+  const sources = [
+    {
+      name: 'Open ER-API (open.er-api.com)',
+      url: 'https://open.er-api.com/v6/latest/USD',
+      extract: (data: any) => data.rates,
+    },
+    {
+      name: 'ExchangeRate-API (api.exchangerate-api.com)',
+      url: 'https://api.exchangerate-api.com/v4/latest/USD',
+      extract: (data: any) => data.rates,
+    },
+    {
+      name: 'FawazAhmed Currency CDN',
+      url: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json',
+      extract: (data: any) => {
+        const u = data.usd || {};
+        return {
+          INR: u.inr,
+          EUR: u.eur,
+          GBP: u.gbp,
+          CNY: u.cny,
+          JPY: u.jpy,
+          USD: 1.0,
+        };
+      },
+    },
+  ];
+
+  for (const src of sources) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(src.url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const json = await res.json();
+        const rawRates = src.extract(json);
+        if (rawRates && typeof rawRates === 'object') {
+          const extracted: Record<string, number> = { USD: 1.0 };
+          
+          Object.keys(SUPPORTED_CURRENCIES).forEach((code) => {
+            const val = rawRates[code] || rawRates[code.toLowerCase()];
+            if (typeof val === 'number' && val > 0) {
+              extracted[code] = Math.round(val * 1000) / 1000;
+              SUPPORTED_CURRENCIES[code].rate = extracted[code];
+            }
+          });
+
+          const timestamp = new Date().toLocaleTimeString();
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('feenion_live_fx_rates', JSON.stringify(extracted));
+            localStorage.setItem('feenion_live_fx_source', src.name);
+            localStorage.setItem('feenion_live_fx_last_updated', timestamp);
+          }
+          window.dispatchEvent(new Event('feenion_currency_changed'));
+          return { success: true, source: src.name, rates: extracted, lastUpdated: timestamp };
+        }
+      }
+    } catch (err) {
+      // Try next fallback endpoint
+      continue;
+    }
+  }
+
+  // If all live APIs fail, fallback to latest hardcoded defaults
+  const fallbackRates: Record<string, number> = {};
+  Object.keys(SUPPORTED_CURRENCIES).forEach((code) => {
+    fallbackRates[code] = SUPPORTED_CURRENCIES[code].rate;
+  });
+
+  return {
+    success: false,
+    source: 'Built-in Fallback Catalog',
+    rates: fallbackRates,
+    lastUpdated: 'Offline / Built-in',
+  };
+}
+
 export function formatCost(cost: number | null | undefined): string {
-  if (cost === null || cost === undefined || isNaN(cost)) return '$0.00';
-  if (cost === 0) return '$0.00';
-  const isNeg = cost < 0;
-  const abs = Math.abs(cost);
+  const curr = getActiveCurrency();
+  if (cost === null || cost === undefined || isNaN(cost)) return `${curr.symbol}0.00`;
+  
+  const converted = cost * curr.rate;
+  if (converted === 0) return `${curr.symbol}0.00`;
+  
+  const isNeg = converted < 0;
+  const abs = Math.abs(converted);
   const sign = isNeg ? '-' : '';
 
-  if (abs < 0.0001) return `${sign}<$0.0001`;
-  if (abs < 0.01) return `${sign}$${abs.toFixed(4)}`;
-  if (abs < 1) return `${sign}$${abs.toFixed(3)}`;
-  return `${sign}$${abs.toFixed(2)}`;
+  if (abs < 0.0001) return `${sign}<${curr.symbol}0.0001`;
+  if (abs < 0.01) return `${sign}${curr.symbol}${abs.toFixed(4)}`;
+  if (abs < 1) return `${sign}${curr.symbol}${abs.toFixed(3)}`;
+  return `${sign}${curr.symbol}${abs.toFixed(2)}`;
 }
 
 export function parseDate(isoStr: string | number | null | undefined): Date | null {

@@ -330,7 +330,7 @@ export const TracesPage: React.FC<TracesPageProps> = ({
                   </td>
 
                   <td className="py-2.5 px-3 font-mono text-slate-300">
-                    {trace.estimated_cost ? formatCost(trace.estimated_cost) : '$0.00'}
+                    {formatCost(trace.estimated_cost)}
                   </td>
 
                   <td className="py-2.5 px-3 text-right font-mono text-slate-400 text-[11px]">

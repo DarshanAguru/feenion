@@ -31,6 +31,30 @@ def _percentile(values: list[float], p: float) -> float:
     d1 = sorted_v[int(c)] * (k - f)
     return round(float(d0 + d1), 2)
 
+DEFAULT_MODEL_RATES = {
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gemini-2.0-flash": (0.10, 0.40),
+    "gemini-1.5-pro": (3.50, 10.50),
+    "gemini-1.5-flash": (0.075, 0.30),
+    "claude-3-5-sonnet": (3.00, 15.00),
+    "claude-3-5-haiku": (0.80, 4.00),
+    "deepseek-chat": (0.14, 0.28),
+    "deepseek-reasoner": (0.55, 2.19),
+    "llama-3.3-70b": (0.70, 0.90),
+    "o1": (15.00, 60.00),
+    "o3-mini": (1.10, 4.40),
+}
+
+def calc_model_cost(model_name: Optional[str], prompt_tokens: int, completion_tokens: int) -> float:
+    if not model_name:
+        return round((prompt_tokens * 2.50 / 1_000_000.0) + (completion_tokens * 10.00 / 1_000_000.0), 6)
+    m = model_name.lower().strip()
+    for key, (p_rate, c_rate) in DEFAULT_MODEL_RATES.items():
+        if key in m or m in key:
+            return round((prompt_tokens * p_rate / 1_000_000.0) + (completion_tokens * c_rate / 1_000_000.0), 6)
+    return round((prompt_tokens * 2.50 / 1_000_000.0) + (completion_tokens * 10.00 / 1_000_000.0), 6)
+
 def to_iso_utc(dt: Optional[datetime]) -> Optional[str]:
     if not dt:
         return None
@@ -217,15 +241,18 @@ def list_traces(
             m = s.metrics_json or {}
             attr = s.attributes_json or {}
             tokens = m.get("tokens") or attr.get("tokens") or {}
-            p_tok = tokens.get("prompt") or attr.get("prompt_tokens", 0)
-            c_tok = tokens.get("completion") or attr.get("completion_tokens", 0)
-            cost_val = m.get("cost") or attr.get("cost", 0.0)
-
-            total_prompt_tokens += int(p_tok)
-            total_completion_tokens += int(c_tok)
-            total_cost += float(cost_val)
-
+            p_tok = int(tokens.get("prompt") or attr.get("prompt_tokens") or 0)
+            c_tok = int(tokens.get("completion") or attr.get("completion_tokens") or 0)
+            cost_val = float(m.get("cost") or attr.get("cost") or 0.0)
             model_name = attr.get("model") or m.get("model")
+
+            if cost_val == 0.0 and (p_tok > 0 or c_tok > 0):
+                cost_val = calc_model_cost(model_name, p_tok, c_tok)
+
+            total_prompt_tokens += p_tok
+            total_completion_tokens += c_tok
+            total_cost += cost_val
+
             if model_name:
                 models_set.add(str(model_name))
                 search_snippets.append(str(model_name))
@@ -351,13 +378,16 @@ def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
             c_tok = int(tokens.get("completion") or attr.get("completion_tokens") or 0)
             tot_tok = int(tokens.get("total") or attr.get("total_tokens") or (p_tok + c_tok))
             cost_val = float(m.get("cost") or attr.get("cost") or 0.0)
+            model_name = attr.get("model") or m.get("model")
+
+            if cost_val == 0.0 and (p_tok > 0 or c_tok > 0):
+                cost_val = calc_model_cost(model_name, p_tok, c_tok)
 
             total_prompt_tokens += p_tok
             total_completion_tokens += c_tok
             total_tokens += tot_tok
             total_cost += cost_val
 
-            model_name = attr.get("model") or m.get("model")
             if model_name:
                 models_set.add(str(model_name))
 
@@ -373,6 +403,11 @@ def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
                 for e in s.events
             ]
 
+            span_metrics = dict(s.metrics_json or {})
+            if "cost" not in span_metrics or span_metrics.get("cost") == 0:
+                if cost_val > 0:
+                    span_metrics["cost"] = cost_val
+
             spans_list.append({
                 "span_id": str(s.id),
                 "trace_id": str(s.trace_id),
@@ -387,7 +422,7 @@ def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
                 "input": s.input_json,
                 "output": s.output_json,
                 "error": s.error_json,
-                "metrics": s.metrics_json or {},
+                "metrics": span_metrics,
                 "events": events_list,
             })
 
@@ -411,7 +446,7 @@ def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
                 "completion": total_completion_tokens,
                 "total": total_tokens if total_tokens > 0 else (total_prompt_tokens + total_completion_tokens),
             },
-            "estimated_cost": total_cost,
+            "estimated_cost": round(total_cost, 6),
             "spans": spans_list,
         }
 
@@ -438,15 +473,23 @@ def get_trace_detail(trace_id: UUID, db: Session = Depends(get_db)):
         c_tok = int(tokens.get("completion") or attr.get("completion_tokens") or 0)
         tot_tok = int(tokens.get("total") or attr.get("total_tokens") or (p_tok + c_tok))
         cost_val = float(m.get("cost") or attr.get("cost") or 0.0)
+        model_name = attr.get("model") or m.get("model")
+
+        if cost_val == 0.0 and (p_tok > 0 or c_tok > 0):
+            cost_val = calc_model_cost(model_name, p_tok, c_tok)
 
         total_prompt_tokens += p_tok
         total_completion_tokens += c_tok
         total_tokens += tot_tok
         total_cost += cost_val
 
-        model_name = attr.get("model") or m.get("model")
         if model_name:
             models_set.add(str(model_name))
+
+        span_metrics = dict(s.metrics or {})
+        if "cost" not in span_metrics or span_metrics.get("cost") == 0:
+            if cost_val > 0:
+                span_metrics["cost"] = cost_val
 
         spans_list.append({
             "span_id": str(s.span_id),
@@ -707,13 +750,17 @@ def get_analytics_overview(
                 m = s.metrics_json or {}
                 attr = s.attributes_json or {}
                 tokens = m.get("tokens") or attr.get("tokens") or {}
-                p_tok = tokens.get("prompt") or attr.get("prompt_tokens", 0)
-                c_tok = tokens.get("completion") or attr.get("completion_tokens", 0)
-                cost_val = m.get("cost") or attr.get("cost", 0.0)
+                p_tok = int(tokens.get("prompt") or attr.get("prompt_tokens") or 0)
+                c_tok = int(tokens.get("completion") or attr.get("completion_tokens") or 0)
+                cost_val = float(m.get("cost") or attr.get("cost") or 0.0)
+                model_name = attr.get("model") or m.get("model")
 
-                prompt_tok += int(p_tok)
-                comp_tok += int(c_tok)
-                cost += float(cost_val)
+                if cost_val == 0.0 and (p_tok > 0 or c_tok > 0):
+                    cost_val = calc_model_cost(model_name, p_tok, c_tok)
+
+                prompt_tok += p_tok
+                comp_tok += c_tok
+                cost += cost_val
 
                 if s.span_type == "llm":
                     llm_spans += 1

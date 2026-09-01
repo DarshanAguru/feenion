@@ -30,9 +30,35 @@ uvicorn feenion_server.main:app --host 0.0.0.0 --port 8000
 
 ## API Endpoints Summary
 
-- `POST /api/v1/traces`: Ingest spans and trace events.
-- `GET /api/v1/traces`: Query trace summaries with prompt, model, and metadata full-text search.
-- `GET /api/v1/traces/{trace_id}/spans`: Retrieve nested spans for flamegraphs and mindmaps.
-- `GET /api/v1/errors`: Retrieve grouped exception fingerprints and occurrences.
-- `POST /api/v1/admin/traces/batch-delete`: Batch delete selected traces (requires Basic Auth).
-- `DELETE /api/v1/admin/traces`: Purge all telemetry data (requires Basic Auth).
+### Ingestion & Realtime
+- `POST /api/v1/traces`: Ingest spans, trace events, and token metrics (supports Gzip).
+- `WS /api/v1/ws/telemetry`: Live real-time WebSocket telemetry push.
+
+### Query & Exploration
+- `GET /api/v1/traces`: Query trace summaries with multi-dimensional filtering, prompt/model search, and sorting.
+- `GET /api/v1/traces/{trace_id}`: Full trace detail with causality tree, inputs/outputs, and costs.
+- `GET /api/v1/traces/{trace_id}/spans`: Retrieve nested spans for waterfall and flamegraphs.
+- `GET /api/v1/count/traces`: Total ingested trace count.
+
+### Analytics Engine
+- `GET /api/v1/analytics/overview`: Health score (0-100), latency percentiles (p50-p99), KPI deltas, time breakdown, and "What Changed?" regression engine.
+- `GET /api/v1/analytics/models`: Provider and model breakdown (tokens, spend, error rates, latencies).
+- `GET /api/v1/analytics/tools`: Tool and MCP execution metrics (calls, failures, latencies).
+- `GET /api/v1/analytics/retrieval`: Vector DB RAG analytics (relevance scores, doc counts, slow queries).
+- `GET /api/v1/analytics/agents`: Autonomous multi-step agent metrics (steps, loops, failure rates).
+- `GET /api/v1/errors`: Semantic error clusters with stack traces and affected models.
+
+### Workspaces & Multi-Tenancy
+- `GET /api/v1/projects`: List all workspaces.
+- `POST /api/v1/projects`: Create workspace and generate API key.
+- `DELETE /api/v1/projects/{project_id}`: Cascade delete workspace and associated data.
+
+### Admin & Maintenance
+- `DELETE /api/v1/admin/traces` / `POST /api/v1/admin/traces/purge`: Purge all data (requires confirmation).
+- `POST /api/v1/admin/traces/batch-delete`: Batch delete selected traces.
+- `DELETE /api/v1/admin/traces/{trace_id}`: Delete a single trace.
+
+### System & Probes
+- `GET /health`: Liveness probe.
+- `GET /ready`: Readiness probe.
+- `GET /ui`: Serves web dashboard.

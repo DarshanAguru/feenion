@@ -1,7 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProjectInfo } from '../../types';
 import { apiClient } from '../../api/client';
-import { Settings, Shield, Trash2, Key, Database, RefreshCw, Check, Copy, AlertTriangle, X } from 'lucide-react';
+import {
+  SUPPORTED_CURRENCIES,
+  getActiveCurrency,
+  setActiveCurrency,
+  fetchLiveExchangeRates,
+  formatCost,
+  CurrencyConfig,
+} from '../../utils/formatters';
+import {
+  getCustomPricing,
+  saveCustomPricing,
+  resetPricingToDefaults,
+  ModelPricingEntry,
+  DEFAULT_MODEL_CATALOG,
+  calculateEstimatedCost,
+} from '../../utils/pricing';
+import {
+  Settings,
+  Trash2,
+  Key,
+  Database,
+  Check,
+  Copy,
+  AlertTriangle,
+  X,
+  Coins,
+  DollarSign,
+  Calculator,
+  Plus,
+  RotateCcw,
+  Save,
+  Sliders,
+  RefreshCw,
+} from 'lucide-react';
 
 interface SettingsPageProps {
   projects: ProjectInfo[];
@@ -24,6 +57,33 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
 
+  // Currency State
+  const [currency, setCurrency] = useState<CurrencyConfig>(getActiveCurrency());
+  const [customFxRate, setCustomFxRate] = useState<string>(String(getActiveCurrency().rate));
+  const [savedCurrencyMsg, setSavedCurrencyMsg] = useState(false);
+  const [isFetchingFx, setIsFetchingFx] = useState(false);
+  const [fxSource, setFxSource] = useState<string>(
+    (typeof window !== 'undefined' && localStorage.getItem('feenion_live_fx_source')) || 'Built-in Catalog'
+  );
+  const [fxLastUpdated, setFxLastUpdated] = useState<string>(
+    (typeof window !== 'undefined' && localStorage.getItem('feenion_live_fx_last_updated')) || 'Default'
+  );
+
+  // Model Pricing Catalog State
+  const [pricingCatalog, setPricingCatalog] = useState<ModelPricingEntry[]>(getCustomPricing());
+  const [savedPricingMsg, setSavedPricingMsg] = useState(false);
+
+  // New Model Form State
+  const [newModelName, setNewModelName] = useState('');
+  const [newModelProvider, setNewModelProvider] = useState('Custom');
+  const [newPromptRate, setNewPromptRate] = useState('1.00');
+  const [newCompletionRate, setNewCompletionRate] = useState('3.00');
+
+  // Token Simulator State
+  const [simModel, setSimModel] = useState('gpt-4o');
+  const [simPromptTokens, setSimPromptTokens] = useState<number>(2500);
+  const [simCompletionTokens, setSimCompletionTokens] = useState<number>(600);
+
   // Project Delete Modal State
   const [projectToDelete, setProjectToDelete] = useState<ProjectInfo | null>(null);
   const [projectDeleteConfirmText, setProjectDeleteConfirmText] = useState('');
@@ -33,6 +93,33 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
   const [purgeConfirmText, setPurgeConfirmText] = useState('');
   const [purgeStatus, setPurgeStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleCurrencyUpdate = () => {
+      setCurrency(getActiveCurrency());
+      setCustomFxRate(String(getActiveCurrency().rate));
+      setFxSource(localStorage.getItem('feenion_live_fx_source') || 'Built-in Catalog');
+      setFxLastUpdated(localStorage.getItem('feenion_live_fx_last_updated') || 'Default');
+    };
+    window.addEventListener('feenion_currency_changed', handleCurrencyUpdate);
+    return () => window.removeEventListener('feenion_currency_changed', handleCurrencyUpdate);
+  }, []);
+
+  const handleSyncLiveFx = async () => {
+    setIsFetchingFx(true);
+    try {
+      const res = await fetchLiveExchangeRates();
+      setFxSource(res.source);
+      setFxLastUpdated(res.lastUpdated);
+      const active = getActiveCurrency();
+      setCurrency(active);
+      setCustomFxRate(String(active.rate));
+      setSavedCurrencyMsg(true);
+      setTimeout(() => setSavedCurrencyMsg(false), 2500);
+    } finally {
+      setIsFetchingFx(false);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,23 +168,408 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
+  const handleSelectCurrency = (code: string) => {
+    const defaultRate = SUPPORTED_CURRENCIES[code]?.rate || 1.0;
+    setCustomFxRate(String(defaultRate));
+    setActiveCurrency(code, defaultRate);
+    setCurrency(getActiveCurrency());
+    setSavedCurrencyMsg(true);
+    setTimeout(() => setSavedCurrencyMsg(false), 2500);
+  };
+
+  const handleSaveFxRate = () => {
+    const r = parseFloat(customFxRate);
+    if (!isNaN(r) && r > 0) {
+      setActiveCurrency(currency.code, r);
+      setCurrency(getActiveCurrency());
+      setSavedCurrencyMsg(true);
+      setTimeout(() => setSavedCurrencyMsg(false), 2500);
+    }
+  };
+
+  const handleUpdateModelRate = (index: number, field: 'prompt_per_1m' | 'completion_per_1m', val: string) => {
+    const num = parseFloat(val);
+    if (isNaN(num) || num < 0) return;
+    const updated = [...pricingCatalog];
+    updated[index] = { ...updated[index], [field]: num, is_custom: true };
+    setPricingCatalog(updated);
+  };
+
+  const handleSaveCatalog = () => {
+    saveCustomPricing(pricingCatalog);
+    setSavedPricingMsg(true);
+    setTimeout(() => setSavedPricingMsg(false), 2500);
+  };
+
+  const handleResetCatalog = () => {
+    if (confirm('Reset all model pricing back to factory defaults?')) {
+      const def = resetPricingToDefaults();
+      setPricingCatalog(def);
+      setSavedPricingMsg(true);
+      setTimeout(() => setSavedPricingMsg(false), 2500);
+    }
+  };
+
+  const handleAddNewModel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newModelName.trim()) return;
+    const pRate = parseFloat(newPromptRate) || 0;
+    const cRate = parseFloat(newCompletionRate) || 0;
+    const entry: ModelPricingEntry = {
+      model: newModelName.trim().toLowerCase(),
+      provider: newModelProvider.trim() || 'Custom',
+      prompt_per_1m: pRate,
+      completion_per_1m: cRate,
+      is_custom: true,
+    };
+    const updated = [entry, ...pricingCatalog.filter(x => x.model.toLowerCase() !== entry.model)];
+    setPricingCatalog(updated);
+    saveCustomPricing(updated);
+    setNewModelName('');
+    setNewPromptRate('1.00');
+    setNewCompletionRate('3.00');
+    setSavedPricingMsg(true);
+    setTimeout(() => setSavedPricingMsg(false), 2500);
+  };
+
+  const handleDeleteCustomModel = (modelName: string) => {
+    const updated = pricingCatalog.filter(x => x.model !== modelName);
+    setPricingCatalog(updated);
+    saveCustomPricing(updated);
+  };
+
+  const simulatedCostUSD = calculateEstimatedCost(simModel, simPromptTokens, simCompletionTokens, pricingCatalog);
+
   return (
-    <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-[#080b11] max-w-4xl">
+    <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-[#080b11] max-w-5xl">
       <div>
         <h2 className="text-base font-mono font-bold text-slate-100 uppercase tracking-tight flex items-center gap-2">
           <Settings className="w-5 h-5 text-indigo-400" />
-          Settings & Project Administration
+          Settings &amp; Global Preferences
         </h2>
         <p className="text-xs text-slate-400 mt-0.5">
-          Manage workspaces, generate API ingestion keys, delete projects, review server status, and configure telemetry retention.
+          Manage currency localization, custom token pricing models, multi-tenant workspaces, API keys, and database maintenance.
         </p>
       </div>
 
-      {/* Projects & API Keys */}
+      {/* 1. Currency & Localization Settings */}
+      <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
+            <Coins className="w-4 h-4 text-amber-400" />
+            <span>Currency &amp; FX Display Preferences</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="text-[10px] font-mono text-slate-400 bg-[#080b11] border border-slate-800 px-2 py-0.5 rounded flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Source: <strong className="text-slate-200">{fxSource}</strong> ({fxLastUpdated})</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSyncLiveFx}
+              disabled={isFetchingFx}
+              className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-mono text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+              title="Fetch latest live exchange rates from open-source APIs"
+            >
+              <RefreshCw className={`w-3 h-3 ${isFetchingFx ? 'animate-spin' : ''}`} />
+              <span>{isFetchingFx ? 'Syncing...' : 'Sync Live Rates'}</span>
+            </button>
+
+            {savedCurrencyMsg && (
+              <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" /> Saved!
+              </span>
+            )}
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-400">
+          Choose your preferred display currency for all token costs, spend aggregates, and analytics across the Feenion dashboard. Live rates are queried from open exchange APIs with instant offline fallback.
+        </p>
+
+        {/* Currency Pill Selector */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 pt-1">
+          {Object.values(SUPPORTED_CURRENCIES).map((curr) => {
+            const isSelected = currency.code === curr.code;
+            return (
+              <button
+                key={curr.code}
+                type="button"
+                onClick={() => handleSelectCurrency(curr.code)}
+                className={`p-3 rounded-xl border text-left font-mono transition-all flex flex-col justify-between gap-1.5 ${
+                  isSelected
+                    ? 'bg-indigo-950/60 border-indigo-500 text-white shadow-md ring-1 ring-indigo-500/50'
+                    : 'bg-[#080b11] border-[#1e2330] text-slate-300 hover:border-slate-700 hover:bg-slate-800/30'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-base">{curr.flag}</span>
+                  <span className="text-xs font-bold text-amber-300">{curr.symbol}</span>
+                </div>
+                <div>
+                  <div className="text-xs font-bold">{curr.code}</div>
+                  <div className="text-[10px] text-slate-400 truncate">{curr.name}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* FX Exchange Rate Customizer & Preview */}
+        <div className="p-3.5 rounded-xl bg-[#080b11] border border-[#1e2330] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono">
+          <div className="flex items-center gap-3">
+            <span className="text-slate-400 text-[11px]">Exchange Rate:</span>
+            <span className="text-slate-300 font-bold">1 USD ($) =</span>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                step="0.01"
+                min="0.001"
+                value={customFxRate}
+                onChange={(e) => setCustomFxRate(e.target.value)}
+                className="w-24 bg-[#0d111a] border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+              />
+              <span className="text-amber-300 font-bold">{currency.code}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveFxRate}
+              className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition-colors"
+            >
+              Update Rate
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 bg-[#0d111a] px-3 py-1.5 rounded-lg border border-white/5">
+            <span>Sample Format:</span>
+            <span className="text-emerald-400 font-bold">{formatCost(0.0042)}</span>
+            <span className="text-slate-600">&bull;</span>
+            <span className="text-emerald-400 font-bold">{formatCost(12.50)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Custom Model Pricing & Token Economics Editor */}
+      <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <span>Custom Model Token Pricing Editor ($ / 1M Tokens)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {savedPricingMsg && (
+              <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" /> Pricing saved!
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleResetCatalog}
+              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-[11px] font-mono flex items-center gap-1 transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" /> Reset Defaults
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveCatalog}
+              className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-mono font-semibold flex items-center gap-1 transition-colors"
+            >
+              <Save className="w-3 h-3" /> Save Rates
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-400">
+          Customize prompt and completion pricing per 1 Million tokens. If prices change or you use custom fine-tuned or self-hosted Ollama models, configure their exact rates here.
+        </p>
+
+        {/* Add Custom Model Form */}
+        <form onSubmit={handleAddNewModel} className="p-3.5 rounded-xl bg-[#080b11] border border-[#1e2330] flex flex-wrap items-center gap-2.5 text-xs font-mono">
+          <div className="flex items-center gap-1.5 flex-1 min-w-[140px]">
+            <span className="text-slate-500 text-[11px]">Model:</span>
+            <input
+              type="text"
+              placeholder="e.g. qwen2.5:32b, gpt-4o-custom"
+              value={newModelName}
+              onChange={(e) => setNewModelName(e.target.value)}
+              className="w-full bg-[#0d111a] border border-slate-700 rounded px-2.5 py-1 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 w-36">
+            <span className="text-slate-500 text-[11px]">Provider:</span>
+            <input
+              type="text"
+              placeholder="Provider"
+              value={newModelProvider}
+              onChange={(e) => setNewModelProvider(e.target.value)}
+              className="w-full bg-[#0d111a] border border-slate-700 rounded px-2 py-1 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 w-36">
+            <span className="text-slate-500 text-[11px]">Input $/1M:</span>
+            <input
+              type="number"
+              step="0.001"
+              min="0"
+              value={newPromptRate}
+              onChange={(e) => setNewPromptRate(e.target.value)}
+              className="w-full bg-[#0d111a] border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 w-36">
+            <span className="text-slate-500 text-[11px]">Output $/1M:</span>
+            <input
+              type="number"
+              step="0.001"
+              min="0"
+              value={newCompletionRate}
+              onChange={(e) => setNewCompletionRate(e.target.value)}
+              className="w-full bg-[#0d111a] border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center gap-1"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Model
+          </button>
+        </form>
+
+        {/* Pricing Catalog Table */}
+        <div className="rounded-xl border border-[#1e2330] overflow-hidden">
+          <div className="max-h-64 overflow-y-auto no-scrollbar">
+            <table className="w-full text-left text-xs font-mono border-collapse">
+              <thead className="bg-[#080b11] text-slate-400 border-b border-[#1e2330] sticky top-0 z-10 text-[11px] uppercase tracking-wider">
+                <tr>
+                  <th className="p-2.5 pl-4">Model Name</th>
+                  <th className="p-2.5">Provider</th>
+                  <th className="p-2.5">Prompt Cost ($/1M)</th>
+                  <th className="p-2.5">Completion Cost ($/1M)</th>
+                  <th className="p-2.5 pr-4 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1e2330] bg-[#090d16] text-slate-300">
+                {pricingCatalog.map((item, idx) => (
+                  <tr key={item.model} className="hover:bg-slate-800/30 transition-colors">
+                    <td className="p-2.5 pl-4 font-bold text-white flex items-center gap-2">
+                      <span>{item.model}</span>
+                      {item.is_custom && (
+                        <span className="px-1.5 py-0.2 text-[9px] rounded bg-indigo-950 text-indigo-300 border border-indigo-800">
+                          Custom
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-2.5 text-slate-400">{item.provider}</td>
+                    <td className="p-2.5">
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-500">$</span>
+                        <input
+                          type="number"
+                          step="0.001"
+                          min="0"
+                          value={item.prompt_per_1m}
+                          onChange={(e) => handleUpdateModelRate(idx, 'prompt_per_1m', e.target.value)}
+                          className="w-20 bg-[#080b11] border border-slate-700 rounded px-1.5 py-0.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </td>
+                    <td className="p-2.5">
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-500">$</span>
+                        <input
+                          type="number"
+                          step="0.001"
+                          min="0"
+                          value={item.completion_per_1m}
+                          onChange={(e) => handleUpdateModelRate(idx, 'completion_per_1m', e.target.value)}
+                          className="w-20 bg-[#080b11] border border-slate-700 rounded px-1.5 py-0.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </td>
+                    <td className="p-2.5 pr-4 text-right">
+                      {item.is_custom ? (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCustomModel(item.model)}
+                          className="text-rose-400 hover:text-rose-300 text-[11px] underline"
+                        >
+                          Remove
+                        </button>
+                      ) : (
+                        <span className="text-slate-500 text-[10px]">Catalog Default</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Live Token Cost Simulator / Calculator */}
+        <div className="p-4 rounded-xl bg-[#080b11] border border-indigo-900/40 space-y-3 font-mono text-xs">
+          <div className="flex items-center gap-2 text-indigo-300 font-bold">
+            <Calculator className="w-4 h-4 text-indigo-400" />
+            <span>Live Token Cost Calculator &bull; Instant Simulation</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <div>
+              <span className="text-[10px] text-slate-400 block mb-1">Select Model:</span>
+              <select
+                value={simModel}
+                onChange={(e) => setSimModel(e.target.value)}
+                className="w-full bg-[#0d111a] border border-slate-700 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+              >
+                {pricingCatalog.map(p => (
+                  <option key={p.model} value={p.model}>{p.model} ({p.provider})</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <span className="text-[10px] text-slate-400 block mb-1">Prompt Tokens:</span>
+              <input
+                type="number"
+                min="0"
+                value={simPromptTokens}
+                onChange={(e) => setSimPromptTokens(parseInt(e.target.value) || 0)}
+                className="w-full bg-[#0d111a] border border-slate-700 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+
+            <div>
+              <span className="text-[10px] text-slate-400 block mb-1">Completion Tokens:</span>
+              <input
+                type="number"
+                min="0"
+                value={simCompletionTokens}
+                onChange={(e) => setSimCompletionTokens(parseInt(e.target.value) || 0)}
+                className="w-full bg-[#0d111a] border border-slate-700 rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-indigo-950/40 border border-indigo-800 text-center">
+              <span className="text-[10px] text-slate-400 block">Calculated Cost ({currency.code})</span>
+              <span className="text-sm font-bold text-emerald-400 block mt-0.5">
+                {formatCost(simulatedCostUSD)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Workspaces & API Keys */}
       <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-4">
         <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
           <Key className="w-4 h-4 text-indigo-400" />
-          <span>Workspaces & API Keys</span>
+          <span>Workspaces &amp; API Keys</span>
         </div>
 
         <form onSubmit={handleCreate} className="flex gap-2">
@@ -186,11 +658,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
-      {/* Database & Infrastructure Status */}
+      {/* 4. Database & Infrastructure Status */}
       <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-3">
         <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
           <Database className="w-4 h-4 text-emerald-400" />
-          <span>Server & Storage Health</span>
+          <span>Server &amp; Storage Health</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
@@ -211,7 +683,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
-      {/* Danger Zone */}
+      {/* 5. Danger Zone */}
       <div className="rounded-xl bg-rose-950/20 border border-rose-900/60 p-5 shadow-lg space-y-3">
         <div className="flex items-center gap-2 text-rose-300 text-xs font-mono font-bold">
           <Trash2 className="w-4 h-4 text-rose-400" />
@@ -258,38 +730,44 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               This will permanently delete all associated <strong className="text-rose-300">API keys, traces, spans, and metrics</strong> for this workspace.
             </p>
 
-            <p className="text-xs text-slate-400">
-              To confirm, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete workspace</strong> below:
-            </p>
-
-            <input
-              type="text"
-              placeholder="Type 'delete workspace' to confirm"
-              value={projectDeleteConfirmText}
-              onChange={(e) => setProjectDeleteConfirmText(e.target.value)}
-              className="w-full bg-[#080b11] border border-rose-900 focus:border-rose-500 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:outline-none placeholder-slate-500"
-              autoFocus
-            />
+            <div className="p-3 bg-rose-950/40 border border-rose-900/60 rounded-lg text-xs space-y-2 font-mono">
+              <p className="text-rose-200">
+                To confirm, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete workspace</strong> below:
+              </p>
+              <input
+                type="text"
+                value={projectDeleteConfirmText}
+                onChange={(e) => setProjectDeleteConfirmText(e.target.value)}
+                placeholder="Type 'delete workspace' to confirm"
+                className="w-full bg-[#080b11] border border-rose-800/80 rounded px-2.5 py-1 text-xs text-rose-200 placeholder-rose-700/60 focus:outline-none focus:border-rose-500 font-mono"
+              />
+            </div>
 
             {projectDeleteStatus && (
-              <p className="text-xs font-mono text-rose-400">{projectDeleteStatus}</p>
+              <div className="p-2.5 rounded bg-rose-950/80 border border-rose-800 text-xs font-mono text-rose-200">
+                {projectDeleteStatus}
+              </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setProjectToDelete(null)}
-                className="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200"
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={projectDeleteConfirmText.trim().toLowerCase() !== 'delete workspace'}
                 onClick={handleConfirmDeleteProject}
-                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs transition-colors"
+                disabled={projectDeleteConfirmText.trim().toLowerCase() !== 'delete workspace'}
+                className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all ${
+                  projectDeleteConfirmText.trim().toLowerCase() === 'delete workspace'
+                    ? 'bg-rose-600 hover:bg-rose-500 text-white cursor-pointer shadow-lg shadow-rose-950'
+                    : 'bg-rose-950 text-rose-500 cursor-not-allowed opacity-50'
+                }`}
               >
-                Delete Workspace
+                Permanently Delete Workspace
               </button>
             </div>
           </div>
@@ -300,45 +778,58 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {isPurgeModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0d111a] border border-rose-900/80 rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4 animate-in fade-in duration-150">
-            <div className="flex items-center gap-2.5 text-rose-300 font-mono font-bold text-sm">
-              <AlertTriangle className="w-5 h-5 text-rose-400" />
-              <span>Confirm Purge All Telemetry</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-rose-300 font-mono font-bold text-sm">
+                <AlertTriangle className="w-5 h-5 text-rose-400" />
+                <span>Purge Entire Telemetry Database</span>
+              </div>
+              <button
+                onClick={() => setIsPurgeModalOpen(false)}
+                className="p-1 rounded text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-300 leading-relaxed font-sans">
               This action is permanent and cannot be undone. To delete all traces and spans across all workspaces, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete everything</strong> below:
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-2 font-mono">
               <input
                 type="text"
-                placeholder="Type 'delete everything' to confirm"
                 value={purgeConfirmText}
                 onChange={(e) => setPurgeConfirmText(e.target.value)}
-                className="w-full bg-[#080b11] border border-rose-900 focus:border-rose-500 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:outline-none placeholder-slate-500"
-                autoFocus
+                placeholder="Type 'delete everything' to confirm"
+                className="w-full bg-[#080b11] border border-rose-800/80 rounded px-2.5 py-1 text-xs text-rose-200 placeholder-rose-700/60 focus:outline-none focus:border-rose-500 font-mono"
               />
             </div>
 
             {purgeStatus && (
-              <p className="text-xs font-mono text-rose-400">{purgeStatus}</p>
+              <div className="p-2.5 rounded bg-rose-950/80 border border-rose-800 text-xs font-mono text-rose-200">
+                {purgeStatus}
+              </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setIsPurgeModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-200"
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={purgeConfirmText.trim().toLowerCase() !== 'delete everything'}
                 onClick={handlePurge}
-                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-xs transition-colors"
+                disabled={purgeConfirmText.trim().toLowerCase() !== 'delete everything'}
+                className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all ${
+                  purgeConfirmText.trim().toLowerCase() === 'delete everything'
+                    ? 'bg-rose-600 hover:bg-rose-500 text-white cursor-pointer shadow-lg shadow-rose-950'
+                    : 'bg-rose-950 text-rose-500 cursor-not-allowed opacity-50'
+                }`}
               >
-                Purge Everything
+                Purge Database
               </button>
             </div>
           </div>

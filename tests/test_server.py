@@ -73,6 +73,27 @@ def test_project_lifecycle_and_filters():
         assert traces_res.status_code == 200
         assert "traces" in traces_res.json()
 
+        # Ingest trace into this project using API Key
+        trace_id = str(uuid.uuid4())
+        ingest_res = client.post(
+            "/api/v1/traces",
+            headers={"X-Feenion-Api-Key": proj_data["api_key"]},
+            json={
+                "schema_version": "1.0",
+                "traces": [
+                    {
+                        "trace_id": trace_id,
+                        "name": "isolated_workspace_task",
+                        "start_time": "2026-09-01T12:00:00Z",
+                        "status": "ok",
+                        "spans": [],
+                    }
+                ],
+            },
+        )
+        assert ingest_res.status_code == 200
+        assert ingest_res.json()["accepted"] == 1
+
         # Delete project
         del_res = client.delete(f"/api/v1/projects/{proj_id}")
         assert del_res.status_code == 200

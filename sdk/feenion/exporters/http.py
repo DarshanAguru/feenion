@@ -22,6 +22,7 @@ class HTTPExporter(Exporter):
         self,
         endpoint: str = "http://localhost:8000",
         api_key: str | None = None,
+        project_id: str | None = None,
         timeout: float = 5.0,
         max_retries: int = 3,
         backoff_factor: float = 0.5,
@@ -29,6 +30,7 @@ class HTTPExporter(Exporter):
     ):
         self.endpoint = endpoint.rstrip("/")
         self.api_key = api_key
+        self.project_id = project_id
         self.timeout = timeout
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
@@ -56,6 +58,9 @@ class HTTPExporter(Exporter):
         if self.api_key:
             headers["X-Feenion-Api-Key"] = self.api_key
             headers["Authorization"] = f"Bearer {self.api_key}"
+
+        if self.project_id:
+            headers["X-Project-Id"] = self.project_id
 
         if self.compress and len(raw_bytes) > 256:
             data = gzip.compress(raw_bytes)

@@ -11,6 +11,8 @@ from ..models import TraceBatch
 from ..store import TraceStore
 from ..config import settings
 from ..ws import manager
+from ..auth import get_current_project
+from ..db import Project
 
 router = APIRouter(
     prefix="/api/v1",
@@ -22,7 +24,11 @@ def get_store() -> TraceStore:
     return trace_store
 
 @router.post("/traces")
-async def ingest_traces(request: Request, store: TraceStore = Depends(get_store)):
+async def ingest_traces(
+    request: Request,
+    store: TraceStore = Depends(get_store),
+    project: Project = Depends(get_current_project),
+):
     body = await request.body()
     if request.headers.get("content-encoding") == "gzip":
         try:
@@ -45,11 +51,12 @@ async def ingest_traces(request: Request, store: TraceStore = Depends(get_store)
             detail=f"Maximum batch size is {settings.max_batch_size}",
         )
 
-    store.add_many(batch.traces)
+    store.add_many(batch.traces, project_id=project.id)
 
     # Immediately broadcast instant real-time telemetry push to connected WebSockets
     asyncio.create_task(manager.broadcast({
         "type": "trace_ingested",
+        "project_id": project.id,
         "count": len(batch.traces),
     }))
 

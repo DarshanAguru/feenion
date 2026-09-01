@@ -255,7 +255,22 @@ npm install
 npm run build
 ```
 
-Please review our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
+---
+
+## 📡 REST & WebSocket API
+
+The Feenion telemetry server provides high-performance asynchronous endpoints for ingestion, exploration, deep analytics, and live WebSocket push:
+
+| Category | Key Endpoints | Description |
+| -------- | ------------- | ----------- |
+| **Ingestion** | `POST /api/v1/traces`<br/>`WS /api/v1/ws/telemetry` | High-throughput batch ingestion (with Gzip support) and real-time live event streaming. |
+| **Queries** | `GET /api/v1/traces`<br/>`GET /api/v1/traces/{id}`<br/>`GET /api/v1/traces/{id}/spans` | Multi-dimensional trace search, full causality tree, and child span hierarchy. |
+| **Analytics** | `GET /api/v1/analytics/overview`<br/>`GET /api/v1/analytics/models`<br/>`GET /api/v1/analytics/tools`<br/>`GET /api/v1/analytics/retrieval`<br/>`GET /api/v1/analytics/agents`<br/>`GET /api/v1/errors` | System health scores, latency percentiles (p50-p99), model token economics, tool calling stats, RAG metrics, and error clustering. |
+| **Workspaces** | `GET /api/v1/projects`<br/>`POST /api/v1/projects`<br/>`DELETE /api/v1/projects/{id}` | Multi-tenant workspace management and API key provisioning. |
+| **Admin** | `DELETE /api/v1/admin/traces`<br/>`POST /api/v1/admin/traces/batch-delete`<br/>`DELETE /api/v1/admin/traces/{id}` | Telemetry database purge, batch trace deletion, and single trace removal. |
+| **Probes** | `GET /health`<br/>`GET /ready` | Liveness and readiness health probes for container orchestrators. |
+
+For detailed payloads, schemas, query parameters, and cURL examples, see the **[Full API Specification](docs/api.md)** or the **[Interactive Web Documentation](https://feenion.fun/docs#api-reference)**.
 
 ---
 

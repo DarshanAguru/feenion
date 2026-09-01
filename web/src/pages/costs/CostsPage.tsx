@@ -56,13 +56,13 @@ export const CostsPage: React.FC = () => {
         />
         <MetricCard
           title="Avg Cost / Request"
-          value={`$${totalRequests > 0 ? (totalCost / totalRequests).toFixed(4) : '0.0000'}`}
+          value={formatCost(totalRequests > 0 ? totalCost / totalRequests : 0)}
           secondaryInfo="Across all endpoints"
           sparklineColor="#3b82f6"
         />
         <MetricCard
           title="Effective Cost / 1k Tokens"
-          value={`$${avgCostPer1k.toFixed(5)}`}
+          value={formatCost(avgCostPer1k)}
           secondaryInfo="Blended rate"
           sparklineColor="#eab308"
         />

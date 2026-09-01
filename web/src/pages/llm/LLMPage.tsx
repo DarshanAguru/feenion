@@ -67,7 +67,7 @@ export const LLMPage: React.FC = () => {
         <MetricCard
           title="Total Model Spend"
           value={formatCost(totalCost)}
-          secondaryInfo={`Avg $${totalRequests > 0 ? (totalCost / totalRequests).toFixed(4) : '0.0000'}/req`}
+          secondaryInfo={`Avg ${formatCost(totalRequests > 0 ? totalCost / totalRequests : 0)}/req`}
           sparklineColor="#10b981"
         />
         <MetricCard
@@ -138,7 +138,7 @@ export const LLMPage: React.FC = () => {
                   </td>
 
                   <td className="py-3 px-4 text-slate-300">
-                    ${m.avg_cost_per_request.toFixed(4)}
+                    {formatCost(m.avg_cost_per_request)}
                   </td>
 
                   <td className="py-3 px-4 text-right">
