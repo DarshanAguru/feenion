@@ -26,11 +26,11 @@ export interface CurrencyConfig {
 
 export const SUPPORTED_CURRENCIES: Record<string, CurrencyConfig> = {
   USD: { code: 'USD', name: 'US Dollar', symbol: '$', rate: 1.0, flag: '🇺🇸' },
-  INR: { code: 'INR', name: 'Indian Rupee', symbol: '₹', rate: 87.2, flag: '🇮🇳' },
-  EUR: { code: 'EUR', name: 'Euro', symbol: '€', rate: 0.92, flag: '🇪🇺' },
-  GBP: { code: 'GBP', name: 'British Pound', symbol: '£', rate: 0.78, flag: '🇬🇧' },
-  CNY: { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', rate: 7.24, flag: '🇨🇳' },
-  JPY: { code: 'JPY', name: 'Japanese Yen', symbol: '¥', rate: 153.5, flag: '🇯🇵' },
+  INR: { code: 'INR', name: 'Indian Rupee', symbol: '₹', rate: 95.07, flag: '🇮🇳' },
+  EUR: { code: 'EUR', name: 'Euro', symbol: '€', rate: 0.862, flag: '🇪🇺' },
+  GBP: { code: 'GBP', name: 'British Pound', symbol: '£', rate: 0.738, flag: '🇬🇧' },
+  CNY: { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', rate: 6.718, flag: '🇨🇳' },
+  JPY: { code: 'JPY', name: 'Japanese Yen', symbol: '¥', rate: 160.0, flag: '🇯🇵' },
 };
 
 export function getActiveCurrency(): CurrencyConfig {
@@ -82,20 +82,47 @@ export async function fetchLiveExchangeRates(): Promise<{
 }> {
   const sources = [
     {
+      name: 'Frankfurter v2 (api.frankfurter.dev)',
+      url: 'https://api.frankfurter.dev/v2/rates?base=USD',
+      extract: (data: any) => {
+        if (Array.isArray(data)) {
+          const map: Record<string, number> = { USD: 1.0 };
+          for (const item of data) {
+            if (item && item.quote && typeof item.rate === 'number') {
+              map[item.quote.toUpperCase()] = Math.round(item.rate * 1000) / 1000;
+            }
+          }
+          return map;
+        }
+        if (data && data.rates) return data.rates;
+        return null;
+      },
+    },
+    {
+      name: 'Frankfurter v1 (api.frankfurter.dev)',
+      url: 'https://api.frankfurter.dev/v1/latest?base=USD',
+      extract: (data: any) => data?.rates,
+    },
+    {
+      name: 'Frankfurter App (api.frankfurter.app)',
+      url: 'https://api.frankfurter.app/latest?from=USD',
+      extract: (data: any) => data?.rates,
+    },
+    {
       name: 'Open ER-API (open.er-api.com)',
       url: 'https://open.er-api.com/v6/latest/USD',
-      extract: (data: any) => data.rates,
+      extract: (data: any) => data?.rates,
     },
     {
       name: 'ExchangeRate-API (api.exchangerate-api.com)',
       url: 'https://api.exchangerate-api.com/v4/latest/USD',
-      extract: (data: any) => data.rates,
+      extract: (data: any) => data?.rates,
     },
     {
       name: 'FawazAhmed Currency CDN',
       url: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json',
       extract: (data: any) => {
-        const u = data.usd || {};
+        const u = data?.usd || {};
         return {
           INR: u.inr,
           EUR: u.eur,
