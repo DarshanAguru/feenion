@@ -240,11 +240,15 @@ class Tracer:
 
     def trace(
         self,
-        func: Callable[P, R] | None = None,
+        func: Callable[P, R] | str | None = None,
         *,
         name: str | None = None,
         span_type: str = "custom",
-    ) -> Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Any:
+        if isinstance(func, str):
+            name = func
+            func = None
+
         def decorator(fn: Callable[P, R]) -> Callable[P, R]:
             is_async = inspect.iscoroutinefunction(fn)
             span_name = name or fn.__name__

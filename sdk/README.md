@@ -66,16 +66,26 @@ result = agent_executor.invoke(
 )
 ```
 
-### 3. OpenAI Auto-Instrumentation
+### 3. OpenAI & Azure OpenAI Auto-Instrumentation
 
 ```python
-from openai import OpenAI
-from feenion.integrations.openai import wrap_openai
+from openai import OpenAI, AzureOpenAI
+from feenion.integrations import wrap_openai, wrap_azure_openai
 
+# Standard OpenAI
 client = wrap_openai(OpenAI())
 
+# Azure OpenAI
+azure_client = wrap_azure_openai(
+    AzureOpenAI(
+        azure_endpoint="https://my-resource.openai.azure.com/",
+        api_key="AZURE_API_KEY",
+        api_version="2024-02-01",
+    )
+)
+
 # Spans, prompt tokens, completion tokens, and dollar costs are recorded automatically
-response = client.chat.completions.create(
+response = azure_client.chat.completions.create(
     model="gpt-4o",
     messages=[{"role": "user", "content": "Explain quantum computing in 2 sentences"}],
 )

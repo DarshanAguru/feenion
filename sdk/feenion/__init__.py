@@ -8,6 +8,10 @@ from .pricing import (
 from .integrations import (
     instrument_openai,
     wrap_openai,
+    instrument_azure_openai,
+    wrap_azure_openai,
+    instrument_azure_ai,
+    wrap_azure_ai,
     instrument_anthropic,
     wrap_anthropic,
     instrument_gemini,
@@ -15,6 +19,8 @@ from .integrations import (
     instrument_langchain,
     FeenionCallbackHandler,
 )
+
+__version__ = "0.1.0"
 
 tracer = Tracer()
 
@@ -64,6 +70,10 @@ __all__ = [
     "PricingRegistry",
     "instrument_openai",
     "wrap_openai",
+    "instrument_azure_openai",
+    "wrap_azure_openai",
+    "instrument_azure_ai",
+    "wrap_azure_ai",
     "instrument_anthropic",
     "wrap_anthropic",
     "instrument_gemini",

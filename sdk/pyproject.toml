@@ -5,12 +5,77 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "feenion"
 version = "0.1.0"
-description = "Feenion Python Telemetry SDK"
-requires-python = ">=3.11"
+description = "Official Python Telemetry & Distributed Tracing SDK for Feenion."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Darshan", email = "agurudf@gmail.com" }
+]
+keywords = [
+    "ai",
+    "llm",
+    "observability",
+    "tracing",
+    "debugging",
+    "rag",
+    "agents",
+    "opentelemetry",
+    "langchain",
+    "openai",
+    "anthropic",
+    "gemini",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "pydantic>=2.0.0",
+    "requests>=2.28.0",
 ]
+
+[project.optional-dependencies]
+gemini = [
+    "google-genai>=0.1.0",
+]
+openai = [
+    "openai>=1.0.0",
+]
+azure = [
+    "openai>=1.0.0",
+]
+anthropic = [
+    "anthropic>=0.18.0",
+]
+langchain = [
+    "langchain-core>=0.1.0",
+]
+all = [
+    "google-genai>=0.1.0",
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+    "langchain-core>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://feenion.fun"
+Documentation = "https://feenion.fun/docs"
+Repository = "https://github.com/DarshanAguru/feenion.git"
+Issues = "https://github.com/DarshanAguru/feenion/issues"
+Changelog = "https://github.com/DarshanAguru/feenion/releases"
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.setuptools.package-data]
+feenion = ["py.typed"]
 
