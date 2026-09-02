@@ -11,11 +11,17 @@ import {
   ProjectInfo,
 } from '../types';
 
-let currentProjectId: string = 'default';
+let currentProjectId: string =
+  typeof window !== 'undefined'
+    ? localStorage.getItem('feenion_selected_project_id') || 'default'
+    : 'default';
 
 export const apiClient = {
   setProject(projectId: string) {
     currentProjectId = projectId;
+    try {
+      localStorage.setItem('feenion_selected_project_id', projectId);
+    } catch {}
   },
 
   getProject(): string {
@@ -26,6 +32,7 @@ export const apiClient = {
     const headers: Record<string, string> = { ...customHeaders };
     if (currentProjectId) {
       headers['X-Project-Id'] = currentProjectId;
+      headers['X-Workspace-Id'] = currentProjectId;
     }
     return headers;
   },
@@ -47,6 +54,18 @@ export const apiClient = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to create project' }));
       throw new Error(err.detail || 'Failed to create project');
+    }
+    return res.json();
+  },
+
+  async getProjectApiKey(projectId: string): Promise<{ project_id: string; project_name: string; api_key: string }> {
+    const res = await fetch(`/api/v1/projects/${projectId}/key`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to generate project API key' }));
+      throw new Error(err.detail || 'Failed to generate project API key');
     }
     return res.json();
   },

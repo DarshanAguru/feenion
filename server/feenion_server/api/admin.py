@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..db import EventModel, SpanModel, TraceModel, get_db
+from ..auth import get_current_project
+from ..db import EventModel, SpanModel, TraceModel, Project, get_db
 from ..store import TraceStore
 from ..ws import manager
 
@@ -29,32 +30,42 @@ async def clear_all_traces(
     body: Optional[PurgeAllRequest] = None,
     confirmation: Optional[str] = None,
     db: Session = Depends(get_db),
+    project: Project = Depends(get_current_project),
 ):
-    """Purge all traces, spans, and events from the database with 'delete everything' confirmation."""
+    """Purge all traces, spans, and events for the active workspace with 'delete everything' confirmation."""
     conf = (body.confirmation if body and body.confirmation else None) or confirmation
     if not conf or conf.strip().lower() != "delete everything":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Confirmation text mismatch. You must enter 'delete everything' to purge all data.",
+            detail="Confirmation text mismatch. You must enter 'delete everything' to purge data.",
         )
 
-    db.query(EventModel).delete()
-    db.query(SpanModel).delete()
-    db.query(TraceModel).delete()
-    db.commit()
+    # Find all trace IDs belonging specifically to the active workspace
+    workspace_trace_ids = [t[0] for t in db.query(TraceModel.id).filter(TraceModel.project_id == project.id).all()]
 
-    # Clear in-memory cache
-    trace_store.clear()
+    if workspace_trace_ids:
+        db.query(EventModel).filter(EventModel.trace_id.in_(workspace_trace_ids)).delete(synchronize_session=False)
+        db.query(SpanModel).filter(SpanModel.trace_id.in_(workspace_trace_ids)).delete(synchronize_session=False)
+        db.query(TraceModel).filter(TraceModel.id.in_(workspace_trace_ids)).delete(synchronize_session=False)
+        db.commit()
+
+    # Clear in-memory cache for this workspace's traces
+    trace_store.remove_traces(workspace_trace_ids)
 
     # Broadcast instant WebSocket refresh to connected dashboards
     await manager.broadcast({
         "type": "data_cleared",
-        "message": "All traces purged",
+        "workspace_id": str(project.id),
+        "workspace_name": project.name,
+        "message": f"All traces purged for workspace '{project.name}'",
     })
 
     return {
         "status": "success",
-        "message": "All telemetry traces, spans, and events have been purged.",
+        "workspace_id": str(project.id),
+        "workspace_name": project.name,
+        "deleted_count": len(workspace_trace_ids),
+        "message": f"All telemetry traces, spans, and events have been purged for workspace '{project.name}'.",
     }
 
 @router.post("/traces/batch-delete")

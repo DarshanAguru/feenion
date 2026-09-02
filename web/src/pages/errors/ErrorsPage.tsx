@@ -93,11 +93,11 @@ export const ErrorsPage: React.FC<ErrorsPageProps> = ({ errors, onSelectTrace })
       )}
 
       {/* Main Layout: Resizable Error Groups on Left, Inspector on Right */}
-      <div className="flex-1 flex flex-col md:flex-row gap-0 overflow-hidden relative">
+      <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-0 overflow-y-auto md:overflow-hidden relative">
         {/* Left: Error Groups List */}
         <div
-          style={{ width: `${listWidth}px` }}
-          className="w-full md:w-auto shrink-0 flex flex-col bg-[#0d111a] border border-[#1e2330] rounded-xl overflow-hidden shadow-lg"
+          style={typeof window !== 'undefined' && window.innerWidth >= 768 ? { width: `${listWidth}px` } : {}}
+          className="w-full md:w-auto shrink-0 flex flex-col bg-[#0d111a] border border-[#1e2330] rounded-xl overflow-hidden shadow-lg min-h-[300px] md:min-h-0"
         >
           <div className="p-3 border-b border-[#1e2330] bg-[#090d16] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">

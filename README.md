@@ -69,21 +69,30 @@ Open **[http://localhost:8000](http://localhost:8000)** to view the live dashboa
 ### 2. Install the Python SDK
 
 ```bash
+# Using uv (Recommended)
+uv add feenion
+
+# Or using pip
 pip install feenion
 ```
 
 ### 3. Trace Your First Function
 
 ```python
+import feenion
 from feenion import trace, span, configure
 
 # Configure target Feenion server
 configure(server_url="http://localhost:8000")
 
-@trace(name="customer_support_agent", span_type="agent")
+@trace(name="customer_support_agent", span_type="agent", capture_input=True, capture_output=True)
 def handle_support_query(user_query: str):
+    feenion.set_user("user_9921")
+    feenion.set_tag("tier", "enterprise")
+    
     with span("vector_kb_search", span_type="retrieval", input={"query": user_query}):
         docs = search_knowledge_base(user_query)
+        feenion.add_event("docs_retrieved", {"count": len(docs)})
 
     with span("llm_synthesis", span_type="llm"):
         return generate_answer(user_query, docs)
@@ -128,23 +137,44 @@ handle_support_query("How do I rotate my API keys?")
 
 ## 🧩 Framework Integrations
 
-### 1. OpenAI Auto-Instrumentation
+### 1. Azure OpenAI & Azure AI Foundry (with LangChain support)
+
+```python
+from langchain_openai import AzureChatOpenAI
+from feenion.integrations import wrap_azure_openai
+
+# Wraps LangChain AzureChatOpenAI (.invoke, .ainvoke) or raw openai.AzureOpenAI
+llm = wrap_azure_openai(AzureChatOpenAI(
+    azure_endpoint="https://my-resource.openai.azure.com/",
+    api_key="AZURE_API_KEY",
+    azure_deployment="gpt-4o",
+    api_version="2024-02-01",
+))
+
+# Spans, tokens, costs, and any endpoint errors are captured automatically!
+response = llm.invoke([("user", "Verify financial compliance batch #8821")])
+```
+
+### 2. OpenAI Auto-Instrumentation (Raw SDK & LangChain)
 
 ```python
 from openai import OpenAI
-from feenion.integrations.openai import instrument_openai
+from langchain_openai import ChatOpenAI
+from feenion.integrations import wrap_openai
 
-client = OpenAI()
-instrument_openai(client)
-
-# All chat completions now record prompt/completion tokens, duration, and calculated cost!
+# Raw OpenAI client
+client = wrap_openai(OpenAI())
 response = client.chat.completions.create(
     model="gpt-4o",
     messages=[{"role": "user", "content": "Explain raft consensus."}]
 )
+
+# LangChain ChatOpenAI
+chat_llm = wrap_openai(ChatOpenAI(model="gpt-4o"))
+chat_response = chat_llm.invoke("Summarize quantum computing")
 ```
 
-### 2. Google Gemini Auto-Instrumentation
+### 3. Google Gemini Auto-Instrumentation
 
 ```python
 from google import genai
@@ -159,7 +189,7 @@ response = client.models.generate_content(
 )
 ```
 
-### 3. Anthropic Auto-Instrumentation
+### 4. Anthropic Auto-Instrumentation
 
 ```python
 from anthropic import Anthropic
@@ -175,14 +205,14 @@ response = client.messages.create(
 )
 ```
 
-### 4. LangChain Native Callback
+### 5. LangChain Native Callback Handler
 
 ```python
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from feenion.integrations.langchain import FeenionCallbackHandler
 
-handler = FeenionCallbackHandler()
+handler = FeenionCallbackHandler(trace_name="pipeline_execution")
 llm = ChatOpenAI(model="gpt-4o", callbacks=[handler])
 
 prompt = ChatPromptTemplate.from_template("Summarize: {topic}")
@@ -190,21 +220,108 @@ chain = prompt | llm
 chain.invoke({"topic": "Distributed Tracing"}, config={"callbacks": [handler]})
 ```
 
-### 5. Zero-Key Comprehensive Mock AI Ecosystem
+### 6. Dynamic Customization & Deep Observability Helpers
+
+```python
+import feenion
+
+# Inside any function or span:
+feenion.set_user("analyst_404")
+feenion.set_session("sess_8831")
+feenion.set_tag("jurisdiction", "EU_GDPR")
+feenion.set_attribute("risk_score", 0.94)
+feenion.add_event("checkpoint_reached", {"completed_rules": 14})
+```
+
+---
+
+## 📡 Pluggable Telemetry Exporters
+
+Feenion provides 5 built-in, production-ready exporters for diverse infrastructure environments:
+
+```python
+import feenion
+from feenion.exporters import (
+    AsyncExporter,
+    HTTPExporter,
+    JSONLExporter,
+    ConsoleExporter,
+    CompositeExporter,
+)
+
+# 1. Non-Blocking Async Exporter (Default for Production)
+# Queues spans in-memory and flushes in batches without blocking request threads
+feenion.configure(
+    exporter=AsyncExporter(
+        HTTPExporter(
+            endpoint="http://localhost:8000",
+            api_key="your_workspace_api_key",
+            project_id="prod-rag-pipeline",
+        ),
+        batch_size=50,
+        flush_interval=0.5,
+    )
+)
+
+# 2. Local File Exporter (Air-Gapped / Offline Testing / CI Replay)
+feenion.configure(exporter=JSONLExporter("telemetry/traces.jsonl"))
+
+# 3. Terminal Console Exporter (Local Development & Debugging)
+feenion.configure(exporter=ConsoleExporter(verbose=True))
+
+# 4. Composite Exporter (Multi-Destination Telemetry)
+# Streams to remote Feenion server while saving local JSONL audit logs
+feenion.configure(
+    exporter=CompositeExporter([
+        AsyncExporter(HTTPExporter("http://localhost:8000")),
+        JSONLExporter("audit_traces.jsonl"),
+        ConsoleExporter(verbose=False),
+    ])
+)
+```
+
+---
+
+## 🏢 Multi-Tenant Workspace Routing & Authentication
+
+When running multiple services or LLM agents, route telemetry into isolated workspaces using the unique **Workspace ID** provided in the Feenion Web UI (under **Settings → Workspaces**):
+
+> **🔐 Authentication & Local Hosting**:
+> - **Local Hosting**: The `api_key` is optional for local development on the same machine.
+> - **Remote / Production Deployments**: When hosting Feenion in production with authentication, provide your `api_key` (generated per workspace in Settings).
+
+```python
+import feenion
+from feenion import trace
+
+# Option 1: Global Workspace Configuration
+feenion.configure(
+    server_url="http://localhost:8000",
+    workspace_id="60d03b94-82a1-4328-874e-7b5fbfbc4402",
+    api_key="fn_live_...",  # Optional for local hosting, required if server has auth enabled
+)
+
+# Option 2: Dynamic Per-Agent / Per-Trace Workspace Routing (with per-trace Auth)
+@trace(
+    name="compliance_scanner",
+    workspace_id="60d03b94-82a1-4328-874e-7b5fbfbc4402",
+    api_key="fn_live_...",  # Authenticate directly to target workspace
+)
+def run_compliance():
+    # Or attach dynamically inside any function:
+    feenion.set_workspace_id("60d03b94-82a1-4328-874e-7b5fbfbc4402")
+    feenion.set_api_key("fn_live_...")
+    return "completed"
+```
+
+---
+
+### 7. Zero-Key Comprehensive Mock AI Ecosystem
 
 Run the standalone executable mock demo mimicking Gemini, OpenAI, Claude, RAG retrievers, and Model Context Protocol (MCP) tools:
 
 ```bash
 python examples/comprehensive_mock_ecosystem.py
-```
-
-### 6. Client-Side Sensitive PII & Secret Redaction
-
-```python
-from feenion.redaction import Redactor
-
-# Custom sensitive keys are automatically masked before payloads leave application memory
-redactor = Redactor(sensitive_keys={"api_key", "password", "auth_token", "ssn"})
 ```
 
 ---

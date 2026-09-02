@@ -7,6 +7,15 @@ def test_health():
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
+def test_favicon_endpoints():
+    with TestClient(app) as client:
+        res_svg = client.get("/favicon.svg")
+        assert res_svg.status_code == 200
+        assert "image/svg+xml" in res_svg.headers.get("content-type", "")
+
+        res_ico = client.get("/favicon.ico")
+        assert res_ico.status_code == 200
+
 def test_empty_batch_rejected():
     with TestClient(app) as client:
         response = client.post(
@@ -93,6 +102,33 @@ def test_project_lifecycle_and_filters():
         )
         assert ingest_res.status_code == 200
         assert ingest_res.json()["accepted"] == 1
+
+        # Generate/get project key
+        key_res = client.post(f"/api/v1/projects/{proj_id}/key")
+        assert key_res.status_code == 200
+        assert "api_key" in key_res.json()
+        assert key_res.json()["project_id"] == proj_id
+
+        # Ingest trace into this project using X-Workspace name header
+        trace_id_2 = str(uuid.uuid4())
+        ingest_res_2 = client.post(
+            "/api/v1/traces",
+            headers={"X-Workspace": unique_name},
+            json={
+                "schema_version": "1.0",
+                "traces": [
+                    {
+                        "trace_id": trace_id_2,
+                        "name": "auto_workspace_task",
+                        "start_time": "2026-09-01T12:00:00Z",
+                        "status": "ok",
+                        "spans": [],
+                    }
+                ],
+            },
+        )
+        assert ingest_res_2.status_code == 200
+        assert ingest_res_2.json()["accepted"] == 1
 
         # Delete project
         del_res = client.delete(f"/api/v1/projects/{proj_id}")

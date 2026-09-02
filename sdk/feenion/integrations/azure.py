@@ -68,6 +68,13 @@ def instrument_azure_openai(client: Any = None, tracer: Any = None) -> Any:
 
             return sync_wrapper
 
+    from .common import wrap_langchain_model
+
+    # 1. If this is a LangChain model (e.g. AzureChatOpenAI, AzureOpenAI)
+    if hasattr(client, "invoke") or hasattr(client, "generate") or hasattr(client, "callbacks"):
+        return wrap_langchain_model(client, provider="azure.openai", default_model="azure-gpt-4o", tracer=active_tracer)
+
+    # 2. Raw AzureOpenAI or AsyncAzureOpenAI client
     if client is not None:
         if hasattr(client, "chat") and hasattr(client.chat, "completions"):
             client.chat.completions.create = wrap_chat_create(client.chat.completions.create)

@@ -40,7 +40,7 @@ interface SettingsPageProps {
   projects: ProjectInfo[];
   selectedProject: string;
   onSelectProject: (projectId: string) => void;
-  onCreateProject: (name: string) => void;
+  onCreateProject: (name: string) => Promise<{ project: ProjectInfo; api_key: string }>;
   onDeleteProject: (projectId: string) => Promise<void>;
   onRefreshData: () => void;
 }
@@ -57,6 +57,21 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
 
+  // Workspace API Keys & Snippets State
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>(() => {
+    try {
+      const cached = localStorage.getItem('feenion_cached_api_keys');
+      return cached ? JSON.parse(cached) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [loadingKeyId, setLoadingKeyId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [activeSnippetWorkspace, setActiveSnippetWorkspace] = useState<ProjectInfo | null>(null);
+  const [copiedSnippet, setCopiedSnippet] = useState(false);
+
   // Currency State
   const [currency, setCurrency] = useState<CurrencyConfig>(getActiveCurrency());
   const [customFxRate, setCustomFxRate] = useState<string>(String(getActiveCurrency().rate));
@@ -72,6 +87,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   // Model Pricing Catalog State
   const [pricingCatalog, setPricingCatalog] = useState<ModelPricingEntry[]>(getCustomPricing());
   const [savedPricingMsg, setSavedPricingMsg] = useState(false);
+
+  // Active Workspace resolution
+  const activeWorkspaceObj = projects.find(p => p.id === selectedProject || p.name === selectedProject) || projects[0];
+  const activeWorkspaceName = activeWorkspaceObj?.name || 'Active Workspace';
 
   // New Model Form State
   const [newModelName, setNewModelName] = useState('');
@@ -93,6 +112,26 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
   const [purgeConfirmText, setPurgeConfirmText] = useState('');
   const [purgeStatus, setPurgeStatus] = useState<string | null>(null);
+
+  const handleFetchApiKey = async (projectId: string) => {
+    try {
+      setLoadingKeyId(projectId);
+      const res = await apiClient.getProjectApiKey(projectId);
+      if (res.api_key) {
+        setRevealedKeys(prev => {
+          const next = { ...prev, [projectId]: res.api_key };
+          try {
+            localStorage.setItem('feenion_cached_api_keys', JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to generate project API key');
+    } finally {
+      setLoadingKeyId(null);
+    }
+  };
 
   useEffect(() => {
     const handleCurrencyUpdate = () => {
@@ -123,14 +162,25 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName.trim()) return;
+    const name = newProjectName.trim();
+    if (!name) return;
     try {
-      const res = await apiClient.createProject(newProjectName.trim());
-      onCreateProject(newProjectName.trim());
-      setCreatedApiKey(res.api_key);
+      const res = await onCreateProject(name);
+      if (res?.api_key) {
+        setCreatedApiKey(res.api_key);
+        if (res.project?.id) {
+          setRevealedKeys(prev => {
+            const next = { ...prev, [res.project.id]: res.api_key };
+            try {
+              localStorage.setItem('feenion_cached_api_keys', JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+        }
+      }
       setNewProjectName('');
     } catch (err: any) {
-      alert(err.message || 'Failed to create project');
+      alert(err.message || 'Failed to create workspace');
     }
   };
 
@@ -241,15 +291,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const simulatedCostUSD = calculateEstimatedCost(simModel, simPromptTokens, simCompletionTokens, pricingCatalog);
 
   return (
-    <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-[#080b11] max-w-5xl">
-      <div>
-        <h2 className="text-base font-mono font-bold text-slate-100 uppercase tracking-tight flex items-center gap-2">
-          <Settings className="w-5 h-5 text-indigo-400" />
-          Settings &amp; Global Preferences
-        </h2>
-        <p className="text-xs text-slate-400 mt-0.5">
-          Manage currency localization, custom token pricing models, multi-tenant workspaces, API keys, and database maintenance.
-        </p>
+    <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#080b11] w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#1e2330]">
+        <div>
+          <h2 className="text-base font-mono font-bold text-slate-100 uppercase tracking-tight flex items-center gap-2">
+            <Settings className="w-5 h-5 text-indigo-400" />
+            Settings &amp; Global Preferences
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Manage currency localization, custom token pricing models, multi-tenant workspaces, API keys, and database maintenance.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="text-[11px] font-mono text-slate-400 bg-[#0d111a] border border-[#1e2330] px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Active Project: <strong className="text-indigo-300 font-semibold">{projects.find(p => p.id === selectedProject)?.name || selectedProject || 'Default'}</strong></span>
+          </div>
+        </div>
       </div>
 
       {/* 1. Currency & Localization Settings */}
@@ -340,13 +398,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             >
               Update Rate
             </button>
-          </div>
-
-          <div className="flex items-center gap-2 text-[11px] text-slate-400 bg-[#0d111a] px-3 py-1.5 rounded-lg border border-white/5">
-            <span>Sample Format:</span>
-            <span className="text-emerald-400 font-bold">{formatCost(0.0042)}</span>
-            <span className="text-slate-600">&bull;</span>
-            <span className="text-emerald-400 font-bold">{formatCost(12.50)}</span>
           </div>
         </div>
       </div>
@@ -443,7 +494,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
         {/* Pricing Catalog Table */}
         <div className="rounded-xl border border-[#1e2330] overflow-hidden">
-          <div className="max-h-64 overflow-y-auto no-scrollbar">
+          <div className="max-h-72 overflow-y-auto no-scrollbar">
             <table className="w-full text-left text-xs font-mono border-collapse">
               <thead className="bg-[#080b11] text-slate-400 border-b border-[#1e2330] sticky top-0 z-10 text-[11px] uppercase tracking-wider">
                 <tr>
@@ -565,147 +616,288 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
-      {/* 3. Workspaces & API Keys */}
-      <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-4">
-        <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
-          <Key className="w-4 h-4 text-indigo-400" />
-          <span>Workspaces &amp; API Keys</span>
-        </div>
-
-        <form onSubmit={handleCreate} className="flex gap-2">
-          <input
-            type="text"
-            placeholder="New Workspace Name..."
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            className="flex-1 bg-[#080b11] border border-slate-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-          />
-          <button
-            type="submit"
-            className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors"
-          >
-            Create Workspace
-          </button>
-        </form>
-
-        {createdApiKey && (
-          <div className="p-3 rounded-lg bg-indigo-950/40 border border-indigo-800/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-indigo-300 font-bold">Workspace Created! Ingestion API Key:</span>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(createdApiKey);
-                  setCopiedKey(true);
-                  setTimeout(() => setCopiedKey(false), 2000);
-                }}
-                className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-mono hover:text-white"
-              >
-                {copiedKey ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
-                {copiedKey ? 'Copied' : 'Copy'}
-              </button>
+      {/* Responsive 2-Column Section for Workspaces + Infrastructure & Maintenance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* 3. Workspaces & API Keys */}
+        <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
+              <Key className="w-4 h-4 text-indigo-400" />
+              <span>Multi-Tenant Workspaces &amp; Ingestion Routing</span>
             </div>
-            <code className="text-xs font-mono text-slate-200 break-all select-all block bg-[#080b11] p-2 rounded border border-slate-800">
-              {createdApiKey}
-            </code>
+            <span className="text-[11px] font-mono text-slate-400 bg-[#080b11] border border-slate-800 px-2 py-0.5 rounded">
+              {projects.length} {projects.length === 1 ? 'Workspace' : 'Workspaces'}
+            </span>
           </div>
-        )}
 
-        <div className="space-y-1.5 pt-2">
-          <span className="text-[11px] font-mono uppercase text-slate-400 block mb-1">Existing Workspaces</span>
-          {projects.map(p => (
-            <div
-              key={p.id}
-              onClick={() => onSelectProject(p.id)}
-              className={`flex items-center justify-between p-2.5 rounded-lg border text-xs font-mono cursor-pointer transition-colors ${
-                selectedProject === p.id
-                  ? 'bg-indigo-950/40 border-indigo-500/80 text-white'
-                  : 'bg-[#080b11] border-[#1e2330] text-slate-300 hover:bg-slate-800/40'
-              }`}
+          {/* Workspace Routing Guideline Banner */}
+          <div className="p-3 rounded-lg bg-indigo-950/30 border border-indigo-800/60 text-xs font-mono space-y-1">
+            <div className="flex items-center gap-1.5 text-indigo-300 font-bold text-[11px]">
+              <AlertTriangle className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Workspace ID Telemetry Routing</span>
+            </div>
+            <p className="text-slate-300 text-[11px] leading-relaxed font-sans">
+              Telemetry is routed strictly using each workspace's unique <code className="text-amber-300 font-mono bg-indigo-950/80 px-1 py-0.5 rounded">Workspace ID</code> (e.g. <code className="text-emerald-300 font-mono">feenion.configure(workspace_id="...")</code> or <code className="text-emerald-300 font-mono">@trace(workspace_id="...")</code>). Workspace names are human-readable labels for your dashboard.
+            </p>
+          </div>
+
+          <form onSubmit={handleCreate} className="flex gap-2">
+            <input
+              type="text"
+              placeholder="New Workspace Name (e.g. payment-agent-prod)..."
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              className="flex-1 bg-[#080b11] border border-slate-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+            />
+            <button
+              type="submit"
+              className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors shrink-0 flex items-center gap-1"
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-bold truncate">{p.name}</span>
-                {selectedProject === p.id && (
-                  <span className="px-1.5 py-0.2 rounded bg-indigo-600 text-white text-[9px] font-bold">
-                    Active
-                  </span>
-                )}
-                <span className="text-[10px] text-slate-500">ID: {p.id.slice(0, 8)}...</span>
-              </div>
+              <Plus className="w-3.5 h-3.5" /> Create Workspace
+            </button>
+          </form>
 
-              <div className="flex items-center gap-2">
+          {createdApiKey && (
+            <div className="p-3.5 rounded-lg bg-indigo-950/40 border border-indigo-800/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-indigo-300 font-bold flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-400" /> Workspace Created! Ingestion API Key:
+                </span>
                 <button
-                  type="button"
-                  disabled={projects.length <= 1}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setProjectToDelete(p);
-                    setProjectDeleteConfirmText('');
-                    setProjectDeleteStatus(null);
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdApiKey);
+                    setCopiedKey(true);
+                    setTimeout(() => setCopiedKey(false), 2000);
                   }}
-                  className={`p-1.5 rounded-md text-xs transition-colors flex items-center gap-1 ${
-                    projects.length <= 1
-                      ? 'opacity-30 text-slate-600 cursor-not-allowed'
-                      : 'text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 border border-transparent hover:border-rose-800/60'
-                  }`}
-                  title={projects.length <= 1 ? "Cannot delete the only remaining workspace" : `Delete workspace '${p.name}'`}
+                  className="flex items-center gap-1 px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px] font-mono hover:text-white transition-colors"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span className="text-[10px] hidden sm:inline">Delete</span>
+                  {copiedKey ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                  {copiedKey ? 'Copied' : 'Copy Key'}
                 </button>
               </div>
+              <code className="text-xs font-mono text-amber-200 break-all select-all block bg-[#080b11] p-2 rounded border border-slate-800">
+                {createdApiKey}
+              </code>
             </div>
-          ))}
-        </div>
-      </div>
+          )}
 
-      {/* 4. Database & Infrastructure Status */}
-      <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-3">
-        <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
-          <Database className="w-4 h-4 text-emerald-400" />
-          <span>Server &amp; Storage Health</span>
+          {/* Workspaces List with One-Click Copy and Python Snippets */}
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-mono uppercase text-slate-400 block">Configured Workspaces</span>
+              <span className="text-[10px] font-mono text-slate-500">{projects.length} workspace{projects.length !== 1 ? 's' : ''}</span>
+            </div>
+
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+              {[...projects]
+                .sort((a, b) => {
+                  const aActive = a.id === selectedProject || a.name === selectedProject;
+                  const bActive = b.id === selectedProject || b.name === selectedProject;
+                  if (aActive && !bActive) return -1;
+                  if (!aActive && bActive) return 1;
+                  return 0;
+                })
+                .map(p => {
+                  const isActive = selectedProject === p.id || selectedProject === p.name;
+                  const revealedKey = revealedKeys[p.id];
+                  const isKeyLoading = loadingKeyId === p.id;
+
+                  return (
+                    <div
+                      key={p.id}
+                      className={`p-3 rounded-xl border text-xs font-mono transition-all space-y-2.5 ${
+                        isActive
+                          ? 'bg-[#0d1424] border-emerald-500/60 ring-1 ring-emerald-500/30'
+                          : 'bg-[#080b11] border-[#1e2330] hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => onSelectProject(p.id)}
+                            className={`font-bold truncate text-left transition-colors ${
+                              isActive ? 'text-white' : 'text-slate-300 hover:text-white'
+                            }`}
+                            title="Click to switch active dashboard workspace"
+                          >
+                            {p.name}
+                          </button>
+                          {isActive && (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/70 text-emerald-300 text-[10px] font-bold shrink-0 shadow-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              Active
+                            </span>
+                          )}
+                        </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Quick Python Setup Snippet Button */}
+                        <button
+                          type="button"
+                          onClick={() => setActiveSnippetWorkspace(p)}
+                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-indigo-300 text-[10px] font-mono flex items-center gap-1 transition-colors"
+                          title={`View Python code snippet to route telemetry to ${p.name}`}
+                        >
+                          <span>&lt;/&gt; SDK Setup</span>
+                        </button>
+
+                        {/* Switch Workspace Button if not active */}
+                        {!isActive && (
+                          <button
+                            type="button"
+                            onClick={() => onSelectProject(p.id)}
+                            className="px-2 py-1 rounded bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-800 text-indigo-300 text-[10px] transition-colors"
+                          >
+                            Switch
+                          </button>
+                        )}
+
+                        {/* Delete Workspace Button */}
+                        <button
+                          type="button"
+                          disabled={projects.length <= 1}
+                          onClick={() => {
+                            setProjectToDelete(p);
+                            setProjectDeleteConfirmText('');
+                            setProjectDeleteStatus(null);
+                          }}
+                          className={`p-1.5 rounded-md text-xs transition-colors flex items-center gap-1 ${
+                            projects.length <= 1
+                              ? 'opacity-30 text-slate-600 cursor-not-allowed'
+                              : 'text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 border border-transparent hover:border-rose-800/60'
+                          }`}
+                          title={projects.length <= 1 ? "Cannot delete the only remaining workspace" : `Delete workspace '${p.name}'`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Metadata Section: Full Workspace ID + Ingestion API Key */}
+                    <div className="space-y-2 pt-1 border-t border-[#1e2330]/80">
+                      {/* Full Workspace ID */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-slate-400 font-semibold uppercase tracking-wider">Workspace ID (Required for SDK):</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(p.id);
+                              setCopiedId(p.id);
+                              setTimeout(() => setCopiedId(null), 2000);
+                            }}
+                            className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-mono text-[10px] bg-indigo-950/40 border border-indigo-800/60 px-1.5 py-0.5 rounded transition-colors"
+                            title="Copy Workspace ID to clipboard"
+                          >
+                            {copiedId === p.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedId === p.id ? 'Copied ID' : 'Copy ID'}</span>
+                          </button>
+                        </div>
+                        <div className="p-2 rounded bg-[#05080f] border border-slate-800 text-[11px] font-mono text-slate-200 select-all break-all tracking-wide">
+                          {p.id}
+                        </div>
+                      </div>
+
+                      {/* Ingestion API Key */}
+                      <div className="space-y-1 pt-0.5">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-slate-400 font-semibold uppercase tracking-wider">Ingestion API Key:</span>
+                          {revealedKey ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(revealedKey);
+                                setCopiedKeyId(p.id);
+                                setTimeout(() => setCopiedKeyId(null), 2000);
+                              }}
+                              className="text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono text-[10px] bg-amber-950/40 border border-amber-800/60 px-1.5 py-0.5 rounded transition-colors"
+                              title="Copy API Key to clipboard"
+                            >
+                              {copiedKeyId === p.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedKeyId === p.id ? 'Copied Key' : 'Copy Key'}</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={isKeyLoading}
+                              onClick={() => handleFetchApiKey(p.id)}
+                              className="text-indigo-400 hover:text-indigo-300 font-semibold text-[10px] underline flex items-center gap-1"
+                            >
+                              {isKeyLoading ? 'Generating...' : 'Reveal / Generate Key'}
+                            </button>
+                          )}
+                        </div>
+                        {revealedKey ? (
+                          <div className="p-2 rounded bg-[#05080f] border border-amber-900/60 text-[11px] font-mono text-amber-300 select-all break-all tracking-wide">
+                            {revealedKey}
+                          </div>
+                        ) : (
+                          <div className="p-1.5 rounded bg-[#05080f]/60 border border-slate-800/60 text-[10px] text-slate-500 font-mono italic">
+                            Key hidden. Click &ldquo;Reveal / Generate Key&rdquo; to retrieve.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-          <div className="p-3 rounded-lg bg-[#080b11] border border-[#1e2330]">
-            <span className="text-[10px] uppercase font-mono text-slate-400 block">Database Backend</span>
-            <span className="text-xs font-mono text-emerald-400 font-bold mt-1 block">SQLite WAL</span>
+        {/* Right Column: Server Health + Danger Zone */}
+        <div className="space-y-6">
+          {/* 4. Database & Infrastructure Status */}
+          <div className="rounded-xl bg-[#0d111a] border border-[#1e2330] p-5 shadow-lg space-y-3">
+            <div className="flex items-center gap-2 text-slate-200 text-xs font-mono font-bold">
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>Server &amp; Storage Health</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="p-3 rounded-lg bg-[#080b11] border border-[#1e2330]">
+                <span className="text-[10px] uppercase font-mono text-slate-400 block">Database Backend</span>
+                <span className="text-xs font-mono text-emerald-400 font-bold mt-1 block">SQLite WAL</span>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#080b11] border border-[#1e2330]">
+                <span className="text-[10px] uppercase font-mono text-slate-400 block">Retention Policy</span>
+                <span className="text-xs font-mono text-slate-200 font-bold mt-1 block">30 Days</span>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#080b11] border border-[#1e2330]">
+                <span className="text-[10px] uppercase font-mono text-slate-400 block">Ingestion Engine</span>
+                <span className="text-xs font-mono text-indigo-400 font-bold mt-1 block">Async Queue Worker</span>
+              </div>
+            </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-[#080b11] border border-[#1e2330]">
-            <span className="text-[10px] uppercase font-mono text-slate-400 block">Retention Policy</span>
-            <span className="text-xs font-mono text-slate-200 font-bold mt-1 block">30 Days</span>
-          </div>
+          {/* 5. Danger Zone */}
+          <div className="rounded-xl bg-rose-950/20 border border-rose-900/60 p-5 shadow-lg space-y-3">
+            <div className="flex items-center gap-2 text-rose-300 text-xs font-mono font-bold">
+              <Trash2 className="w-4 h-4 text-rose-400" />
+              <span>Danger Zone — Purge Workspace Telemetry</span>
+            </div>
 
-          <div className="p-3 rounded-lg bg-[#080b11] border border-[#1e2330]">
-            <span className="text-[10px] uppercase font-mono text-slate-400 block">Ingestion Engine</span>
-            <span className="text-xs font-mono text-indigo-400 font-bold mt-1 block">Async Queue Worker</span>
+            <p className="text-xs text-rose-300/80">
+              Permanently deletes all traces, spans, and execution logs from your database for the active workspace <strong className="text-white font-mono bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-800">({activeWorkspaceName})</strong>. Other workspaces remain unaffected.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsPurgeModalOpen(true);
+                setPurgeConfirmText('');
+                setPurgeStatus(null);
+              }}
+              className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Purge Workspace Data
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* 5. Danger Zone */}
-      <div className="rounded-xl bg-rose-950/20 border border-rose-900/60 p-5 shadow-lg space-y-3">
-        <div className="flex items-center gap-2 text-rose-300 text-xs font-mono font-bold">
-          <Trash2 className="w-4 h-4 text-rose-400" />
-          <span>Danger Zone — Purge Telemetry</span>
-        </div>
-
-        <p className="text-xs text-rose-300/80">
-          Permanently deletes all traces, spans, and execution logs from your database across all workspaces.
-        </p>
-
-        <button
-          type="button"
-          onClick={() => {
-            setIsPurgeModalOpen(true);
-            setPurgeConfirmText('');
-            setPurgeStatus(null);
-          }}
-          className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-          Purge All Data
-        </button>
       </div>
 
       {/* Project / Workspace Delete Confirmation Modal */}
@@ -774,14 +966,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       )}
 
-      {/* Purge All Telemetry Modal */}
+      {/* Purge Workspace Telemetry Modal */}
       {isPurgeModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0d111a] border border-rose-900/80 rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4 animate-in fade-in duration-150">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 text-rose-300 font-mono font-bold text-sm">
                 <AlertTriangle className="w-5 h-5 text-rose-400" />
-                <span>Purge Entire Telemetry Database</span>
+                <span>Purge Workspace Telemetry: {activeWorkspaceName}</span>
               </div>
               <button
                 onClick={() => setIsPurgeModalOpen(false)}
@@ -792,7 +984,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed font-sans">
-              This action is permanent and cannot be undone. To delete all traces and spans across all workspaces, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete everything</strong> below:
+              This action is permanent and cannot be undone. To delete all traces and spans belonging to <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">{activeWorkspaceName}</strong>, type <strong className="text-white font-mono bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">delete everything</strong> below:
             </p>
 
             <div className="space-y-2 font-mono">
@@ -829,7 +1021,89 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     : 'bg-rose-950 text-rose-500 cursor-not-allowed opacity-50'
                 }`}
               >
-                Purge Database
+                Purge Workspace Traces
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Python SDK Setup Snippet Modal */}
+      {activeSnippetWorkspace && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0d111a] border border-indigo-900/80 rounded-xl p-5 w-full max-w-xl shadow-2xl space-y-4 animate-in fade-in duration-150">
+            <div className="flex items-center justify-between border-b border-[#1e2330] pb-3">
+              <div className="flex items-center gap-2 text-indigo-300 font-mono font-bold text-sm">
+                <Key className="w-4 h-4 text-indigo-400" />
+                <span>Python SDK Ingestion Config: {activeSnippetWorkspace.name}</span>
+              </div>
+              <button
+                onClick={() => setActiveSnippetWorkspace(null)}
+                className="p-1 rounded text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed font-sans">
+              Telemetry is routed strictly by <strong className="text-white font-mono bg-indigo-950/80 px-1.5 py-0.5 rounded border border-indigo-800">workspace_id</strong>. Copy this workspace ID to route telemetry from your Python code:
+            </p>
+
+            {/* Method 1: Global Configure */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span className="font-semibold text-slate-300">Method 1: Global Application Configuration</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const code = `import feenion\n\n# Configure Feenion globally with this Workspace ID\nfeenion.configure(\n    server_url="http://localhost:8000",\n    workspace_id="${activeSnippetWorkspace.id}",\n    api_key="${revealedKeys[activeSnippetWorkspace.id] || '<YOUR_API_KEY>'}",  # Optional for local, required for auth\n)`;
+                    navigator.clipboard.writeText(code);
+                    setCopiedSnippet(true);
+                    setTimeout(() => setCopiedSnippet(false), 2000);
+                  }}
+                  className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 text-[10px]"
+                >
+                  {copiedSnippet ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedSnippet ? 'Copied Snippet' : 'Copy Code'}</span>
+                </button>
+              </div>
+
+              <pre className="p-3.5 rounded-lg bg-[#080b11] border border-[#1e2330] text-xs font-mono text-slate-200 overflow-x-auto select-all leading-relaxed">
+{`import feenion
+
+# Configure Feenion globally with this Workspace ID
+feenion.configure(
+    server_url="http://localhost:8000",
+    workspace_id="${activeSnippetWorkspace.id}",
+    api_key="${revealedKeys[activeSnippetWorkspace.id] || '<YOUR_API_KEY>'}",  # Optional for local, required for auth
+)`}
+              </pre>
+            </div>
+
+            {/* Method 2: Per-Trace Routing */}
+            <div className="space-y-2">
+              <span className="font-semibold text-slate-300 text-[11px] font-mono block">Method 2: Dynamic Per-Trace / Per-Agent Routing (with Auth)</span>
+              <pre className="p-3.5 rounded-lg bg-[#080b11] border border-[#1e2330] text-xs font-mono text-slate-200 overflow-x-auto select-all leading-relaxed">
+{`from feenion import trace
+
+# Route this agent's traces to workspace ${activeSnippetWorkspace.name} with authentication
+@trace(
+    name="my_agent",
+    workspace_id="${activeSnippetWorkspace.id}",
+    api_key="${revealedKeys[activeSnippetWorkspace.id] || '<YOUR_API_KEY>'}",  # Optional for local, required for auth
+)
+def run_agent():
+    return "completed"`}
+              </pre>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveSnippetWorkspace(null)}
+                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-mono font-semibold"
+              >
+                Done
               </button>
             </div>
           </div>

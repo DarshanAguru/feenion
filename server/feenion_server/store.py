@@ -94,6 +94,15 @@ class TraceStore:
         with self._lock:
             self._in_memory_traces.clear()
 
+    def remove_traces(self, trace_ids: list[str | UUID]) -> None:
+        with self._lock:
+            for t_id in trace_ids:
+                try:
+                    uuid_id = UUID(str(t_id))
+                    self._in_memory_traces.pop(uuid_id, None)
+                except Exception:
+                    pass
+
     def count(self) -> int:
         db = SessionLocal()
         try:

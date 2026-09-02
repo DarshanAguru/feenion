@@ -22,6 +22,7 @@ class HTTPExporter(Exporter):
         self,
         endpoint: str = "http://localhost:8000",
         api_key: str | None = None,
+        workspace_id: str | None = None,
         project_id: str | None = None,
         timeout: float = 5.0,
         max_retries: int = 3,
@@ -30,7 +31,7 @@ class HTTPExporter(Exporter):
     ):
         self.endpoint = endpoint.rstrip("/")
         self.api_key = api_key
-        self.project_id = project_id
+        self.workspace_id = workspace_id or project_id
         self.timeout = timeout
         self.max_retries = max_retries
         self.backoff_factor = backoff_factor
@@ -39,10 +40,7 @@ class HTTPExporter(Exporter):
     def export(self, trace: Trace) -> None:
         self.export_batch([trace])
 
-    def export_batch(self, traces: list[Trace]) -> None:
-        if not traces:
-            return
-
+    def _send_payload(self, traces: list[Trace], api_key: str | None = None, workspace_id: str | None = None) -> None:
         payload_dict = {
             "schema_version": "1.0",
             "sdk_version": "0.1.0",
@@ -55,12 +53,13 @@ class HTTPExporter(Exporter):
             "User-Agent": "Feenion-Python-SDK/0.1.0",
         }
 
-        if self.api_key:
-            headers["X-Feenion-Api-Key"] = self.api_key
-            headers["Authorization"] = f"Bearer {self.api_key}"
+        if api_key:
+            headers["X-Feenion-Api-Key"] = api_key
+            headers["Authorization"] = f"Bearer {api_key}"
 
-        if self.project_id:
-            headers["X-Project-Id"] = self.project_id
+        if workspace_id:
+            headers["X-Workspace-Id"] = workspace_id
+            headers["X-Project-Id"] = workspace_id
 
         if self.compress and len(raw_bytes) > 256:
             data = gzip.compress(raw_bytes)
@@ -86,6 +85,24 @@ class HTTPExporter(Exporter):
                 # Calculate exponential backoff with jitter
                 sleep_time = self.backoff_factor * (2 ** attempt) + random.uniform(0, 0.1)
                 time.sleep(sleep_time)
+
+    def export_batch(self, traces: list[Trace]) -> None:
+        if not traces:
+            return
+
+        # Group traces by effective credentials (api_key, workspace_id)
+        grouped: dict[tuple[str | None, str | None], list[Trace]] = {}
+        for tr in traces:
+            tr_api_key = tr.metadata.get("api_key") if tr.metadata else None
+            tr_workspace_id = tr.metadata.get("workspace_id") if tr.metadata else None
+
+            effective_key = tr_api_key or self.api_key
+            effective_ws = tr_workspace_id or self.workspace_id
+
+            grouped.setdefault((effective_key, effective_ws), []).append(tr)
+
+        for (eff_key, eff_ws), group_traces in grouped.items():
+            self._send_payload(group_traces, api_key=eff_key, workspace_id=eff_ws)
 
     def shutdown(self) -> None:
         super().shutdown()

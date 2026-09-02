@@ -11,7 +11,10 @@ import {
   Radio,
   ChevronDown,
   Layers,
+  Menu,
 } from 'lucide-react';
+
+import { CustomDropdown, DropdownOption } from '../common/CustomDropdown';
 
 interface TopBarProps {
   projects: ProjectInfo[];
@@ -29,6 +32,7 @@ interface TopBarProps {
   wsConnected: boolean;
   onOpenCommandPalette: () => void;
   onOpenShortcuts: () => void;
+  onToggleMobileMenu?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -47,6 +51,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   wsConnected,
   onOpenCommandPalette,
   onOpenShortcuts,
+  onToggleMobileMenu,
 }) => {
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
@@ -60,70 +65,80 @@ export const TopBar: React.FC<TopBarProps> = ({
     }
   };
 
+  const activeProjectValue = projects.find(p => p.id === selectedProject || p.name === selectedProject)?.id || selectedProject;
+
+  const projectOptions: DropdownOption[] = projects.map(p => ({
+    value: p.id,
+    label: p.name,
+    sublabel: p.id.length > 20 ? `${p.id.slice(0, 8)}...` : undefined,
+    icon: <Layers className="w-3.5 h-3.5" />,
+    badge: (p.id === activeProjectValue || p.name === activeProjectValue) ? 'Active' : undefined,
+    badgeColor: 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/80',
+  }));
+
+  const environmentOptions: DropdownOption[] = [
+    { value: 'production', label: 'Production', dotColor: 'bg-emerald-400' },
+    { value: 'staging', label: 'Staging', dotColor: 'bg-amber-400' },
+    { value: 'development', label: 'Development', dotColor: 'bg-cyan-400' },
+    { value: 'all', label: 'All Environments', dotColor: 'bg-slate-400' },
+  ];
+
+  const timeRangeOptions: DropdownOption[] = [
+    { value: '15m', label: 'Last 15m', sublabel: 'Past 15 minutes' },
+    { value: '1h', label: 'Last 1h', sublabel: 'Past 1 hour' },
+    { value: '6h', label: 'Last 6h', sublabel: 'Past 6 hours' },
+    { value: '24h', label: 'Last 24h', sublabel: 'Past 24 hours' },
+    { value: '7d', label: 'Last 7d', sublabel: 'Past 7 days' },
+    { value: '30d', label: 'Last 30d', sublabel: 'Past 30 days' },
+    { value: 'all', label: 'All Time', sublabel: 'Full history' },
+  ];
+
   return (
-    <header className="h-14 bg-[#090d16] border-b border-[#1e2330] px-4 flex items-center justify-between gap-3 select-none z-10">
-      {/* Left Area: Project & Environment Pickers */}
-      <div className="flex items-center gap-2.5 flex-wrap">
-        {/* Project Selector */}
-        <div className="flex items-center gap-1.5 bg-[#0d111a] border border-[#1e2330] rounded-lg px-2.5 py-1 text-xs">
-          <Layers className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-          <span className="text-[10px] text-slate-400 font-mono uppercase">Workspace:</span>
-          <select
-            value={selectedProject}
-            onChange={(e) => {
-              if (e.target.value === '__new__') {
-                setIsCreatingProject(true);
-              } else {
-                onSelectProject(e.target.value);
-              }
-            }}
-            className="bg-transparent text-slate-200 font-mono text-xs focus:outline-none cursor-pointer"
-          >
-            {projects.map(p => (
-              <option key={p.id} value={p.id} className="bg-[#0d111a] text-slate-200">
-                {p.name}
-              </option>
-            ))}
-            <option value="__new__" className="bg-[#0d111a] text-indigo-400 font-bold">
-              + New Project
-            </option>
-          </select>
-        </div>
+    <header className="min-h-14 bg-[#090d16] border-b border-[#1e2330] px-3 sm:px-4 py-2 sm:py-0 flex items-center justify-between gap-2 select-none z-20">
+      {/* Left Area: Mobile Hamburger + Custom Pickers */}
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+        {/* Mobile Hamburger Drawer Trigger */}
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 md:hidden shrink-0 border border-slate-800"
+          aria-label="Open navigation menu"
+          title="Open Navigation Menu"
+        >
+          <Menu className="w-4 h-4 text-indigo-400" />
+        </button>
 
-        {/* Environment Selector */}
-        <div className="flex items-center gap-1.5 bg-[#0d111a] border border-[#1e2330] rounded-lg px-2.5 py-1 text-xs">
-          <span className="text-[10px] text-slate-400 font-mono uppercase">Env:</span>
-          <select
-            value={environment}
-            onChange={(e) => onSelectEnvironment(e.target.value)}
-            className="bg-transparent text-slate-200 font-mono text-xs focus:outline-none cursor-pointer"
-          >
-            <option value="production" className="bg-[#0d111a]">production</option>
-            <option value="staging" className="bg-[#0d111a]">staging</option>
-            <option value="development" className="bg-[#0d111a]">development</option>
-            <option value="all" className="bg-[#0d111a]">all environments</option>
-          </select>
-        </div>
+        {/* Workspace Custom Dropdown */}
+        <CustomDropdown
+          value={activeProjectValue}
+          onChange={onSelectProject}
+          options={projectOptions}
+          labelPrefix="Workspace:"
+          icon={<Layers className="w-3.5 h-3.5" />}
+          searchable={projects.length > 2}
+          actionItem={{
+            label: '+ Create New Workspace',
+            onClick: () => setIsCreatingProject(true),
+          }}
+        />
 
-        {/* Time Range Selector */}
-        <div className="flex items-center gap-1.5 bg-[#0d111a] border border-[#1e2330] rounded-lg px-2.5 py-1 text-xs">
-          <select
-            value={timeRange}
-            onChange={(e) => onSelectTimeRange(e.target.value)}
-            className="bg-transparent text-slate-200 font-mono text-xs focus:outline-none cursor-pointer"
-          >
-            <option value="15m" className="bg-[#0d111a]">Last 15 minutes</option>
-            <option value="1h" className="bg-[#0d111a]">Last 1 hour</option>
-            <option value="6h" className="bg-[#0d111a]">Last 6 hours</option>
-            <option value="24h" className="bg-[#0d111a]">Last 24 hours</option>
-            <option value="7d" className="bg-[#0d111a]">Last 7 days</option>
-            <option value="30d" className="bg-[#0d111a]">Last 30 days</option>
-            <option value="all" className="bg-[#0d111a]">All time</option>
-          </select>
-        </div>
+        {/* Environment Custom Dropdown */}
+        <CustomDropdown
+          value={environment}
+          onChange={onSelectEnvironment}
+          options={environmentOptions}
+          labelPrefix="Env:"
+        />
+
+        {/* Time Range Custom Dropdown */}
+        <CustomDropdown
+          value={timeRange}
+          onChange={onSelectTimeRange}
+          options={timeRangeOptions}
+        />
       </div>
 
-      {/* Center Search Bar Launcher */}
+      {/* Center Search Bar Launcher (Desktop) */}
       <div className="flex-1 max-w-md hidden md:block">
         <button
           onClick={onOpenCommandPalette}
@@ -139,13 +154,23 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Right Controls: Live Stream Status, Refresh, Shortcuts */}
-      <div className="flex items-center gap-2">
+      {/* Right Controls: Search icon on mobile, Live Stream Status, Refresh */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {/* Mobile Search Button */}
+        <button
+          onClick={onOpenCommandPalette}
+          className="p-1.5 rounded-lg bg-[#0d111a] border border-[#1e2330] text-slate-300 hover:text-white md:hidden shrink-0"
+          title="Search"
+          aria-label="Search command palette"
+        >
+          <Search className="w-3.5 h-3.5 text-indigo-400" />
+        </button>
+
         {/* Live Stream Status Pill */}
-        <div className="flex items-center gap-1.5 bg-[#0d111a] border border-[#1e2330] rounded-lg p-0.5">
+        <div className="flex items-center gap-1 bg-[#0d111a] border border-[#1e2330] rounded-lg p-0.5">
           <button
             onClick={onToggleFeedPause}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors ${
+            className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors ${
               isFeedPaused
                 ? 'bg-amber-950/60 text-amber-300 border border-amber-800'
                 : 'bg-emerald-950/60 text-emerald-300 border border-emerald-800'
@@ -154,13 +179,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             {isFeedPaused ? (
               <>
-                <Pause className="w-3 h-3 text-amber-400" />
-                <span>Paused {bufferedCount > 0 ? `(${bufferedCount})` : ''}</span>
+                <Pause className="w-2.5 h-2.5 text-amber-400" />
+                <span className="hidden xs:inline">Paused</span>
               </>
             ) : (
               <>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>Live</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                <span className="hidden xs:inline">Live</span>
               </>
             )}
           </button>
@@ -174,10 +199,10 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </div>
 
-        {/* Shortcuts Help */}
+        {/* Shortcuts Help (Hidden on very small mobile) */}
         <button
           onClick={onOpenShortcuts}
-          className="p-1.5 rounded-lg bg-[#0d111a] border border-[#1e2330] text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+          className="p-1.5 rounded-lg bg-[#0d111a] border border-[#1e2330] text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors hidden sm:block"
           title="Keyboard shortcuts (?)"
         >
           <HelpCircle className="w-4 h-4" />

@@ -17,26 +17,35 @@ The official, high-performance Python client library for Feenion — the self-ho
 ## Installation
 
 ```bash
+# Using uv (Recommended)
+uv add feenion
+
+# Or using pip
 pip install feenion
 ```
 
 ## Quickstart Examples
 
-### 1. Manual Tracing with Spans
+### 1. Manual Tracing with Spans & Customization
 
 ```python
+import feenion
 from feenion import trace, span, configure
 from feenion.exporters import HTTPExporter, AsyncExporter
 
 configure(exporter=AsyncExporter(HTTPExporter("http://localhost:8000")))
 
-@trace(name="rag_search_agent", span_type="agent")
+@trace(name="rag_search_agent", span_type="agent", capture_input=True, capture_output=True)
 def run_agent(query: str):
+    feenion.set_user("user_401")
+    feenion.set_tag("pipeline", "compliance")
+
     # Vector Search Span
     with span("hybrid_search", span_type="retrieval") as s:
         s.input = {"query": query}
         docs = ["Feenion is a self-hosted AI observability platform."]
         s.output = {"documents": docs}
+        feenion.add_event("docs_retrieved", {"count": len(docs)})
 
     # LLM Completion Span
     with span("llm_completion", span_type="llm") as s:
@@ -52,42 +61,65 @@ def run_agent(query: str):
         return response
 ```
 
-### 2. LangChain Integration
+### 2. LangChain Chat Models & Azure OpenAI Auto-Instrumentation
 
 ```python
-from feenion.integrations.langchain import FeenionCallbackHandler
+from langchain_openai import AzureChatOpenAI, ChatOpenAI
+from feenion.integrations import wrap_azure_openai, wrap_openai
 
-handler = FeenionCallbackHandler(trace_name="conversational_agent")
-
-# Attach to agent execution
-result = agent_executor.invoke(
-    {"input": "Summarize today's active support tickets"},
-    config={"callbacks": [handler]},
-)
-```
-
-### 3. OpenAI & Azure OpenAI Auto-Instrumentation
-
-```python
-from openai import OpenAI, AzureOpenAI
-from feenion.integrations import wrap_openai, wrap_azure_openai
-
-# Standard OpenAI
-client = wrap_openai(OpenAI())
-
-# Azure OpenAI
-azure_client = wrap_azure_openai(
-    AzureOpenAI(
+# Azure OpenAI (LangChain AzureChatOpenAI or raw AzureOpenAI)
+azure_llm = wrap_azure_openai(
+    AzureChatOpenAI(
         azure_endpoint="https://my-resource.openai.azure.com/",
         api_key="AZURE_API_KEY",
+        azure_deployment="gpt-4o",
         api_version="2024-02-01",
     )
 )
 
-# Spans, prompt tokens, completion tokens, and dollar costs are recorded automatically
-response = azure_client.chat.completions.create(
-    model="gpt-4o",
-    messages=[{"role": "user", "content": "Explain quantum computing in 2 sentences"}],
+# OpenAI (LangChain ChatOpenAI or raw OpenAI)
+openai_llm = wrap_openai(ChatOpenAI(model="gpt-4o"))
+
+# Telemetry, tokens, and errors are captured automatically across .invoke() / .ainvoke()
+response = azure_llm.invoke([("user", "Explain quantum computing in 2 sentences")])
+```
+
+### 3. Pluggable Telemetry Exporters
+
+```python
+import feenion
+from feenion.exporters import (
+    AsyncExporter,
+    HTTPExporter,
+    JSONLExporter,
+    ConsoleExporter,
+    CompositeExporter,
+)
+
+# 1. Non-Blocking Async Exporter (Default for Production)
+feenion.configure(
+    exporter=AsyncExporter(
+        HTTPExporter(
+            endpoint="http://localhost:8000",
+            api_key="your_api_key",
+            project_id="prod-workspace",
+        )
+    )
+)
+
+# 2. Local File Exporter (Air-gapped / CI / Offline Replay)
+feenion.configure(exporter=JSONLExporter("traces.jsonl"))
+
+# 3. Terminal Console Exporter
+feenion.configure(exporter=ConsoleExporter(verbose=True))
+
+# 4. Multi-Destination Composite Exporter
+feenion.configure(
+    exporter=CompositeExporter([
+        AsyncExporter(HTTPExporter("http://localhost:8000")),
+        JSONLExporter("audit_traces.jsonl"),
+        ConsoleExporter(verbose=False),
+    ])
 )
 ```
 

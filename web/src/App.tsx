@@ -12,6 +12,7 @@ import { TopBar } from './components/layout/TopBar';
 import { CommandPalette } from './components/layout/CommandPalette';
 import { ShortcutsModal } from './components/common/ShortcutsModal';
 import { TraceComparisonModal } from './components/trace/TraceComparisonModal';
+import { Layers } from 'lucide-react';
 
 // Dynamic Page Views
 import { OverviewPage } from './pages/overview/OverviewPage';
@@ -29,21 +30,37 @@ import { SettingsPage } from './pages/settings/SettingsPage';
 
 export const App: React.FC = () => {
   // Navigation & View State
-  const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
+  const [activeTab, setActiveTab] = useState<NavigationTab>(() => {
+    return (localStorage.getItem('feenion_active_tab') as NavigationTab) || 'overview';
+  });
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('feenion_sidebar_collapsed') === 'true';
+  });
 
   // Global Context State (Workspace / Environment / Timeline)
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>('default');
-  const [environment, setEnvironment] = useState<string>('all');
-  const [timeRange, setTimeRange] = useState<string>('24h');
+  const [selectedProject, setSelectedProject] = useState<string>(() => {
+    return localStorage.getItem('feenion_selected_project_id') || '';
+  });
+  const [environment, setEnvironment] = useState<string>(() => {
+    return localStorage.getItem('feenion_environment') || 'all';
+  });
+  const [timeRange, setTimeRange] = useState<string>(() => {
+    return localStorage.getItem('feenion_time_range') || '24h';
+  });
 
   // Filters State for Traces Explorer
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [spanTypeFilter, setSpanTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    return localStorage.getItem('feenion_status_filter') || 'all';
+  });
+  const [spanTypeFilter, setSpanTypeFilter] = useState<string>(() => {
+    return localStorage.getItem('feenion_span_type_filter') || 'all';
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('newest');
+  const [sortBy, setSortBy] = useState<string>(() => {
+    return localStorage.getItem('feenion_sort_by') || 'newest';
+  });
 
   // Live Stream Feed State
   const [isFeedPaused, setIsFeedPaused] = useState(false);
@@ -51,7 +68,8 @@ export const App: React.FC = () => {
   const [wsConnected, setWsConnected] = useState(false);
   const bufferedEventsRef = useRef<any[]>([]);
 
-  // Modals
+  // Modals & Mobile Navigation
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [comparisonModalTraces, setComparisonModalTraces] = useState<{ a: string; b?: string } | null>(null);
@@ -62,6 +80,54 @@ export const App: React.FC = () => {
   const [analyticsOverview, setAnalyticsOverview] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(false);
   const [currencyVersion, setCurrencyVersion] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // In-House Workspace Transitioning State
+  const [isSwitchingWorkspace, setIsSwitchingWorkspace] = useState(false);
+  const [switchingTargetName, setSwitchingTargetName] = useState<string>('');
+
+  // Sync Global Settings to LocalStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('feenion_active_tab', activeTab);
+    } catch {}
+  }, [activeTab]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('feenion_sidebar_collapsed', String(isSidebarCollapsed));
+    } catch {}
+  }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('feenion_environment', environment);
+    } catch {}
+  }, [environment]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('feenion_time_range', timeRange);
+    } catch {}
+  }, [timeRange]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('feenion_status_filter', statusFilter);
+    } catch {}
+  }, [statusFilter]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('feenion_span_type_filter', spanTypeFilter);
+    } catch {}
+  }, [spanTypeFilter]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('feenion_sort_by', sortBy);
+    } catch {}
+  }, [sortBy]);
 
   // Global Currency Change Listener
   useEffect(() => {
@@ -70,36 +136,51 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('feenion_currency_changed', handleCurrencyChange);
   }, []);
 
-  // Fetch Projects List
+  // Fetch Projects List & Synchronize Active Workspace
   const fetchProjects = useCallback(async () => {
     try {
       const projs = await apiClient.getProjects();
       setProjects(projs);
-      if (projs.length > 0 && (!selectedProject || !projs.find(p => p.id === selectedProject || p.name === selectedProject))) {
-        setSelectedProject(projs[0].id);
-        apiClient.setProject(projs[0].id);
+      if (projs.length > 0) {
+        const savedId = localStorage.getItem('feenion_selected_project_id');
+        const matched =
+          projs.find(p => p.id === savedId || p.name === savedId) ||
+          projs.find(p => p.id === selectedProject || p.name === selectedProject);
+
+        const targetId = matched ? matched.id : projs[0].id;
+        setSelectedProject(targetId);
+        apiClient.setProject(targetId);
+        localStorage.setItem('feenion_selected_project_id', targetId);
       }
     } catch (err) {
       console.error('Failed to load projects:', err);
     }
   }, [selectedProject]);
 
-  // Handle Workspace switching
+  // Handle Workspace switching with full clean page reload
   const handleSelectProject = (projectId: string) => {
-    setSelectedProject(projectId);
-    apiClient.setProject(projectId);
+    const matched = projects.find(p => p.id === projectId || p.name === projectId);
+    const resolvedId = matched ? matched.id : projectId;
+    apiClient.setProject(resolvedId);
+    try {
+      localStorage.setItem('feenion_selected_project_id', resolvedId);
+    } catch {}
+    window.location.reload();
   };
 
   // Handle Creating a new Workspace
   const handleCreateProject = async (name: string) => {
     try {
       const res = await apiClient.createProject(name);
-      await fetchProjects();
-      setSelectedProject(res.project.id);
       apiClient.setProject(res.project.id);
+      try {
+        localStorage.setItem('feenion_selected_project_id', res.project.id);
+      } catch {}
+      window.location.reload();
+      return res;
     } catch (err: any) {
       console.error('Project creation failed:', err);
-      alert(err.message || 'Failed to create project workspace');
+      throw err;
     }
   };
 
@@ -108,12 +189,14 @@ export const App: React.FC = () => {
     try {
       await apiClient.deleteProject(projectId);
       const remaining = projects.filter(p => p.id !== projectId);
-      setProjects(remaining);
       if (selectedProject === projectId && remaining.length > 0) {
-        setSelectedProject(remaining[0].id);
-        apiClient.setProject(remaining[0].id);
+        const nextId = remaining[0].id;
+        apiClient.setProject(nextId);
+        try {
+          localStorage.setItem('feenion_selected_project_id', nextId);
+        } catch {}
       }
-      fetchData();
+      window.location.reload();
     } catch (err: any) {
       console.error('Project deletion failed:', err);
       alert(err.message || 'Failed to delete workspace');
@@ -252,20 +335,23 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen bg-[#080b11] text-slate-100 font-sans overflow-hidden select-none">
-      {/* Collapsible Sidebar */}
+      {/* Collapsible Sidebar (Desktop Rail & Mobile Drawer) */}
       <Sidebar
         activeTab={activeTab}
         onSelectTab={(tab) => {
           setActiveTab(tab);
           setSelectedTraceId(null);
+          setIsMobileNavOpen(false);
         }}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         errorCount={errors.reduce((acc, e) => acc + e.count, 0)}
+        isMobileOpen={isMobileNavOpen}
+        onCloseMobile={() => setIsMobileNavOpen(false)}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
         {/* Global Top Bar */}
         <TopBar
           projects={projects}
@@ -283,10 +369,11 @@ export const App: React.FC = () => {
           wsConnected={wsConnected}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenShortcuts={() => setIsShortcutsOpen(true)}
+          onToggleMobileMenu={() => setIsMobileNavOpen(prev => !prev)}
         />
 
         {/* Dynamic Page Views */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main key={selectedProject} className="flex-1 flex flex-col overflow-hidden">
           {activeTab === 'overview' && (
             <OverviewPage
               analytics={analyticsOverview}
@@ -327,26 +414,71 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'llm' && <LLMPage />}
+          {activeTab === 'llm' && (
+            <LLMPage
+              selectedProject={selectedProject}
+              timeRange={timeRange}
+              environment={environment}
+              refreshKey={refreshKey}
+            />
+          )}
 
           {activeTab === 'agents' && (
-            <AgentsPage onSelectTrace={handleSelectTrace} />
+            <AgentsPage
+              onSelectTrace={handleSelectTrace}
+              selectedProject={selectedProject}
+              timeRange={timeRange}
+              environment={environment}
+              refreshKey={refreshKey}
+            />
           )}
 
           {activeTab === 'retrieval' && (
-            <RetrievalPage onSelectTrace={handleSelectTrace} />
+            <RetrievalPage
+              onSelectTrace={handleSelectTrace}
+              selectedProject={selectedProject}
+              timeRange={timeRange}
+              environment={environment}
+              refreshKey={refreshKey}
+            />
           )}
 
-          {activeTab === 'tools' && <ToolsPage />}
+          {activeTab === 'tools' && (
+            <ToolsPage
+              selectedProject={selectedProject}
+              timeRange={timeRange}
+              environment={environment}
+              refreshKey={refreshKey}
+            />
+          )}
 
           {activeTab === 'performance' && (
-            <PerformancePage onSelectTrace={handleSelectTrace} />
+            <PerformancePage
+              onSelectTrace={handleSelectTrace}
+              selectedProject={selectedProject}
+              timeRange={timeRange}
+              environment={environment}
+              refreshKey={refreshKey}
+            />
           )}
 
-          {activeTab === 'costs' && <CostsPage />}
+          {activeTab === 'costs' && (
+            <CostsPage
+              selectedProject={selectedProject}
+              timeRange={timeRange}
+              environment={environment}
+              refreshKey={refreshKey}
+            />
+          )}
 
           {activeTab === 'incident' && (
-            <IncidentModePage onSelectTrace={handleSelectTrace} />
+            <IncidentModePage
+              onSelectTrace={handleSelectTrace}
+              selectedProject={selectedProject}
+              timeRange={timeRange}
+              environment={environment}
+              refreshKey={refreshKey}
+            />
           )}
 
           {activeTab === 'settings' && (
@@ -361,6 +493,41 @@ export const App: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* In-House Workspace Transition Animated Overlay */}
+      {isSwitchingWorkspace && (
+        <div className="fixed inset-0 z-50 bg-[#06080e]/80 backdrop-blur-md flex flex-col items-center justify-center p-6 select-none animate-in fade-in duration-200">
+          <div className="relative flex flex-col items-center max-w-sm w-full text-center space-y-5 p-8 rounded-2xl bg-[#0d121f]/95 border border-indigo-500/40 shadow-2xl shadow-indigo-950/80 ring-1 ring-indigo-500/20">
+            {/* Animated Orbital Spinner with Pulsing Layers Icon */}
+            <div className="relative flex items-center justify-center w-20 h-20">
+              <div className="absolute inset-0 rounded-full border-2 border-indigo-500/30 animate-ping opacity-30" />
+              <div className="absolute inset-0 rounded-full border-2 border-t-indigo-400 border-r-cyan-400 border-b-transparent border-l-transparent animate-spin" />
+              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-950 via-slate-900 to-indigo-900 border border-indigo-500/60 flex items-center justify-center shadow-inner">
+                <Layers className="w-7 h-7 text-indigo-400 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Target Workspace Badge & Name */}
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-950/80 border border-indigo-500/50 text-[10px] font-mono font-bold text-indigo-300 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Switching Workspace
+              </div>
+              <h3 className="text-lg font-mono font-bold text-white tracking-tight break-all">
+                {switchingTargetName || 'Workspace'}
+              </h3>
+              <p className="text-xs text-slate-400 font-sans">
+                Calibrating trace indices, error groups, and telemetry data...
+              </p>
+            </div>
+
+            {/* High-Tech Loading Shimmer Bar */}
+            <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+              <div className="h-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500 rounded-full animate-pulse w-full" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global Command Palette */}
       <CommandPalette

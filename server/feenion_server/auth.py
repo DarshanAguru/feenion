@@ -45,35 +45,35 @@ def get_current_project(
     db: Session = Depends(get_db),
     header_key: str | None = Security(api_key_header),
     bearer_credentials: HTTPAuthorizationCredentials | None = Security(http_bearer),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
     x_project_id: Optional[str] = Header(default=None, alias="X-Project-Id"),
-    x_project_name: Optional[str] = Header(default=None, alias="X-Project-Name"),
 ) -> Project:
-    # 1. Direct Project ID from UI header
-    if x_project_id:
-        proj = db.query(Project).filter(Project.id == x_project_id).first()
-        if proj:
-            return proj
-        # If user passed a project name as project_id (e.g. "default")
-        proj = db.query(Project).filter(Project.name == x_project_id).first()
-        if proj:
-            return proj
-
-    # 2. Direct Project Name from UI header
-    if x_project_name:
-        proj = db.query(Project).filter(Project.name == x_project_name).first()
-        if proj:
-            return proj
-
-    # 3. API Key Auth
+    # 1. Check API Key Authentication (if provided)
     key_str = header_key
     if not key_str and bearer_credentials:
         key_str = bearer_credentials.credentials
 
     if key_str:
-        key_hash = hash_api_key(key_str)
+        key_hash = hash_api_key(key_str.strip())
         api_key_record = db.query(APIKey).filter(APIKey.key_hash == key_hash, APIKey.revoked_at.is_(None)).first()
-        if api_key_record and api_key_record.project:
-            return api_key_record.project
+        if not api_key_record or not api_key_record.project:
+            raise HTTPException(status_code=401, detail="Invalid or revoked Feenion API Key")
+        return api_key_record.project
 
-    # 4. Fallback to default project
+    # 2. Strict Workspace ID or Name Lookup (if provided without key for local / open access)
+    target_workspace_id = (x_workspace_id or x_project_id or "").strip()
+    if target_workspace_id:
+        proj = db.query(Project).filter(
+            (Project.id == target_workspace_id) | (Project.name.ilike(target_workspace_id))
+        ).first()
+        if not proj:
+            # Auto-provision workspace on-the-fly for seamless local development
+            proj = Project(name=target_workspace_id)
+            db.add(proj)
+            db.commit()
+            db.refresh(proj)
+            create_project_api_key(db, proj.id, name=f"{proj.name}-key")
+        return proj
+
+    # 3. Fallback to default workspace
     return get_or_create_default_project(db)

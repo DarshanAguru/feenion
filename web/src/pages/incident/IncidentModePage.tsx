@@ -8,9 +8,19 @@ import { ShieldAlert, AlertOctagon, Flame, ArrowRight, Layers, Sparkles, Wrench 
 
 interface IncidentModePageProps {
   onSelectTrace: (traceId: string) => void;
+  selectedProject?: string;
+  timeRange?: string;
+  environment?: string;
+  refreshKey?: number;
 }
 
-export const IncidentModePage: React.FC<IncidentModePageProps> = ({ onSelectTrace }) => {
+export const IncidentModePage: React.FC<IncidentModePageProps> = ({
+  onSelectTrace,
+  selectedProject,
+  timeRange = '1h',
+  environment = 'all',
+  refreshKey,
+}) => {
   const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
   const [errors, setErrors] = useState<ErrorGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,8 +29,11 @@ export const IncidentModePage: React.FC<IncidentModePageProps> = ({ onSelectTrac
     const loadIncidentData = async () => {
       try {
         setLoading(true);
+        if (selectedProject) {
+          apiClient.setProject(selectedProject);
+        }
         const [overviewData, errorsData] = await Promise.all([
-          apiClient.getAnalyticsOverview('1h', 'all'),
+          apiClient.getAnalyticsOverview(timeRange, environment),
           apiClient.getErrors(20),
         ]);
         setAnalytics(overviewData);
@@ -32,7 +45,7 @@ export const IncidentModePage: React.FC<IncidentModePageProps> = ({ onSelectTrac
       }
     };
     loadIncidentData();
-  }, []);
+  }, [selectedProject, timeRange, environment, refreshKey]);
 
   if (loading) return <LoadingSkeleton rows={8} />;
   if (!analytics) return null;

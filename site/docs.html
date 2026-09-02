@@ -386,12 +386,64 @@ handle_query(<span class="text-emerald-300">"How do I reset my password?"</span>
         </p>
       </section>
 
-      <!-- Section: Async Batch Exporter -->
+      <!-- Section: Pluggable Exporters -->
       <section id="async-exporter" class="space-y-4 border-b border-slate-800/80 pb-10">
-        <h2 class="text-xl font-bold font-mono text-white">Non-Blocking Async Exporter</h2>
+        <h2 class="text-xl font-bold font-mono text-white">Pluggable Telemetry Exporters</h2>
         <p class="text-slate-300">
-          When a span finishes, it is pushed to an in-memory lock-free queue. A dedicated background daemon thread flushes batches of traces over HTTP to the ingestion API every 500ms (or upon buffer fullness). Application threads are never blocked by telemetry export.
+          Feenion provides 5 built-in, decoupled exporters for any production or testing setup:
         </p>
+        <ul class="list-disc list-inside space-y-1.5 text-slate-300 pl-2 text-sm">
+          <li><strong>AsyncExporter(inner)</strong>: Non-blocking daemon worker with an in-memory queue flushing batches every 500ms without slowing down request loops.</li>
+          <li><strong>HTTPExporter(endpoint, api_key, project_id)</strong>: Direct HTTP ingestion transport to the Feenion server with tenant API key authentication.</li>
+          <li><strong>JSONLExporter(filepath)</strong>: Structured append-only local file logging for air-gapped environments, CI pipelines, and offline trace replay.</li>
+          <li><strong>ConsoleExporter(verbose)</strong>: Real-time formatted terminal output for local developer interactive debugging.</li>
+          <li><strong>CompositeExporter([exporters])</strong>: Broadcasts telemetry to multiple targets simultaneously (e.g. streaming to remote HTTP while saving local JSONL audit files).</li>
+        </ul>
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre leading-relaxed glass-inner"><code><span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> configure
+<span class="text-purple-400">from</span> feenion.exporters <span class="text-purple-400">import</span> AsyncExporter, HTTPExporter, CompositeExporter, JSONLExporter
+
+<span class="text-slate-500"># Composite: Async HTTP upload + local JSONL audit trail</span>
+configure(
+    exporter=CompositeExporter([
+        AsyncExporter(HTTPExporter(<span class="text-emerald-300">"http://localhost:8000"</span>, api_key=<span class="text-emerald-300">"feenion_key"</span>, project_id=<span class="text-emerald-300">"finance-prod"</span>)),
+        JSONLExporter(<span class="text-emerald-300">"traces_audit.jsonl"</span>),
+    ])
+)</code></pre>
+      </section>
+
+      <!-- Section: Multi-Tenant Workspace Routing -->
+      <section id="sdk-workspace-routing" class="space-y-4 border-b border-slate-800/80 pb-10">
+        <h2 class="text-xl font-bold font-mono text-white">Multi-Tenant Workspace Routing & Authentication</h2>
+        <p class="text-slate-300">
+          Telemetry in Feenion is routed strictly using each workspace's unique <code class="text-indigo-300 font-mono">Workspace ID</code> (obtained from the Settings page):
+        </p>
+        <div class="p-3.5 rounded-xl glass-inner space-y-1 text-xs font-mono">
+          <span class="text-amber-300 font-bold">🔐 Authentication & Local Hosting</span>
+          <p class="text-slate-400 font-sans text-xs leading-relaxed">
+            API key is optional for local development on the same PC. When deploying Feenion in production with authentication enabled, provide your workspace's API key.
+          </p>
+        </div>
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre leading-relaxed glass-inner"><code><span class="text-purple-400">import</span> feenion
+<span class="text-purple-400">from</span> feenion <span class="text-purple-400">import</span> trace
+
+<span class="text-slate-500"># Option 1: Global Workspace Configuration by Workspace ID</span>
+feenion.configure(
+    server_url=<span class="text-emerald-300">"http://localhost:8000"</span>,
+    workspace_id=<span class="text-emerald-300">"60d03b94-82a1-4328-874e-7b5fbfbc4402"</span>,
+    api_key=<span class="text-emerald-300">"fn_live_..."</span>,  <span class="text-slate-500"># Optional for local instance, required for auth</span>
+)
+
+<span class="text-slate-500"># Option 2: Dynamic Per-Agent / Per-Trace Workspace Routing (with Auth)</span>
+<span class="text-indigo-400">@trace</span>(
+    name=<span class="text-emerald-300">"compliance_scanner"</span>,
+    workspace_id=<span class="text-emerald-300">"60d03b94-82a1-4328-874e-7b5fbfbc4402"</span>,
+    api_key=<span class="text-emerald-300">"fn_live_..."</span>,
+)
+<span class="text-purple-400">def</span> <span class="text-blue-400">run_compliance</span>():
+    <span class="text-slate-500"># Or attach dynamically inside any function:</span>
+    feenion.set_workspace_id(<span class="text-emerald-300">"60d03b94-82a1-4328-874e-7b5fbfbc4402"</span>)
+    feenion.set_api_key(<span class="text-emerald-300">"fn_live_..."</span>)
+    <span class="text-purple-400">return</span> <span class="text-emerald-300">"completed"</span></code></pre>
       </section>
 
       <!-- Section: Python SDK Deep-Dive -->
@@ -456,19 +508,38 @@ safe_payload = redactor.redact(raw_payload)</code></pre>
       </section>
 
       <!-- Section: AI Frameworks -->
-      <section id="instrument-openai" class="space-y-4 border-b border-slate-800/80 pb-10">
+      <section id="instrument-azure-openai" class="space-y-4 border-b border-slate-800/80 pb-10">
         <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800 text-indigo-400 text-xs font-mono font-semibold">
           Chapter 4 &bull; Framework Auto-Instrumentation
         </div>
+        <h2 class="text-xl font-bold font-mono text-white">Azure OpenAI & Azure AI Foundry</h2>
+        <p class="text-slate-300">
+          Wrap Azure OpenAI (<code class="text-indigo-300">openai.AzureOpenAI</code> or LangChain <code class="text-indigo-300">langchain_openai.AzureChatOpenAI</code>) in one call:
+        </p>
+        <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre leading-relaxed glass-inner"><code><span class="text-purple-400">from</span> langchain_openai <span class="text-purple-400">import</span> AzureChatOpenAI
+<span class="text-purple-400">from</span> feenion.integrations <span class="text-purple-400">import</span> wrap_azure_openai
+
+<span class="text-slate-500"># Auto-instruments .invoke(), .ainvoke(), tokens, and pricing</span>
+llm = wrap_azure_openai(AzureChatOpenAI(
+    azure_endpoint=<span class="text-emerald-300">"https://my-resource.openai.azure.com/"</span>,
+    api_key=<span class="text-emerald-300">"AZURE_API_KEY"</span>,
+    azure_deployment=<span class="text-emerald-300">"gpt-4o"</span>,
+    api_version=<span class="text-emerald-300">"2024-02-01"</span>,
+))
+
+response = llm.invoke([(<span class="text-emerald-300">"user"</span>, <span class="text-emerald-300">"Analyze compliance report #1024"</span>)])</code></pre>
+      </section>
+
+      <!-- Section: OpenAI -->
+      <section id="instrument-openai" class="space-y-4 border-b border-slate-800/80 pb-10">
         <h2 class="text-xl font-bold font-mono text-white">OpenAI Auto-Instrumentation</h2>
         <p class="text-slate-300">
-          Wrap the official <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">OpenAI</code> client with one line:
+          Wrap the official <code class="text-indigo-300 bg-[#0d111a] px-1.5 py-0.5 rounded border border-[#1e2330]">OpenAI</code> client or LangChain <code class="text-indigo-300">ChatOpenAI</code>:
         </p>
         <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">from</span> openai <span class="text-purple-400">import</span> OpenAI
-<span class="text-purple-400">from</span> feenion.integrations.openai <span class="text-purple-400">import</span> instrument_openai
+<span class="text-purple-400">from</span> feenion.integrations.openai <span class="text-purple-400">import</span> wrap_openai
 
-client = OpenAI()
-instrument_openai(client)</code></pre>
+client = wrap_openai(OpenAI())</code></pre>
       </section>
 
       <!-- Section: Google Gemini -->
@@ -504,7 +575,7 @@ instrument_anthropic(client)</code></pre>
         <h2 class="text-xl font-bold font-mono text-white">LangChain & LangGraph Callbacks</h2>
         <pre class="p-4 rounded-xl font-mono text-xs text-slate-200 overflow-x-auto whitespace-pre glass-inner"><code><span class="text-purple-400">from</span> feenion.integrations.langchain <span class="text-purple-400">import</span> FeenionCallbackHandler
 
-handler = FeenionCallbackHandler()
+handler = FeenionCallbackHandler(trace_name=<span class="text-emerald-300">"rag_chain"</span>)
 chain.invoke({<span class="text-emerald-300">"topic"</span>: <span class="text-emerald-300">"AI Debugging"</span>}, config={<span class="text-emerald-300">"callbacks"</span>: [handler]})</code></pre>
       </section>
 

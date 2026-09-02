@@ -8,9 +8,19 @@ import { Gauge, Clock, Layers, Sparkles, Search, Wrench, AlertTriangle, ArrowRig
 
 interface PerformancePageProps {
   onSelectTrace: (traceId: string) => void;
+  selectedProject?: string;
+  timeRange?: string;
+  environment?: string;
+  refreshKey?: number;
 }
 
-export const PerformancePage: React.FC<PerformancePageProps> = ({ onSelectTrace }) => {
+export const PerformancePage: React.FC<PerformancePageProps> = ({
+  onSelectTrace,
+  selectedProject,
+  timeRange = '24h',
+  environment = 'all',
+  refreshKey,
+}) => {
   const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +28,10 @@ export const PerformancePage: React.FC<PerformancePageProps> = ({ onSelectTrace 
     const fetchPerf = async () => {
       try {
         setLoading(true);
-        const data = await apiClient.getAnalyticsOverview('24h', 'all');
+        if (selectedProject) {
+          apiClient.setProject(selectedProject);
+        }
+        const data = await apiClient.getAnalyticsOverview(timeRange, environment);
         setAnalytics(data);
       } catch (err) {
         console.error('Failed to fetch performance analytics:', err);
@@ -27,7 +40,7 @@ export const PerformancePage: React.FC<PerformancePageProps> = ({ onSelectTrace 
       }
     };
     fetchPerf();
-  }, []);
+  }, [selectedProject, timeRange, environment, refreshKey]);
 
   if (loading) return <LoadingSkeleton rows={6} />;
   if (!analytics) return null;

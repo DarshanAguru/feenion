@@ -9,9 +9,19 @@ import { Search, Database, AlertCircle, CheckCircle, Clock, FileText, ArrowRight
 
 interface RetrievalPageProps {
   onSelectTrace: (traceId: string) => void;
+  selectedProject?: string;
+  timeRange?: string;
+  environment?: string;
+  refreshKey?: number;
 }
 
-export const RetrievalPage: React.FC<RetrievalPageProps> = ({ onSelectTrace }) => {
+export const RetrievalPage: React.FC<RetrievalPageProps> = ({
+  onSelectTrace,
+  selectedProject,
+  timeRange,
+  environment,
+  refreshKey,
+}) => {
   const [stats, setStats] = useState<RetrievalStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,6 +29,9 @@ export const RetrievalPage: React.FC<RetrievalPageProps> = ({ onSelectTrace }) =
     const fetchRetrieval = async () => {
       try {
         setLoading(true);
+        if (selectedProject) {
+          apiClient.setProject(selectedProject);
+        }
         const data = await apiClient.getAnalyticsRetrieval();
         setStats(data);
       } catch (err) {
@@ -28,7 +41,7 @@ export const RetrievalPage: React.FC<RetrievalPageProps> = ({ onSelectTrace }) =
       }
     };
     fetchRetrieval();
-  }, []);
+  }, [selectedProject, timeRange, environment, refreshKey]);
 
   if (loading) return <LoadingSkeleton rows={6} />;
   if (!stats) return null;

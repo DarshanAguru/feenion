@@ -84,3 +84,47 @@ def test_jsonl_exporter(tmp_path: Path):
     lines = output_file.read_text().splitlines()
 
     assert len(lines) == 1
+
+def test_customization_helpers():
+    import feenion
+    tracer = Tracer()
+    
+    with tracer.trace_context("custom_trace", tags={"env": "prod"}, user_id="u-123"):
+        sp = feenion.current_span()
+        assert sp is not None
+        
+        feenion.set_tag("tier", "enterprise")
+        feenion.set_attribute("threshold", 0.95)
+        feenion.add_event("cache_hit", {"key": "rule_1"})
+        
+        with tracer.span_context("sub_task") as child:
+            child_sp = feenion.current_span()
+            assert child_sp.span_id == child.span_id
+            feenion.set_user("u-456")
+            feenion.log("step_finished", {"status": "ok"})
+            
+    trace = next(iter(tracer.traces.values()))
+    assert trace.metadata["user_id"] == "u-123"
+    assert len(trace.spans) == 2
+    root = trace.spans[0]
+    assert root.attributes["tags"]["tier"] == "enterprise"
+    assert root.attributes["threshold"] == 0.95
+    assert len(root.events) == 1
+    
+    child_span = trace.spans[1]
+    assert child_span.attributes["user_id"] == "u-456"
+    assert len(child_span.events) == 1
+
+def test_workspace_routing_helpers():
+    import feenion
+    from feenion import trace
+
+    @trace(name="compliance_agent", workspace_id="ws_12345", api_key="fn_secret_key")
+    def run_compliance():
+        feenion.set_workspace_id("ws_12345")
+        feenion.set_api_key("fn_secret_key")
+        feenion.set_tag("jurisdiction", "EU_GDPR")
+        return "completed"
+
+    result = run_compliance()
+    assert result == "completed"

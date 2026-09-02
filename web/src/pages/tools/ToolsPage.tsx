@@ -6,7 +6,19 @@ import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { formatNumber, formatDuration, formatRelativeTime } from '../../utils/formatters';
 import { Wrench, CheckCircle2, XCircle, Clock, ArrowUpDown } from 'lucide-react';
 
-export const ToolsPage: React.FC = () => {
+interface ToolsPageProps {
+  selectedProject?: string;
+  timeRange?: string;
+  environment?: string;
+  refreshKey?: number;
+}
+
+export const ToolsPage: React.FC<ToolsPageProps> = ({
+  selectedProject,
+  timeRange,
+  environment,
+  refreshKey,
+}) => {
   const [tools, setTools] = useState<ToolStats[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +26,9 @@ export const ToolsPage: React.FC = () => {
     const fetchTools = async () => {
       try {
         setLoading(true);
+        if (selectedProject) {
+          apiClient.setProject(selectedProject);
+        }
         const data = await apiClient.getAnalyticsTools();
         setTools(data.tools || []);
       } catch (err) {
@@ -23,7 +38,7 @@ export const ToolsPage: React.FC = () => {
       }
     };
     fetchTools();
-  }, []);
+  }, [selectedProject, timeRange, environment, refreshKey]);
 
   if (loading) return <LoadingSkeleton rows={6} />;
 

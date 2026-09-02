@@ -25,14 +25,38 @@ from dataclasses import dataclass, field
 from typing import Any, List, Dict
 
 # Import Feenion SDK components
+import feenion
 from feenion import trace, span, configure, tracer
+from feenion.redaction import Redactor
 from feenion.exporters import ConsoleExporter, HTTPExporter, AsyncExporter, CompositeExporter
 from feenion.integrations import (
     instrument_gemini,
     wrap_gemini,
     instrument_openai,
+    wrap_openai,
     instrument_anthropic,
+    wrap_anthropic,
 )
+
+# =============================================================================
+# 🏢 MULTI-TENANT WORKSPACE ROUTING CONFIGURATION (OPTIONAL)
+# -----------------------------------------------------------------------------
+# By default, ALL scenarios in this mock suite ([1], [2], [3], [5], [6], [7], [8], [9])
+# send their traces and metrics to your primary (Default) workspace.
+#
+# Scenario [4] (RAG Vector Database Search) demonstrates per-trace workspace isolation:
+# If you set RAG_TARGET_WORKSPACE_ID below, ONLY the RAG pipeline's traces will be
+# routed into that specific workspace!
+#
+# How to use:
+# 1. Open the Feenion Dashboard (http://localhost:8000 -> Settings -> Workspaces).
+# 2. Copy the Workspace ID or Name of your target workspace (e.g. "reag-test").
+# 3. Paste it in RAG_TARGET_WORKSPACE_ID below.
+# =============================================================================
+RAG_TARGET_WORKSPACE_ID: str | None = None  # <-- Paste Workspace ID or Name for RAG demo (e.g. "reag-test")
+RAG_TARGET_API_KEY: str | None = None       # <-- Optional API Key if server authentication is enabled
+
+
 
 # -----------------------------------------------------------------------------
 # 1. Mock Google Gemini SDK Emulation
@@ -217,13 +241,23 @@ def run_openai_chat_trace(prompt: str = "Verify compliance schema format.") -> s
     return content
 
 
-@trace(name="rag_knowledge_pipeline", span_type="retrieval")
 def run_rag_vector_search(query: str = "enterprise trading limits") -> List[Dict[str, Any]]:
     """Test RAG Vector Database semantic retrieval."""
     print(f"\n[4] 🔍 Running RAG Vector DB Search: '{query}'...")
-    docs = MockVectorDatabase.search(query=query, top_k=3)
-    print(f"📚 Retrieved {len(docs)} knowledge base chunks (Top Score: {docs[0]['score']})")
-    return docs
+    if RAG_TARGET_WORKSPACE_ID:
+        print(f"🏢 Routing RAG Telemetry to Isolated Workspace: '{RAG_TARGET_WORKSPACE_ID}'")
+    else:
+        print("🏢 Routing RAG Telemetry to (Default) Workspace")
+
+    with tracer.trace_context(
+        "rag_knowledge_pipeline",
+        span_type="retrieval",
+        workspace_id=RAG_TARGET_WORKSPACE_ID,
+        api_key=RAG_TARGET_API_KEY,
+    ):
+        docs = MockVectorDatabase.search(query=query, top_k=3)
+        print(f"📚 Retrieved {len(docs)} knowledge base chunks (Top Score: {docs[0]['score']})")
+        return docs
 
 
 @trace(name="mcp_tool_execution", span_type="tool")
@@ -302,6 +336,66 @@ def run_simulated_failure(failure_type: str = "database_timeout") -> None:
             raise TimeoutError("504 Gateway Timeout: Database connection pool exhausted after 3000ms.")
 
 
+@trace(name="secure_pii_redaction_workflow", span_type="agent")
+def run_pii_redaction_demo() -> Dict[str, Any]:
+    """Demonstrates client-side PII & secret masking with Redactor before telemetry export."""
+    print("\n[8] 🛡️  Running Client-Side Sensitive PII & Secret Redaction...")
+    
+    # 1. Attach user metadata
+    feenion.set_user("compliance_officer_904")
+    feenion.set_session("sess_gdpr_audit_771")
+    feenion.set_tag("security_level", "CONFIDENTIAL")
+
+    # 2. Raw payload containing sensitive API keys, passwords, and tokens
+    raw_payload = {
+        "user_email": "jane.doe@enterprise.com",
+        "api_key": "sk-live-99214-secret-token-abcdef123456",
+        "password": "SuperSecretPassword123!",
+        "auth_token": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "credit_card": "4111-2222-3333-4444",
+        "nested_details": {
+            "secret_key": "super_secret_signing_key_441",
+            "account_status": "active",
+        },
+    }
+
+    # 3. Apply Feenion Redactor
+    redactor = Redactor()
+    safe_payload = redactor.redact(raw_payload)
+
+    with span("process_sanitized_payload", span_type="tool") as s:
+        s.set_input({"raw_fields_count": len(raw_payload)})
+        s.set_output({"sanitized_payload": safe_payload})
+        feenion.add_event("redaction_applied", {
+            "masked_fields": ["api_key", "password", "auth_token", "secret_key"],
+            "status": "zero_leakage",
+        })
+
+    print(f"🔒 Sensitive fields safely redacted in memory: {safe_payload}")
+    return safe_payload
+
+
+@trace(name="customized_telemetry_workflow", span_type="agent")
+def run_customization_demo() -> Dict[str, Any]:
+    """Demonstrates feenion.set_user, feenion.set_session, feenion.set_tag, feenion.add_event."""
+    print("\n[9] 🏷️  Running Dynamic Customization (Tags, User, Session, Events)...")
+
+    feenion.set_user("senior_analyst_88")
+    feenion.set_session("chat_sess_99412")
+    feenion.set_tag("jurisdiction", "EU_GDPR")
+    feenion.set_tag("environment", "production")
+    feenion.set_attribute("risk_score", 0.94)
+
+    with span("validation_checkpoint", span_type="custom") as s:
+        feenion.add_event("rule_evaluation_start", {"ruleset": "FINRA_2026"})
+        time.sleep(0.02)
+        feenion.add_event("rule_evaluation_passed", {"rules_passed": 24, "flagged": 0})
+        s.set_output({"status": "compliant"})
+
+    print("🏷️  Attached custom user, session, tags, attributes, and timestamped events!")
+    return {"user": "senior_analyst_88", "jurisdiction": "EU_GDPR"}
+
+
 # -----------------------------------------------------------------------------
 # 6. Interactive CLI Chat Menu Loop
 # -----------------------------------------------------------------------------
@@ -310,28 +404,39 @@ def print_banner(server_url: str):
     print("\n" + "=" * 70)
     print("  🚀 Feenion AI Observability — Interactive Debugging CLI")
     print(f"  📡 Live Dashboard Endpoint: {server_url}")
+    print(f"  🏢 Global Telemetry:        '(Default Workspace)'")
+    print(f"  🎯 RAG Scenario [4] Target: {RAG_TARGET_WORKSPACE_ID or '(Default Workspace)'}")
     print("=" * 70)
     print("Select an action to simulate and observe live in the UI:\n")
     print("  [1] ⚙️  Standard Function & Custom Spans")
     print("  [2] ✨ Google Gemini 2.0 Flash LLM Chat")
     print("  [3] 🟢 OpenAI GPT-4o Chat Completion")
-    print("  [4] 🔍 RAG Vector DB Semantic Search")
+    print("  [4] 🔍 RAG Vector DB Semantic Search (Isolated Workspace Demo)")
     print("  [5] 🛠️  Model Context Protocol (MCP) Tool Calling")
     print("  [6] 🤖 Full Multi-Step Autonomous Agent Loop")
     print("  [7] ⚠️  Simulated Failure & Error Diagnostic")
-    print("  [8] 💬 Interactive Freeform Chat Query")
+    print("  [8] 🛡️  Client-Side PII & Secret Redaction (Zero Leakage)")
+    print("  [9] 🏷️  Tags, User, Session & Event Customization")
+    print(" [10] 💬 Interactive Freeform Chat Query")
     print("  [a] 🚀 Run ALL scenarios sequentially")
     print("  [q] 🚪 Quit")
     print("-" * 70)
 
 
 def run_interactive_cli(server_url: str = "http://localhost:8000"):
-    # Configure CompositeExporter (Live Dashboard + Terminal JSON)
+    # Configure Feenion with Default Workspace (All standard scenarios go to Default)
     configure(
-        exporter=CompositeExporter(
+        server_url=server_url,
+        exporter=CompositeExporter([
             ConsoleExporter(),
-            AsyncExporter(HTTPExporter(endpoint=server_url, timeout=1.0, max_retries=1)),
-        )
+            AsyncExporter(
+                HTTPExporter(
+                    endpoint=server_url,
+                    timeout=2.0,
+                    max_retries=1,
+                )
+            ),
+        ]),
     )
 
     # Check if run non-interactively (e.g. CI / pipe)
@@ -343,6 +448,8 @@ def run_interactive_cli(server_url: str = "http://localhost:8000"):
         run_rag_vector_search()
         run_mcp_tool_execution()
         run_autonomous_agent()
+        run_pii_redaction_demo()
+        run_customization_demo()
         try:
             run_simulated_failure()
         except Exception:
@@ -352,7 +459,7 @@ def run_interactive_cli(server_url: str = "http://localhost:8000"):
     while True:
         print_banner(server_url)
         try:
-            choice = input("👉 Enter choice [1-8, a, q]: ").strip().lower()
+            choice = input("👉 Enter choice [1-10, a, q]: ").strip().lower()
         except (KeyboardInterrupt, EOFError):
             print("\nExiting. Happy debugging!")
             break
@@ -391,6 +498,10 @@ def run_interactive_cli(server_url: str = "http://localhost:8000"):
             except Exception as e:
                 print(f"🚨 Caught expected test error: {e}")
         elif choice == '8':
+            run_pii_redaction_demo()
+        elif choice == '9':
+            run_customization_demo()
+        elif choice == '10':
             query = input("💬 Ask anything (triggers dynamic Agent + RAG + MCP): ").strip()
             if query:
                 run_autonomous_agent(user_query=query, account_id="acc_chat_session")
@@ -402,13 +513,15 @@ def run_interactive_cli(server_url: str = "http://localhost:8000"):
             run_rag_vector_search()
             run_mcp_tool_execution()
             run_autonomous_agent()
+            run_pii_redaction_demo()
+            run_customization_demo()
             try:
                 run_simulated_failure("database_timeout")
             except Exception as e:
                 print(f"🚨 Caught test error: {e}")
             print("\n✅ All scenarios executed and transmitted to dashboard!")
         else:
-            print("Invalid selection. Please enter a number between 1 and 8, 'a', or 'q'.")
+            print("Invalid selection. Please enter a number between 1 and 10, 'a', or 'q'.")
 
         time.sleep(0.4)
 
@@ -419,3 +532,4 @@ if __name__ == "__main__":
         server_target = sys.argv[1]
 
     run_interactive_cli(server_target)
+

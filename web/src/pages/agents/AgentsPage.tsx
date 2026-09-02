@@ -9,9 +9,19 @@ import { Bot, Repeat, AlertTriangle, Clock, Layers, Sparkles, Wrench, ArrowRight
 
 interface AgentsPageProps {
   onSelectTrace: (traceId: string) => void;
+  selectedProject?: string;
+  timeRange?: string;
+  environment?: string;
+  refreshKey?: number;
 }
 
-export const AgentsPage: React.FC<AgentsPageProps> = ({ onSelectTrace }) => {
+export const AgentsPage: React.FC<AgentsPageProps> = ({
+  onSelectTrace,
+  selectedProject,
+  timeRange,
+  environment,
+  refreshKey,
+}) => {
   const [stats, setStats] = useState<AgentStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,6 +29,9 @@ export const AgentsPage: React.FC<AgentsPageProps> = ({ onSelectTrace }) => {
     const fetchAgents = async () => {
       try {
         setLoading(true);
+        if (selectedProject) {
+          apiClient.setProject(selectedProject);
+        }
         const data = await apiClient.getAnalyticsAgents();
         setStats(data);
       } catch (err) {
@@ -28,7 +41,7 @@ export const AgentsPage: React.FC<AgentsPageProps> = ({ onSelectTrace }) => {
       }
     };
     fetchAgents();
-  }, []);
+  }, [selectedProject, timeRange, environment, refreshKey]);
 
   if (loading) return <LoadingSkeleton rows={6} />;
   if (!stats) return null;

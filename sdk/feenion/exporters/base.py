@@ -35,27 +35,39 @@ class CompositeExporter(Exporter):
     Exports traces to multiple child exporters simultaneously (e.g. Console + HTTP Server).
     """
 
-    def __init__(self, *exporters: Exporter) -> None:
-        self.exporters = list(exporters)
+    def __init__(self, *exporters: Exporter | list[Exporter] | tuple[Exporter, ...]) -> None:
+        flat_exporters: list[Exporter] = []
+        for item in exporters:
+            if isinstance(item, (list, tuple)):
+                flat_exporters.extend(item)
+            else:
+                flat_exporters.append(item)
+        self.exporters = flat_exporters
 
     def export(self, trace: Trace) -> None:
         for exp in self.exporters:
             try:
                 exp.export(trace)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[feenion] Exporter {type(exp).__name__} failed: {e}")
 
     def export_batch(self, traces: list[Trace]) -> None:
         for exp in self.exporters:
             try:
                 exp.export_batch(traces)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[feenion] Exporter {type(exp).__name__} failed: {e}")
 
     def flush(self) -> None:
         for exp in self.exporters:
-            exp.flush()
+            try:
+                exp.flush()
+            except Exception:
+                pass
 
     def shutdown(self) -> None:
         for exp in self.exporters:
-            exp.shutdown()
+            try:
+                exp.shutdown()
+            except Exception:
+                pass

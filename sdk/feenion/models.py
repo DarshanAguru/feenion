@@ -95,6 +95,68 @@ class Span:
     def set_attributes(self, attrs: dict[str, Any]) -> None:
         self.attributes.update(attrs)
 
+    def set_tag(self, key: str, value: Any) -> None:
+        """Adds a tag or custom label to the span attributes."""
+        tags = self.attributes.setdefault("tags", {})
+        if isinstance(tags, dict):
+            tags[key] = value
+        elif isinstance(tags, list):
+            tags.append(f"{key}:{value}")
+        else:
+            self.attributes[f"tag.{key}"] = value
+
+    def set_tags(self, tags: dict[str, Any] | list[str]) -> None:
+        """Attaches multiple tags to the span."""
+        if isinstance(tags, dict):
+            for k, v in tags.items():
+                self.set_tag(k, v)
+        elif isinstance(tags, list):
+            existing = self.attributes.setdefault("tags", [])
+            if isinstance(existing, list):
+                existing.extend(tags)
+
+    def set_user(self, user_id: str) -> None:
+        """Attaches a user ID to the span for session attribution."""
+        self.attributes["user_id"] = user_id
+
+    def set_session(self, session_id: str) -> None:
+        """Attaches a session or conversation ID to the span."""
+        self.attributes["session_id"] = session_id
+
+    def log(self, event_type: str, payload: dict[str, Any] | None = None) -> Event:
+        """Convenience alias for add_event."""
+        return self.add_event(event_type=event_type, payload=payload)
+
+    def set_retrieval_metrics(
+        self,
+        query: str | None = None,
+        documents_count: int | None = None,
+        top_k: int | None = None,
+        similarity_scores: list[float] | None = None,
+    ) -> None:
+        """Attaches retrieval & RAG telemetry to the span."""
+        if query:
+            self.attributes["query"] = query
+        if top_k is not None:
+            self.attributes["top_k"] = top_k
+        if documents_count is not None:
+            self.metrics["documents_retrieved"] = documents_count
+        if similarity_scores:
+            self.metrics["similarity_scores"] = similarity_scores
+
+    def set_tool_metrics(
+        self,
+        tool_name: str,
+        arguments: Any = None,
+        result: Any = None,
+    ) -> None:
+        """Attaches tool or MCP call telemetry to the span."""
+        self.attributes["tool_name"] = tool_name
+        if arguments is not None:
+            self.input = arguments
+        if result is not None:
+            self.output = result
+
     def set_llm_metrics(
         self,
         model: str,

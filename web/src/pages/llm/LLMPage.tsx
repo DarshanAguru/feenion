@@ -6,7 +6,19 @@ import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { formatNumber, formatDuration, formatCost } from '../../utils/formatters';
 import { Sparkles, Bot, Coins, AlertCircle, ArrowUpRight, Cpu, Layers } from 'lucide-react';
 
-export const LLMPage: React.FC = () => {
+interface LLMPageProps {
+  selectedProject?: string;
+  timeRange?: string;
+  environment?: string;
+  refreshKey?: number;
+}
+
+export const LLMPage: React.FC<LLMPageProps> = ({
+  selectedProject,
+  timeRange,
+  environment,
+  refreshKey,
+}) => {
   const [models, setModels] = useState<ModelStats[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +26,9 @@ export const LLMPage: React.FC = () => {
     const fetchModels = async () => {
       try {
         setLoading(true);
+        if (selectedProject) {
+          apiClient.setProject(selectedProject);
+        }
         const data = await apiClient.getAnalyticsModels();
         setModels(data.models || []);
       } catch (err) {
@@ -23,7 +38,7 @@ export const LLMPage: React.FC = () => {
       }
     };
     fetchModels();
-  }, []);
+  }, [selectedProject, timeRange, environment, refreshKey]);
 
   if (loading) return <LoadingSkeleton rows={6} />;
 

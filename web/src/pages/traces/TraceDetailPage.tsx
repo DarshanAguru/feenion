@@ -272,12 +272,12 @@ export const TraceDetailPage: React.FC<TraceDetailPageProps> = ({
       {/* Main Multi-View Debugger Workspace with 50-50 Default Split */}
       <div
         ref={containerRef}
-        className="flex-1 flex flex-col md:flex-row overflow-hidden p-3 gap-0 relative"
+        className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden p-2 sm:p-3 gap-3 md:gap-0 relative"
       >
-        {/* Left Primary Visualization Panel (50% Default) */}
+        {/* Left Primary Visualization Panel (Responsive 100% on mobile, split on desktop) */}
         <div
-          style={{ width: `calc(${splitPercent}% - 6px)` }}
-          className="w-full md:w-auto flex flex-col overflow-hidden space-y-2 pr-1 shrink-0"
+          className="w-full md:w-auto flex flex-col overflow-hidden space-y-2 pr-0 md:pr-1 shrink-0 min-h-[360px] md:min-h-0"
+          style={typeof window !== 'undefined' && window.innerWidth >= 768 ? { width: `calc(${splitPercent}% - 6px)` } : {}}
         >
           {/* View Mode Switcher */}
           <div className="flex items-center justify-between select-none">
@@ -365,8 +365,8 @@ export const TraceDetailPage: React.FC<TraceDetailPageProps> = ({
 
         {/* Right Structured Span Inspector & Trace Data (50% Default) */}
         <div
-          style={{ width: `calc(${100 - splitPercent}% - 6px)` }}
-          className="w-full md:w-auto flex-1 shrink-0 h-full overflow-hidden pl-1"
+          style={typeof window !== 'undefined' && window.innerWidth >= 768 ? { width: `calc(${100 - splitPercent}% - 6px)` } : {}}
+          className="w-full md:w-auto flex-1 shrink-0 min-h-[400px] md:h-full overflow-hidden pl-0 md:pl-1"
         >
           <SpanInspector span={selectedSpan} allSpans={trace.spans} />
         </div>

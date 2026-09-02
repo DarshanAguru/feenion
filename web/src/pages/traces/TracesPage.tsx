@@ -18,9 +18,12 @@ import {
   Copy,
   Check,
   ChevronRight,
+  ChevronDown,
   Trash2,
   AlertTriangle,
 } from 'lucide-react';
+
+import { CustomDropdown, DropdownOption } from '../../components/common/CustomDropdown';
 
 interface TracesPageProps {
   traces: TraceSummary[];
@@ -60,6 +63,30 @@ export const TracesPage: React.FC<TracesPageProps> = ({
   const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false);
   const [batchDeleteConfirmText, setBatchDeleteConfirmText] = useState('');
   const [deleteStatus, setDeleteStatus] = useState<string | null>(null);
+
+  const statusOptions: DropdownOption[] = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'ok', label: 'OK (Success)', dotColor: 'bg-emerald-400' },
+    { value: 'error', label: 'Error (Failed)', dotColor: 'bg-rose-400' },
+    { value: 'running', label: 'Running', dotColor: 'bg-amber-400' },
+  ];
+
+  const spanTypeOptions: DropdownOption[] = [
+    { value: 'all', label: 'All Spans' },
+    { value: 'llm', label: 'Has LLM Calls', icon: <Sparkles className="w-3.5 h-3.5 text-purple-400" /> },
+    { value: 'retrieval', label: 'Has Retrieval / RAG', icon: <SearchIcon className="w-3.5 h-3.5 text-amber-400" /> },
+    { value: 'tool', label: 'Has Tool Calls', icon: <Wrench className="w-3.5 h-3.5 text-cyan-400" /> },
+    { value: 'agent', label: 'Has Agent Runs', icon: <Bot className="w-3.5 h-3.5 text-emerald-400" /> },
+  ];
+
+  const sortOptions: DropdownOption[] = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'slowest', label: 'Slowest (p95)' },
+    { value: 'most_tokens', label: 'Most Tokens' },
+    { value: 'most_cost', label: 'Most Expensive' },
+    { value: 'most_spans', label: 'Most Spans' },
+    { value: 'error', label: 'Errors First' },
+  ];
 
   const toggleBatch = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -126,61 +153,44 @@ export const TracesPage: React.FC<TracesPageProps> = ({
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#080b11]">
       {/* Filter & Toolbar Header */}
-      <div className="p-4 border-b border-[#1e2330] bg-[#090d16] flex flex-wrap items-center justify-between gap-3 select-none">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="p-3 sm:p-4 border-b border-[#1e2330] bg-[#090d16] flex flex-wrap items-center justify-between gap-2 sm:gap-3 select-none">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           {/* Search Input */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial w-full sm:w-auto">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
             <input
               type="text"
               placeholder="Search trace ID, model, prompt, tool..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-[#0d111a] border border-[#1e2330] text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 w-64"
+              className="pl-8 pr-3 py-1.5 rounded-lg bg-[#0d111a] border border-[#1e2330] text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 w-full sm:w-64"
             />
           </div>
 
-          {/* Status Filter */}
-          <select
+          {/* Status Filter Custom Dropdown */}
+          <CustomDropdown
             value={statusFilter}
-            onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="bg-[#0d111a] border border-[#1e2330] rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none font-mono cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="ok">OK (Success)</option>
-            <option value="error">Error (Failed)</option>
-            <option value="running">Running</option>
-          </select>
+            onChange={onStatusFilterChange}
+            options={statusOptions}
+            labelPrefix="Status:"
+          />
 
-          {/* Span Type Filter */}
-          <select
+          {/* Span Type Filter Custom Dropdown */}
+          <CustomDropdown
             value={spanTypeFilter}
-            onChange={(e) => onSpanTypeFilterChange(e.target.value)}
-            className="bg-[#0d111a] border border-[#1e2330] rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none font-mono cursor-pointer"
-          >
-            <option value="all">All Pipeline Spans</option>
-            <option value="llm">Has LLM Calls</option>
-            <option value="retrieval">Has Retrieval / RAG</option>
-            <option value="tool">Has Tool Calls</option>
-            <option value="agent">Has Agent Runs</option>
-          </select>
+            onChange={onSpanTypeFilterChange}
+            options={spanTypeOptions}
+            labelPrefix="Type:"
+          />
 
-          {/* Sort By Selector */}
-          <div className="flex items-center gap-1 bg-[#0d111a] border border-[#1e2330] rounded-lg px-2.5 py-1 text-xs">
-            <ArrowUpDown className="w-3 h-3 text-slate-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => onSortByChange(e.target.value)}
-              className="bg-transparent text-slate-300 font-mono text-xs focus:outline-none cursor-pointer"
-            >
-              <option value="newest" className="bg-[#0d111a]">Newest First</option>
-              <option value="slowest" className="bg-[#0d111a]">Slowest (p95)</option>
-              <option value="most_tokens" className="bg-[#0d111a]">Most Tokens</option>
-              <option value="most_cost" className="bg-[#0d111a]">Most Expensive</option>
-              <option value="most_spans" className="bg-[#0d111a]">Most Spans</option>
-              <option value="error" className="bg-[#0d111a]">Errors First</option>
-            </select>
-          </div>
+          {/* Sort By Filter Custom Dropdown */}
+          <CustomDropdown
+            value={sortBy}
+            onChange={onSortByChange}
+            options={sortOptions}
+            labelPrefix="Sort:"
+            icon={<ArrowUpDown className="w-3.5 h-3.5" />}
+          />
         </div>
 
         {/* Batch Actions */}
@@ -203,9 +213,9 @@ export const TracesPage: React.FC<TracesPageProps> = ({
             </button>
             <button
               onClick={() => {
-                setIsBatchDeleteModalOpen(true);
                 setBatchDeleteConfirmText('');
                 setDeleteStatus(null);
+                setIsBatchDeleteModalOpen(true);
               }}
               className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white font-medium flex items-center gap-1"
             >
@@ -217,7 +227,7 @@ export const TracesPage: React.FC<TracesPageProps> = ({
 
       {/* Traces Data Table */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full text-left border-collapse text-xs select-text">
+        <table className="w-full min-w-[650px] text-left border-collapse text-xs select-text">
           <thead className="bg-[#0d111a] sticky top-0 z-10 border-b border-[#1e2330] text-[11px] font-mono text-slate-400">
             <tr>
               <th className="py-2.5 px-3 w-10 text-center">

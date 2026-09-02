@@ -6,7 +6,19 @@ import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { formatCost, formatNumber } from '../../utils/formatters';
 import { Coins, TrendingUp, Sparkles, DollarSign, Calculator, AlertTriangle, ArrowRight } from 'lucide-react';
 
-export const CostsPage: React.FC = () => {
+interface CostsPageProps {
+  selectedProject?: string;
+  timeRange?: string;
+  environment?: string;
+  refreshKey?: number;
+}
+
+export const CostsPage: React.FC<CostsPageProps> = ({
+  selectedProject,
+  timeRange,
+  environment,
+  refreshKey,
+}) => {
   const [models, setModels] = useState<ModelStats[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +26,9 @@ export const CostsPage: React.FC = () => {
     const fetchCostData = async () => {
       try {
         setLoading(true);
+        if (selectedProject) {
+          apiClient.setProject(selectedProject);
+        }
         const data = await apiClient.getAnalyticsModels();
         setModels(data.models || []);
       } catch (err) {
@@ -23,7 +38,7 @@ export const CostsPage: React.FC = () => {
       }
     };
     fetchCostData();
-  }, []);
+  }, [selectedProject, timeRange, environment, refreshKey]);
 
   if (loading) return <LoadingSkeleton rows={6} />;
 

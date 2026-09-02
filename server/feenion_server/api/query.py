@@ -68,14 +68,16 @@ class ProjectCreateRequest(BaseModel):
 @router.get("/projects")
 def list_projects(db: Session = Depends(get_db)):
     projects = db.query(Project).order_by(Project.created_at.desc()).all()
-    return [
-        {
+    res = []
+    for p in projects:
+        key_count = db.query(APIKey).filter(APIKey.project_id == p.id, APIKey.revoked_at.is_(None)).count()
+        res.append({
             "id": p.id,
             "name": p.name,
             "created_at": to_iso_utc(p.created_at),
-        }
-        for p in projects
-    ]
+            "key_count": key_count,
+        })
+    return res
 
 @router.post("/projects")
 def create_project(
@@ -88,16 +90,33 @@ def create_project(
         raise HTTPException(status_code=400, detail="Project name is required")
     proj_name = proj_name.strip()
 
-    existing = db.query(Project).filter(Project.name == proj_name).first()
+    existing = db.query(Project).filter(Project.name.ilike(proj_name)).first()
     if existing:
-        raise HTTPException(status_code=400, detail=f"Project '{proj_name}' already exists")
+        raise HTTPException(status_code=400, detail=f"Workspace '{proj_name}' already exists. Please choose a unique name.")
     p = Project(name=proj_name)
     db.add(p)
     db.commit()
     db.refresh(p)
     raw_key, api_key_obj = create_project_api_key(db, p.id, name=f"{proj_name}-key")
     return {
-        "project": {"id": p.id, "name": p.name, "created_at": p.created_at.isoformat()},
+        "project": {"id": p.id, "name": p.name, "created_at": p.created_at.isoformat(), "key_count": 1},
+        "api_key": raw_key,
+    }
+
+@router.post("/projects/{project_id}/key")
+@router.get("/projects/{project_id}/key")
+@router.post("/workspaces/{project_id}/key")
+@router.get("/workspaces/{project_id}/key")
+def generate_project_api_key(project_id: str, db: Session = Depends(get_db)):
+    proj = db.query(Project).filter((Project.id == project_id) | (Project.name == project_id)).first()
+    if not proj:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+    raw_key, api_key_obj = create_project_api_key(db, proj.id, name=f"{proj.name}-key")
+    return {
+        "project_id": proj.id,
+        "workspace_id": proj.id,
+        "project_name": proj.name,
+        "workspace_name": proj.name,
         "api_key": raw_key,
     }
 

@@ -49,6 +49,19 @@ async def websocket_telemetry_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
+@app.get("/favicon.svg")
+@app.get("/favicon.ico")
+def serve_favicon():
+    if (WEB_DIST_PATH / "favicon.svg").exists():
+        return FileResponse(WEB_DIST_PATH / "favicon.svg", media_type="image/svg+xml")
+    pub_fav = Path(__file__).resolve().parent.parent.parent / "web" / "public" / "favicon.svg"
+    if pub_fav.exists():
+        return FileResponse(pub_fav, media_type="image/svg+xml")
+    site_fav = Path(__file__).resolve().parent.parent.parent / "site" / "assets" / "favicon.svg"
+    if site_fav.exists():
+        return FileResponse(site_fav, media_type="image/svg+xml")
+    return HTMLResponse("", status_code=404)
+
 @app.get("/", response_class=HTMLResponse)
 @app.get("/ui", response_class=HTMLResponse)
 def serve_ui():

@@ -39,6 +39,10 @@ Access the Web UI Dashboard at **[http://localhost:8000](http://localhost:8000)*
 In your AI application environment, install `feenion`:
 
 ```bash
+# Using uv (Recommended)
+uv add feenion
+
+# Or using pip
 pip install feenion
 ```
 
