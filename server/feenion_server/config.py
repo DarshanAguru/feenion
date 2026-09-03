@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "Feenion Server"
-    app_version: str = "0.1.0"
+    app_version: str = "0.1.2"
 
     host: str = "0.0.0.0"
     port: int = 8000

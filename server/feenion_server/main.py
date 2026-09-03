@@ -73,7 +73,7 @@ def serve_ui():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": settings.app_version}
 
 @app.get("/ready")
 def readiness():

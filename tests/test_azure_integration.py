@@ -201,3 +201,57 @@ def test_azure_ai_inference_instrumentation():
     assert llm_span["attributes"]["provider"] == "azure_ai_inference"
     assert llm_span["metrics"]["tokens"]["prompt"] == 120
     assert llm_span["metrics"]["cost"] > 0
+
+def test_pydantic_azure_chat_openai_with_wrappers():
+    """Verifies that LangChain's Pydantic-based AzureChatOpenAI works with wrap_azure_openai & wrap_azure_ai."""
+    from pydantic import BaseModel
+
+    class MockPydanticAzureChat(BaseModel):
+        azure_deployment: str = "gpt-4o-deployment"
+        azure_endpoint: str = "https://compliance.openai.azure.com/"
+
+        def invoke(self, messages, **kwargs):
+            return MockLangChainAIMessage(content='{"compliance": "pass"}')
+
+    test_tracer = Tracer()
+    exporter = ListExporter()
+    test_tracer.exporter = exporter
+
+    # 1. wrap_azure_openai with Pydantic model
+    client1 = MockPydanticAzureChat()
+    wrapped1 = wrap_azure_openai(client1, tracer=test_tracer)
+    res1 = wrapped1.invoke([("system", "Analyze"), ("user", "Check tx #101")])
+    assert '{"compliance": "pass"}' in res1.content
+    assert len(exporter.traces) == 1
+    assert exporter.traces[0]["spans"][0]["span_type"] == "llm"
+    assert exporter.traces[0]["spans"][0]["name"] == "azure.openai.gpt-4o-deployment"
+
+    # 2. wrap_azure_ai with Pydantic model
+    exporter.traces.clear()
+    client2 = MockPydanticAzureChat()
+    wrapped2 = wrap_azure_ai(client2, tracer=test_tracer)
+    res2 = wrapped2.invoke([("user", "Hello Azure AI")])
+    assert '{"compliance": "pass"}' in res2.content
+    assert len(exporter.traces) == 1
+    assert exporter.traces[0]["spans"][0]["span_type"] == "llm"
+
+def test_raw_azure_client_invoke_adapter():
+    """Verifies that raw AzureOpenAI clients gain .invoke() compatibility when wrapped."""
+    test_tracer = Tracer()
+    exporter = ListExporter()
+    test_tracer.exporter = exporter
+
+    raw_client = MockAzureOpenAIClient()
+    wrapped = wrap_azure_openai(raw_client, tracer=test_tracer)
+
+    assert hasattr(wrapped, "invoke")
+    messages = [
+        ("system", "You are compliance monitor"),
+        ("user", "Analyze payload")
+    ]
+    resp = wrapped.invoke(messages, response_format={"type": "json_object"})
+    assert hasattr(resp, "content")
+    assert resp.content == "Azure OpenAI verified response."
+    assert len(exporter.traces) == 1
+    assert exporter.traces[0]["spans"][0]["span_type"] == "llm"
+

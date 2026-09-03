@@ -8,6 +8,7 @@ def test_health_and_readiness():
         res_health = client.get("/health")
         assert res_health.status_code == 200
         assert res_health.json()["status"] == "ok"
+        assert res_health.json()["version"] == "0.1.2"
 
         res_ready = client.get("/ready")
         assert res_ready.status_code == 200
@@ -18,7 +19,7 @@ def test_ingestion_and_query_pipeline():
         # 1. Post a trace batch to ingestion API
         batch_payload = {
             "schema_version": "1.0",
-            "sdk_version": "0.1.0",
+            "sdk_version": "0.1.2",
             "traces": [
                 {
                     "trace_id": "00000000-0000-0000-0000-000000000001",

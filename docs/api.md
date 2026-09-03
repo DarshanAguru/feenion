@@ -19,7 +19,7 @@ Ingests a batch of trace payloads with child spans, metrics, and events. Support
 ```json
 {
   "schema_version": "1.0",
-  "sdk_version": "0.1.0",
+  "sdk_version": "0.1.2",
   "traces": [
     {
       "trace_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",

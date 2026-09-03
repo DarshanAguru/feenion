@@ -26,7 +26,7 @@ from .integrations import (
     FeenionCallbackHandler,
 )
 
-__version__ = "0.1.1"
+from ._version import __version__
 
 tracer = Tracer()
 

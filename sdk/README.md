@@ -7,9 +7,11 @@ The official, high-performance Python client library for Feenion — the self-ho
 - 🌲 **Dual Sync & Async Tracing**: Trace synchronous functions and `asyncio` coroutines using `@trace` and `with span(...)`.
 - ⚡ **Non-Blocking Background Export**: Bounded memory queue (`AsyncExporter`) ensures telemetry export never adds latency to production loops.
 - 🦜 **First-Class Framework Integrations**:
+  - `feenion.integrations.azure`: `wrap_azure_openai(client)` and `wrap_azure_ai(client)` for Azure OpenAI & Azure AI Foundry, supporting both LangChain (`AzureChatOpenAI`) and raw SDK clients.
+  - `feenion.integrations.openai`: `wrap_openai(client)` with automatic token counts and model pricing calculations for OpenAI & LangChain (`ChatOpenAI`).
+  - `feenion.integrations.anthropic`: `wrap_anthropic(client)` wrapping Claude messages and LangChain (`ChatAnthropic`).
+  - `feenion.integrations.gemini`: `wrap_gemini(client)` for Google Gemini SDK and LangChain (`ChatGoogleGenerativeAI`).
   - `feenion.integrations.langchain`: `FeenionCallbackHandler` capturing chains, LLMs, tools, and retrievers.
-  - `feenion.integrations.openai`: `wrap_openai(client)` with automatic token counts and model pricing calculations.
-  - `feenion.integrations.anthropic`: `wrap_anthropic(client)` wrapping messages and tools.
 - 💵 **Dynamic & Tunable Pricing Registry**: Built-in default rates for OpenAI, Anthropic, Gemini, Mistral, and DeepSeek, with developer override APIs (`feenion.configure(model_pricing={...})`).
 - 🛡️ **Sensitive Data Redaction**: Automatic masking of passwords, credit cards, bearer tokens, and API keys.
 - 🔁 **Trace Replay Engine**: Mock and replay execution trees for deterministic offline testing.

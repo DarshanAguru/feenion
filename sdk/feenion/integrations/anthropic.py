@@ -34,10 +34,19 @@ def instrument_anthropic(client: Any = None, tracer: Any = None) -> Any:
             finish_reason="stop",
         )
 
+    from .common import ACTIVE_LANGCHAIN_INVOKE, wrap_langchain_model
+
+    # 1. If this is a LangChain model (e.g. ChatAnthropic)
+    if hasattr(client, "invoke") or hasattr(client, "generate") or hasattr(client, "callbacks"):
+        return wrap_langchain_model(client, provider="anthropic", default_model="claude-3-5-sonnet", tracer=active_tracer)
+
     def wrap_messages_create(original_create: Any) -> Any:
         if inspect.iscoroutinefunction(original_create):
             @functools.wraps(original_create)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                if ACTIVE_LANGCHAIN_INVOKE.get():
+                    return await original_create(*args, **kwargs)
+
                 model = kwargs.get("model", "claude-3-5-sonnet")
                 messages = kwargs.get("messages", [])
 
@@ -59,6 +68,9 @@ def instrument_anthropic(client: Any = None, tracer: Any = None) -> Any:
         else:
             @functools.wraps(original_create)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+                if ACTIVE_LANGCHAIN_INVOKE.get():
+                    return original_create(*args, **kwargs)
+
                 model = kwargs.get("model", "claude-3-5-sonnet")
                 messages = kwargs.get("messages", [])
 
@@ -77,12 +89,6 @@ def instrument_anthropic(client: Any = None, tracer: Any = None) -> Any:
                         s.fail(exc)
                         raise exc
             return sync_wrapper
-
-    from .common import wrap_langchain_model
-
-    # 1. If this is a LangChain model (e.g. ChatAnthropic)
-    if hasattr(client, "invoke") or hasattr(client, "generate") or hasattr(client, "callbacks"):
-        return wrap_langchain_model(client, provider="anthropic", default_model="claude-3-5-sonnet", tracer=active_tracer)
 
     # 2. Raw Anthropic or AsyncAnthropic client
     if client is not None:

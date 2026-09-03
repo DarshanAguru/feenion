@@ -44,10 +44,19 @@ def instrument_gemini(target: Any = None, tracer: Any = None) -> Any:
             finish_reason=finish_reason,
         )
 
+    from .common import ACTIVE_LANGCHAIN_INVOKE, wrap_langchain_model
+
+    # 1. LangChain model (e.g. ChatGoogleGenerativeAI)
+    if hasattr(target, "invoke") or hasattr(target, "generate") or hasattr(target, "callbacks"):
+        return wrap_langchain_model(target, provider="gemini", default_model="gemini-2.0-flash", tracer=active_tracer)
+
     def wrap_google_genai_generate(original_func: Any, default_model: str = "gemini-2.0-flash") -> Any:
         if inspect.iscoroutinefunction(original_func):
             @functools.wraps(original_func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                if ACTIVE_LANGCHAIN_INVOKE.get():
+                    return await original_func(*args, **kwargs)
+
                 model = kwargs.get("model") or (args[0] if len(args) > 0 and isinstance(args[0], str) else default_model)
                 contents = kwargs.get("contents") or (args[1] if len(args) > 1 else (args[0] if len(args) > 0 and not isinstance(args[0], str) else None))
 
@@ -68,6 +77,9 @@ def instrument_gemini(target: Any = None, tracer: Any = None) -> Any:
         else:
             @functools.wraps(original_func)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+                if ACTIVE_LANGCHAIN_INVOKE.get():
+                    return original_func(*args, **kwargs)
+
                 model = kwargs.get("model") or (args[0] if len(args) > 0 and isinstance(args[0], str) else default_model)
                 contents = kwargs.get("contents") or (args[1] if len(args) > 1 else (args[0] if len(args) > 0 and not isinstance(args[0], str) else None))
 
@@ -85,12 +97,6 @@ def instrument_gemini(target: Any = None, tracer: Any = None) -> Any:
                         s.fail(exc)
                         raise exc
             return sync_wrapper
-
-    from .common import wrap_langchain_model
-
-    # 1. LangChain model (e.g. ChatGoogleGenerativeAI)
-    if hasattr(target, "invoke") or hasattr(target, "generate") or hasattr(target, "callbacks"):
-        return wrap_langchain_model(target, provider="gemini", default_model="gemini-2.0-flash", tracer=active_tracer)
 
     if target is not None:
         # Case 1: google-genai Client instance (has client.models.generate_content)

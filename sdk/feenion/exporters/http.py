@@ -9,6 +9,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from ..models import Trace
+from .._version import __version__
 from .base import Exporter
 
 class HTTPExporter(Exporter):
@@ -43,14 +44,14 @@ class HTTPExporter(Exporter):
     def _send_payload(self, traces: list[Trace], api_key: str | None = None, workspace_id: str | None = None) -> None:
         payload_dict = {
             "schema_version": "1.0",
-            "sdk_version": "0.1.0",
+            "sdk_version": __version__,
             "traces": [trace.to_dict() for trace in traces],
         }
 
         raw_bytes = json.dumps(payload_dict, default=str).encode("utf-8")
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "Feenion-Python-SDK/0.1.0",
+            "User-Agent": f"Feenion-Python-SDK/{__version__}",
         }
 
         if api_key:

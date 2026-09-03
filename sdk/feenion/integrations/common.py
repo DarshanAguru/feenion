@@ -1,9 +1,53 @@
 from __future__ import annotations
 
+import contextvars
 import functools
 import inspect
 from typing import Any
 from ..pricing import pricing_registry
+
+# Context variable to prevent duplicate child LLM spans when LangChain's invoke
+# internally calls client.chat.completions.create
+ACTIVE_LANGCHAIN_INVOKE = contextvars.ContextVar("feenion_active_langchain_invoke", default=False)
+
+def safe_set_method(obj: Any, name: str, method: Any) -> None:
+    """
+    Safely binds or attaches a method or attribute to any Python object, including:
+    - Pydantic v1 & v2 BaseModel instances (which normally disallow setattr for non-fields)
+    - Standard Python class instances
+    - Slotted, frozen, or dynamic runtime objects
+    """
+    # 1. Try object.__setattr__ (bypasses Pydantic's overridden __setattr__)
+    try:
+        object.__setattr__(obj, name, method)
+        return
+    except Exception:
+        pass
+
+    # 2. Try standard setattr
+    try:
+        setattr(obj, name, method)
+        return
+    except Exception:
+        pass
+
+    # 3. Direct __dict__ assignment
+    try:
+        if hasattr(obj, "__dict__") and isinstance(obj.__dict__, dict):
+            obj.__dict__[name] = method
+            return
+    except Exception:
+        pass
+
+    # 4. Fallback: monkeypatch on the object's class if instance attachment is restricted
+    try:
+        cls = type(obj)
+        marker = f"_feenion_patched_{name}"
+        if not getattr(cls, marker, False):
+            setattr(cls, marker, True)
+            setattr(cls, name, method)
+    except Exception:
+        pass
 
 def serialize_llm_input(input_data: Any) -> Any:
     """Serializes strings, dicts, message tuples, or LangChain BaseMessage objects into JSON-friendly structures."""
@@ -26,10 +70,12 @@ def serialize_llm_input(input_data: Any) -> Any:
         return input_data
     return {"input": str(input_data)}
 
-def extract_langchain_metrics(response: Any, model: str) -> tuple[str, int, int, int, float, str]:
-    """Extracts output content, tokens, cost, and finish reason from LangChain response (AIMessage or LLMResult)."""
+def extract_langchain_metrics(response: Any, model: str) -> tuple[str, int, int, int, float, str, list[dict[str, Any]]]:
+    """Extracts output content, tokens, cost, finish reason, and tool calls from LangChain response (AIMessage or LLMResult)."""
     # 1. Output content
     out_text = ""
+    tool_calls_data: list[dict[str, Any]] = []
+
     if hasattr(response, "content"):
         out_text = str(response.content)
     elif hasattr(response, "generations") and response.generations:
@@ -40,6 +86,23 @@ def extract_langchain_metrics(response: Any, model: str) -> tuple[str, int, int,
             out_text = getattr(first_gen, "text", str(first_gen))
     elif isinstance(response, str):
         out_text = response
+
+    # Extract tool calls if any
+    raw_tool_calls = getattr(response, "tool_calls", None) or getattr(response, "additional_kwargs", {}).get("tool_calls")
+    if raw_tool_calls and isinstance(raw_tool_calls, (list, tuple)):
+        for tc in raw_tool_calls:
+            if isinstance(tc, dict):
+                tool_calls_data.append({
+                    "id": tc.get("id"),
+                    "name": tc.get("name") or tc.get("function", {}).get("name"),
+                    "arguments": tc.get("args") or tc.get("function", {}).get("arguments"),
+                })
+            elif hasattr(tc, "name"):
+                tool_calls_data.append({
+                    "id": getattr(tc, "id", None),
+                    "name": getattr(tc, "name", None),
+                    "arguments": getattr(tc, "args", None),
+                })
 
     # 2. Token counts from usage_metadata or response_metadata
     usage_meta = getattr(response, "usage_metadata", None) or {}
@@ -73,10 +136,14 @@ def extract_langchain_metrics(response: Any, model: str) -> tuple[str, int, int,
     finish_reason = resp_meta.get("finish_reason") or "stop"
     cost = pricing_registry.calculate(detected_model, p_tok, c_tok)
 
-    return out_text, p_tok, c_tok, t_tok, cost, finish_reason
+    return out_text, p_tok, c_tok, t_tok, cost, finish_reason, tool_calls_data
 
 def wrap_langchain_model(model_instance: Any, provider: str, default_model: str, tracer: Any = None) -> Any:
-    """Wraps LangChain ChatModel or LLM instance (.invoke, .ainvoke, .generate, .agenerate)."""
+    """
+    Wraps any LangChain ChatModel, LLM, or Runnable instance (.invoke, .ainvoke, .stream, .astream, .batch, .generate).
+    Safely binds methods using safe_set_method so Pydantic BaseModel instances (AzureChatOpenAI, ChatOpenAI, etc.)
+    never raise ValueError/AttributeError.
+    """
     from .. import tracer as default_tracer
     active_tracer = tracer or default_tracer
 
@@ -89,94 +156,199 @@ def wrap_langchain_model(model_instance: Any, provider: str, default_model: str,
             default_model
         )
 
-    # Wrap .invoke()
+    # 1. Wrap .invoke()
     if hasattr(model_instance, "invoke"):
         original_invoke = model_instance.invoke
 
         @functools.wraps(original_invoke)
-        def sync_invoke_wrapper(input_data: Any, *args: Any, **kwargs: Any) -> Any:
+        def sync_invoke_wrapper(*args: Any, **kwargs: Any) -> Any:
+            input_data = args[0] if args else kwargs.get("input", kwargs)
             model = get_model_name()
             span_name = f"{provider}.{model}"
 
-            with active_tracer.span(span_name, span_type="llm") as s:
-                s.set_attribute("provider", provider)
-                s.set_attribute("model", model)
-                if hasattr(model_instance, "azure_endpoint"):
-                    s.set_attribute("azure_endpoint", str(model_instance.azure_endpoint))
+            token = ACTIVE_LANGCHAIN_INVOKE.set(True)
+            try:
+                with active_tracer.span(span_name, span_type="llm") as s:
+                    s.set_attribute("provider", provider)
+                    s.set_attribute("model", model)
+                    if hasattr(model_instance, "azure_endpoint"):
+                        s.set_attribute("azure_endpoint", str(model_instance.azure_endpoint))
 
-                s.input = serialize_llm_input(input_data)
-                try:
-                    response = original_invoke(input_data, *args, **kwargs)
-                    out_text, p_tok, c_tok, t_tok, cost, finish_reason = extract_langchain_metrics(response, model)
-                    s.output = {"content": out_text}
-                    s.set_llm_metrics(
-                        model=model,
-                        prompt_tokens=p_tok,
-                        completion_tokens=c_tok,
-                        total_tokens=t_tok,
-                        cost=cost,
-                        finish_reason=finish_reason,
-                    )
-                    return response
-                except Exception as exc:
-                    s.fail(exc)
-                    raise exc
+                    s.input = serialize_llm_input(input_data)
+                    try:
+                        response = original_invoke(*args, **kwargs)
+                        out_text, p_tok, c_tok, t_tok, cost, finish_reason, tool_calls = extract_langchain_metrics(response, model)
+                        output_payload: dict[str, Any] = {"content": out_text}
+                        if tool_calls:
+                            output_payload["tool_calls"] = tool_calls
+                        s.output = output_payload
+                        s.set_llm_metrics(
+                            model=model,
+                            prompt_tokens=p_tok,
+                            completion_tokens=c_tok,
+                            total_tokens=t_tok,
+                            cost=cost,
+                            finish_reason=finish_reason,
+                        )
+                        return response
+                    except Exception as exc:
+                        s.fail(exc)
+                        raise exc
+            finally:
+                ACTIVE_LANGCHAIN_INVOKE.reset(token)
 
-        model_instance.invoke = sync_invoke_wrapper
+        safe_set_method(model_instance, "invoke", sync_invoke_wrapper)
 
-    # Wrap .ainvoke()
+    # 2. Wrap .ainvoke()
     if hasattr(model_instance, "ainvoke"):
         original_ainvoke = model_instance.ainvoke
 
         @functools.wraps(original_ainvoke)
-        async def async_invoke_wrapper(input_data: Any, *args: Any, **kwargs: Any) -> Any:
+        async def async_invoke_wrapper(*args: Any, **kwargs: Any) -> Any:
+            input_data = args[0] if args else kwargs.get("input", kwargs)
             model = get_model_name()
             span_name = f"{provider}.{model}"
 
-            with active_tracer.span(span_name, span_type="llm") as s:
-                s.set_attribute("provider", provider)
-                s.set_attribute("model", model)
-                if hasattr(model_instance, "azure_endpoint"):
-                    s.set_attribute("azure_endpoint", str(model_instance.azure_endpoint))
+            token = ACTIVE_LANGCHAIN_INVOKE.set(True)
+            try:
+                with active_tracer.span(span_name, span_type="llm") as s:
+                    s.set_attribute("provider", provider)
+                    s.set_attribute("model", model)
+                    if hasattr(model_instance, "azure_endpoint"):
+                        s.set_attribute("azure_endpoint", str(model_instance.azure_endpoint))
 
-                s.input = serialize_llm_input(input_data)
-                try:
-                    response = await original_ainvoke(input_data, *args, **kwargs)
-                    out_text, p_tok, c_tok, t_tok, cost, finish_reason = extract_langchain_metrics(response, model)
-                    s.output = {"content": out_text}
-                    s.set_llm_metrics(
-                        model=model,
-                        prompt_tokens=p_tok,
-                        completion_tokens=c_tok,
-                        total_tokens=t_tok,
-                        cost=cost,
-                        finish_reason=finish_reason,
-                    )
-                    return response
-                except Exception as exc:
-                    s.fail(exc)
-                    raise exc
+                    s.input = serialize_llm_input(input_data)
+                    try:
+                        response = await original_ainvoke(*args, **kwargs)
+                        out_text, p_tok, c_tok, t_tok, cost, finish_reason, tool_calls = extract_langchain_metrics(response, model)
+                        output_payload: dict[str, Any] = {"content": out_text}
+                        if tool_calls:
+                            output_payload["tool_calls"] = tool_calls
+                        s.output = output_payload
+                        s.set_llm_metrics(
+                            model=model,
+                            prompt_tokens=p_tok,
+                            completion_tokens=c_tok,
+                            total_tokens=t_tok,
+                            cost=cost,
+                            finish_reason=finish_reason,
+                        )
+                        return response
+                    except Exception as exc:
+                        s.fail(exc)
+                        raise exc
+            finally:
+                ACTIVE_LANGCHAIN_INVOKE.reset(token)
 
-        model_instance.ainvoke = async_invoke_wrapper
+        safe_set_method(model_instance, "ainvoke", async_invoke_wrapper)
 
-    # Wrap underlying .client and .async_client if available
+    # 3. Wrap .stream()
+    if hasattr(model_instance, "stream"):
+        original_stream = model_instance.stream
+
+        @functools.wraps(original_stream)
+        def sync_stream_wrapper(*args: Any, **kwargs: Any) -> Any:
+            input_data = args[0] if args else kwargs.get("input", kwargs)
+            model = get_model_name()
+            span_name = f"{provider}.{model}"
+
+            token = ACTIVE_LANGCHAIN_INVOKE.set(True)
+            try:
+                with active_tracer.span(span_name, span_type="llm") as s:
+                    s.set_attribute("provider", provider)
+                    s.set_attribute("model", model)
+                    s.input = serialize_llm_input(input_data)
+                    collected_chunks: list[str] = []
+                    try:
+                        for chunk in original_stream(*args, **kwargs):
+                            text = getattr(chunk, "content", str(chunk))
+                            collected_chunks.append(text)
+                            yield chunk
+                        full_content = "".join(collected_chunks)
+                        s.output = {"content": full_content}
+                        p_tok = max(20, len(str(input_data).split()) * 2)
+                        c_tok = max(10, len(full_content.split()) * 2)
+                        s.set_llm_metrics(
+                            model=model,
+                            prompt_tokens=p_tok,
+                            completion_tokens=c_tok,
+                            total_tokens=p_tok + c_tok,
+                            cost=pricing_registry.calculate(model, p_tok, c_tok),
+                            finish_reason="stop",
+                        )
+                    except Exception as exc:
+                        s.fail(exc)
+                        raise exc
+            finally:
+                ACTIVE_LANGCHAIN_INVOKE.reset(token)
+
+        safe_set_method(model_instance, "stream", sync_stream_wrapper)
+
+    # 4. Wrap .astream()
+    if hasattr(model_instance, "astream"):
+        original_astream = model_instance.astream
+
+        @functools.wraps(original_astream)
+        async def async_stream_wrapper(*args: Any, **kwargs: Any) -> Any:
+            input_data = args[0] if args else kwargs.get("input", kwargs)
+            model = get_model_name()
+            span_name = f"{provider}.{model}"
+
+            token = ACTIVE_LANGCHAIN_INVOKE.set(True)
+            try:
+                with active_tracer.span(span_name, span_type="llm") as s:
+                    s.set_attribute("provider", provider)
+                    s.set_attribute("model", model)
+                    s.input = serialize_llm_input(input_data)
+                    collected_chunks: list[str] = []
+                    try:
+                        async for chunk in original_astream(*args, **kwargs):
+                            text = getattr(chunk, "content", str(chunk))
+                            collected_chunks.append(text)
+                            yield chunk
+                        full_content = "".join(collected_chunks)
+                        s.output = {"content": full_content}
+                        p_tok = max(20, len(str(input_data).split()) * 2)
+                        c_tok = max(10, len(full_content.split()) * 2)
+                        s.set_llm_metrics(
+                            model=model,
+                            prompt_tokens=p_tok,
+                            completion_tokens=c_tok,
+                            total_tokens=p_tok + c_tok,
+                            cost=pricing_registry.calculate(model, p_tok, c_tok),
+                            finish_reason="stop",
+                        )
+                    except Exception as exc:
+                        s.fail(exc)
+                        raise exc
+            finally:
+                ACTIVE_LANGCHAIN_INVOKE.reset(token)
+
+        safe_set_method(model_instance, "astream", async_stream_wrapper)
+
+    # 5. Optionally instrument underlying client and async_client
     if hasattr(model_instance, "client") and model_instance.client is not None:
-        if hasattr(model_instance.client, "chat") and hasattr(model_instance.client.chat, "completions"):
-            # Also instrument raw underlying OpenAI/Azure client
-            if provider == "azure.openai":
-                from .azure import instrument_azure_openai
-                instrument_azure_openai(model_instance.client, tracer=active_tracer)
-            elif provider == "openai":
-                from .openai import instrument_openai
-                instrument_openai(model_instance.client, tracer=active_tracer)
+        try:
+            if hasattr(model_instance.client, "chat") and hasattr(model_instance.client.chat, "completions"):
+                if provider == "azure.openai":
+                    from .azure import instrument_azure_openai
+                    instrument_azure_openai(model_instance.client, tracer=active_tracer)
+                elif provider == "openai":
+                    from .openai import instrument_openai
+                    instrument_openai(model_instance.client, tracer=active_tracer)
+        except Exception:
+            pass
 
     if hasattr(model_instance, "async_client") and model_instance.async_client is not None:
-        if hasattr(model_instance.async_client, "chat") and hasattr(model_instance.async_client.chat, "completions"):
-            if provider == "azure.openai":
-                from .azure import instrument_azure_openai
-                instrument_azure_openai(model_instance.async_client, tracer=active_tracer)
-            elif provider == "openai":
-                from .openai import instrument_openai
-                instrument_openai(model_instance.async_client, tracer=active_tracer)
+        try:
+            if hasattr(model_instance.async_client, "chat") and hasattr(model_instance.async_client.chat, "completions"):
+                if provider == "azure.openai":
+                    from .azure import instrument_azure_openai
+                    instrument_azure_openai(model_instance.async_client, tracer=active_tracer)
+                elif provider == "openai":
+                    from .openai import instrument_openai
+                    instrument_openai(model_instance.async_client, tracer=active_tracer)
+        except Exception:
+            pass
 
     return model_instance
